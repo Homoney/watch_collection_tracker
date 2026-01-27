@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api.v1 import auth
+from app.api.v1 import auth, reference, collections, watches
 
 app = FastAPI(
     title="Watch Collection Tracker API",
@@ -20,6 +20,9 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
+app.include_router(reference.router, prefix="/api/v1/reference", tags=["Reference Data"])
+app.include_router(collections.router, prefix="/api/v1/collections", tags=["Collections"])
+app.include_router(watches.router, prefix="/api/v1/watches", tags=["Watches"])
 
 
 @app.get("/")

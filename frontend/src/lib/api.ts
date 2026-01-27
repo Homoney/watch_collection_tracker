@@ -1,0 +1,204 @@
+import axios, { AxiosError } from 'axios'
+import type {
+  LoginRequest,
+  RegisterRequest,
+  TokenResponse,
+  User,
+  Brand,
+  MovementType,
+  Complication,
+  Collection,
+  CollectionCreate,
+  CollectionUpdate,
+  Watch,
+  WatchCreate,
+  WatchUpdate,
+  WatchListItem,
+  WatchFilters,
+  PaginatedResponse,
+} from '@/types'
+
+// Use relative URL so it works from any hostname/IP
+const API_URL = '/api'
+
+export const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+})
+
+// Request interceptor to add auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('access_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
+// Response interceptor to handle token refresh
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config
+
+    if (error.response?.status === 401 && originalRequest) {
+      const refreshToken = localStorage.getItem('refresh_token')
+
+      if (refreshToken) {
+        try {
+          const response = await axios.post<TokenResponse>(
+            `${API_URL}/v1/auth/refresh`,
+            { refresh_token: refreshToken }
+          )
+
+          const { access_token, refresh_token } = response.data
+
+          localStorage.setItem('access_token', access_token)
+          localStorage.setItem('refresh_token', refresh_token)
+
+          // Retry original request
+          originalRequest.headers.Authorization = `Bearer ${access_token}`
+          return api(originalRequest)
+        } catch (refreshError) {
+          // Refresh failed, clear tokens and redirect to login
+          localStorage.removeItem('access_token')
+          localStorage.removeItem('refresh_token')
+          window.location.href = '/login'
+          return Promise.reject(refreshError)
+        }
+      }
+    }
+
+    return Promise.reject(error)
+  }
+)
+
+// Auth API
+export const authApi = {
+  login: async (data: LoginRequest): Promise<TokenResponse> => {
+    const response = await api.post<TokenResponse>('/v1/auth/login', data)
+    return response.data
+  },
+
+  register: async (data: RegisterRequest): Promise<TokenResponse> => {
+    const response = await api.post<TokenResponse>('/v1/auth/register', data)
+    return response.data
+  },
+
+  logout: async (): Promise<void> => {
+    await api.post('/v1/auth/logout')
+  },
+
+  getMe: async (): Promise<User> => {
+    const response = await api.get<User>('/v1/auth/me')
+    return response.data
+  },
+
+  updateMe: async (data: Partial<User>): Promise<User> => {
+    const response = await api.put<User>('/v1/auth/me', data)
+    return response.data
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string): Promise<void> => {
+    await api.post('/v1/auth/change-password', {
+      current_password: currentPassword,
+      new_password: newPassword,
+    })
+  },
+}
+
+// Reference Data API
+export const referenceApi = {
+  listBrands: async (): Promise<Brand[]> => {
+    const response = await api.get<Brand[]>('/v1/reference/brands')
+    return response.data
+  },
+
+  listMovementTypes: async (): Promise<MovementType[]> => {
+    const response = await api.get<MovementType[]>('/v1/reference/movement-types')
+    return response.data
+  },
+
+  listComplications: async (): Promise<Complication[]> => {
+    const response = await api.get<Complication[]>('/v1/reference/complications')
+    return response.data
+  },
+}
+
+// Collections API
+export const collectionsApi = {
+  list: async (): Promise<Collection[]> => {
+    const response = await api.get<Collection[]>('/v1/collections/')
+    return response.data
+  },
+
+  create: async (data: CollectionCreate): Promise<Collection> => {
+    const response = await api.post<Collection>('/v1/collections/', data)
+    return response.data
+  },
+
+  get: async (id: string): Promise<Collection> => {
+    const response = await api.get<Collection>(`/v1/collections/${id}`)
+    return response.data
+  },
+
+  update: async (id: string, data: CollectionUpdate): Promise<Collection> => {
+    const response = await api.put<Collection>(`/v1/collections/${id}`, data)
+    return response.data
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/v1/collections/${id}`)
+  },
+}
+
+// Watches API
+export const watchesApi = {
+  list: async (
+    filters?: WatchFilters,
+    limit = 20,
+    offset = 0
+  ): Promise<PaginatedResponse<WatchListItem>> => {
+    const params = new URLSearchParams()
+
+    if (filters?.collection_id) params.append('collection_id', filters.collection_id)
+    if (filters?.brand_id) params.append('brand_id', filters.brand_id)
+    if (filters?.movement_type_id) params.append('movement_type_id', filters.movement_type_id)
+    if (filters?.condition) params.append('condition', filters.condition)
+    if (filters?.search) params.append('search', filters.search)
+    if (filters?.sort_by) params.append('sort_by', filters.sort_by)
+    if (filters?.sort_order) params.append('sort_order', filters.sort_order)
+
+    params.append('limit', limit.toString())
+    params.append('offset', offset.toString())
+
+    const response = await api.get<PaginatedResponse<WatchListItem>>(
+      `/v1/watches/?${params.toString()}`
+    )
+    return response.data
+  },
+
+  create: async (data: WatchCreate): Promise<Watch> => {
+    const response = await api.post<Watch>('/v1/watches/', data)
+    return response.data
+  },
+
+  get: async (id: string): Promise<Watch> => {
+    const response = await api.get<Watch>(`/v1/watches/${id}`)
+    return response.data
+  },
+
+  update: async (id: string, data: WatchUpdate): Promise<Watch> => {
+    const response = await api.put<Watch>(`/v1/watches/${id}`, data)
+    return response.data
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/v1/watches/${id}`)
+  },
+}

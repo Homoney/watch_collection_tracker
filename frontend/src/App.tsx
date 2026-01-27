@@ -3,6 +3,8 @@ import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
 import DashboardPage from '@/pages/DashboardPage'
+import WatchListPage from '@/pages/WatchListPage'
+import WatchDetailPage from '@/pages/WatchDetailPage'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -64,6 +66,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/watches"
+        element={
+          <ProtectedRoute>
+            <WatchListPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/watches/:id"
+        element={
+          <ProtectedRoute>
+            <WatchDetailPage />
           </ProtectedRoute>
         }
       />

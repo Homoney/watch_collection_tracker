@@ -1,0 +1,363 @@
+import { useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import AppLayout from '@/components/layout/AppLayout'
+import WatchForm from '@/components/watches/WatchForm'
+import Modal from '@/components/common/Modal'
+import Button from '@/components/common/Button'
+import Badge from '@/components/common/Badge'
+import Spinner from '@/components/common/Spinner'
+import Card from '@/components/common/Card'
+import { useWatch, useUpdateWatch, useDeleteWatch } from '@/hooks/useWatches'
+import type { WatchUpdate } from '@/types'
+
+export default function WatchDetailPage() {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+
+  const { data: watch, isLoading, error } = useWatch(id)
+  const updateMutation = useUpdateWatch()
+  const deleteMutation = useDeleteWatch()
+
+  const handleUpdate = async (data: WatchUpdate) => {
+    if (!id) return
+    try {
+      await updateMutation.mutateAsync({ id, data })
+      setIsEditModalOpen(false)
+    } catch (error) {
+      console.error('Failed to update watch:', error)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!id) return
+    try {
+      await deleteMutation.mutateAsync(id)
+      navigate('/watches')
+    } catch (error) {
+      console.error('Failed to delete watch:', error)
+    }
+  }
+
+  const formatCurrency = (amount: number | null, currency: string) => {
+    if (amount === null) return 'N/A'
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency,
+    }).format(amount)
+  }
+
+  const formatDate = (date: string | null) => {
+    if (!date) return 'N/A'
+    return new Date(date).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
+  }
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center py-12">
+          <Spinner size="lg" />
+        </div>
+      </AppLayout>
+    )
+  }
+
+  if (error || !watch) {
+    return (
+      <AppLayout>
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Watch Not Found</h2>
+          <p className="text-gray-600 mb-4">The watch you're looking for doesn't exist.</p>
+          <Button onClick={() => navigate('/watches')}>Back to Watches</Button>
+        </div>
+      </AppLayout>
+    )
+  }
+
+  return (
+    <AppLayout>
+      <div className="space-y-6">
+        <div className="flex justify-between items-start">
+          <div>
+            <button
+              onClick={() => navigate('/watches')}
+              className="text-blue-600 hover:text-blue-800 mb-2 flex items-center text-sm"
+            >
+              <svg
+                className="w-4 h-4 mr-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
+              </svg>
+              Back to Watches
+            </button>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {watch.brand?.name} {watch.model}
+            </h1>
+            {watch.reference_number && (
+              <p className="text-gray-600 mt-1">Reference: {watch.reference_number}</p>
+            )}
+          </div>
+          <div className="flex gap-3">
+            <Button onClick={() => setIsEditModalOpen(true)}>Edit</Button>
+            <Button variant="danger" onClick={() => setIsDeleteModalOpen(true)}>
+              Delete
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-1">
+            <Card className="p-6">
+              <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4">
+                <svg
+                  className="w-24 h-24 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+              </div>
+              {watch.condition && (
+                <div className="mb-4">
+                  <Badge condition={watch.condition} />
+                </div>
+              )}
+              {watch.collection && (
+                <div>
+                  <span
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                    style={{
+                      backgroundColor: `${watch.collection.color}20`,
+                      color: watch.collection.color,
+                      borderColor: watch.collection.color,
+                      borderWidth: '1px',
+                    }}
+                  >
+                    {watch.collection.name}
+                  </span>
+                </div>
+              )}
+            </Card>
+          </div>
+
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Brand</dt>
+                  <dd className="mt-1 text-sm text-gray-900">{watch.brand?.name || 'N/A'}</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Model</dt>
+                  <dd className="mt-1 text-sm text-gray-900">{watch.model}</dd>
+                </div>
+                {watch.reference_number && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Reference Number</dt>
+                    <dd className="mt-1 text-sm text-gray-900">{watch.reference_number}</dd>
+                  </div>
+                )}
+                {watch.serial_number && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Serial Number</dt>
+                    <dd className="mt-1 text-sm text-gray-900">{watch.serial_number}</dd>
+                  </div>
+                )}
+                {watch.movement_type && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Movement Type</dt>
+                    <dd className="mt-1 text-sm text-gray-900">{watch.movement_type.name}</dd>
+                  </div>
+                )}
+              </dl>
+            </Card>
+
+            <Card className="p-6">
+              <h2 className="text-xl font-semibold text-gray-900 mb-4">Purchase Information</h2>
+              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Purchase Date</dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    {formatDate(watch.purchase_date)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-gray-500">Purchase Price</dt>
+                  <dd className="mt-1 text-sm text-gray-900">
+                    {formatCurrency(watch.purchase_price, watch.purchase_currency)}
+                  </dd>
+                </div>
+                {watch.retailer && (
+                  <div>
+                    <dt className="text-sm font-medium text-gray-500">Retailer</dt>
+                    <dd className="mt-1 text-sm text-gray-900">{watch.retailer}</dd>
+                  </div>
+                )}
+              </dl>
+            </Card>
+
+            {(watch.case_diameter ||
+              watch.case_thickness ||
+              watch.lug_width ||
+              watch.water_resistance ||
+              watch.power_reserve) && (
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Specifications</h2>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {watch.case_diameter && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Case Diameter</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{watch.case_diameter}mm</dd>
+                    </div>
+                  )}
+                  {watch.case_thickness && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Case Thickness</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{watch.case_thickness}mm</dd>
+                    </div>
+                  )}
+                  {watch.lug_width && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Lug Width</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{watch.lug_width}mm</dd>
+                    </div>
+                  )}
+                  {watch.water_resistance && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Water Resistance</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{watch.water_resistance}m</dd>
+                    </div>
+                  )}
+                  {watch.power_reserve && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Power Reserve</dt>
+                      <dd className="mt-1 text-sm text-gray-900">{watch.power_reserve} hours</dd>
+                    </div>
+                  )}
+                </dl>
+              </Card>
+            )}
+
+            {watch.complications.length > 0 && (
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Complications</h2>
+                <div className="flex flex-wrap gap-2">
+                  {watch.complications.map((comp) => (
+                    <span
+                      key={comp}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                    >
+                      {comp}
+                    </span>
+                  ))}
+                </div>
+              </Card>
+            )}
+
+            {(watch.current_market_value || watch.last_value_update) && (
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Market Value</h2>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {watch.current_market_value && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Current Market Value</dt>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        {formatCurrency(
+                          watch.current_market_value,
+                          watch.current_market_currency
+                        )}
+                      </dd>
+                    </div>
+                  )}
+                  {watch.last_value_update && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
+                      <dd className="mt-1 text-sm text-gray-900">
+                        {formatDate(watch.last_value_update)}
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </Card>
+            )}
+
+            {watch.notes && (
+              <Card className="p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Notes</h2>
+                <p className="text-sm text-gray-600 whitespace-pre-wrap">{watch.notes}</p>
+              </Card>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Edit Watch"
+        size="xl"
+      >
+        <WatchForm
+          defaultValues={watch}
+          onSubmit={handleUpdate}
+          onCancel={() => setIsEditModalOpen(false)}
+          isLoading={updateMutation.isPending}
+        />
+      </Modal>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        title="Delete Watch"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <p className="text-gray-600">
+            Are you sure you want to delete{' '}
+            <span className="font-semibold">
+              {watch.brand?.name} {watch.model}
+            </span>
+            ? This action cannot be undone.
+          </p>
+          <div className="flex gap-3">
+            <Button
+              variant="danger"
+              onClick={handleDelete}
+              disabled={deleteMutation.isPending}
+              className="flex-1"
+            >
+              {deleteMutation.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => setIsDeleteModalOpen(false)}
+              disabled={deleteMutation.isPending}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </AppLayout>
+  )
+}
