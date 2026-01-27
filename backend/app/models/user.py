@@ -7,16 +7,16 @@ import enum
 from app.database import Base
 
 
-class CurrencyEnum(str, enum.Enum):
+class CurrencyEnum(enum.Enum):
     USD = "USD"
     EUR = "EUR"
     GBP = "GBP"
     CHF = "CHF"
 
 
-class ThemeEnum(str, enum.Enum):
-    LIGHT = "light"
-    DARK = "dark"
+class ThemeEnum(enum.Enum):
+    light = "light"
+    dark = "dark"
 
 
 class User(Base):
@@ -26,8 +26,8 @@ class User(Base):
     email = Column(String, unique=True, nullable=False, index=True)
     hashed_password = Column(String, nullable=False)
     full_name = Column(String)
-    default_currency = Column(Enum(CurrencyEnum), default=CurrencyEnum.USD, nullable=False)
-    theme = Column(Enum(ThemeEnum), default=ThemeEnum.LIGHT, nullable=False)
+    default_currency = Column(Enum(CurrencyEnum, name='currencyenum'), default=CurrencyEnum.USD, nullable=False)
+    theme = Column(Enum(ThemeEnum, name='themeenum'), default=ThemeEnum.light, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
