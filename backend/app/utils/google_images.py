@@ -1,9 +1,10 @@
 import os
 import uuid
+import re
 from typing import List, Optional
 from pathlib import Path
 import httpx
-from google_images_download import google_images_download
+from bs4 import BeautifulSoup
 from PIL import Image
 from io import BytesIO
 
@@ -16,7 +17,7 @@ def fetch_watch_images(
     storage_path: str = "/app/storage"
 ) -> List[dict]:
     """
-    Fetch watch images from Google Images.
+    Fetch watch images from Google Images using web scraping.
 
     Args:
         brand: Watch brand name
@@ -38,94 +39,189 @@ def fetch_watch_images(
     upload_dir = Path(storage_path) / "uploads" / watch_id
     upload_dir.mkdir(parents=True, exist_ok=True)
 
-    # Temporary download directory
-    temp_dir = Path(storage_path) / "temp" / str(uuid.uuid4())
-    temp_dir.mkdir(parents=True, exist_ok=True)
-
     try:
-        # Configure google_images_download
-        response = google_images_download.googleimagesdownload()
+        # Fetch image URLs from Google Images
+        image_urls = _scrape_google_images(search_query, limit)
 
-        arguments = {
-            "keywords": search_query,
-            "limit": limit,
-            "print_urls": False,
-            "no_directory": True,
-            "silent_mode": True,
-            "output_directory": str(temp_dir),
-            "image_directory": "",
-            "format": "jpg",
-            "type": "photo",
-            "size": "medium",  # Medium sized images
-            "aspect_ratio": "square",  # Prefer square images for watches
-        }
+        if not image_urls:
+            raise Exception("No images found in search results")
 
-        # Download images
-        paths = response.download(arguments)
-
-        # Process downloaded images
+        # Download and process images
         image_metadata = []
 
-        # Get the downloaded files
-        downloaded_files = list(temp_dir.glob("*"))
-
-        for idx, source_path in enumerate(downloaded_files[:limit]):
-            if not source_path.is_file():
-                continue
-
+        for idx, url in enumerate(image_urls[:limit]):
             try:
-                # Generate unique filename
-                file_ext = source_path.suffix or '.jpg'
-                file_name = f"google_{idx + 1}_{uuid.uuid4().hex[:8]}{file_ext}"
-                dest_path = upload_dir / file_name
-
-                # Open and validate image
-                with Image.open(source_path) as img:
-                    # Convert RGBA to RGB if necessary
-                    if img.mode in ('RGBA', 'LA', 'P'):
-                        background = Image.new('RGB', img.size, (255, 255, 255))
-                        if img.mode == 'P':
-                            img = img.convert('RGBA')
-                        background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
-                        img = background
-
-                    # Save to final location
-                    img.save(dest_path, 'JPEG', quality=85)
-
-                    # Get image dimensions and file size
-                    width, height = img.size
-                    file_size = dest_path.stat().st_size
-
-                # Create metadata
-                image_metadata.append({
-                    'file_path': f"{watch_id}/{file_name}",
-                    'file_name': file_name,
-                    'file_size': file_size,
-                    'mime_type': 'image/jpeg',
-                    'width': width,
-                    'height': height,
-                    'source': 'google_images',
-                    'is_primary': idx == 0,  # First image is primary
-                    'sort_order': idx
-                })
+                # Download image
+                metadata = _download_and_process_image(
+                    url,
+                    watch_id,
+                    idx,
+                    upload_dir
+                )
+                if metadata:
+                    image_metadata.append(metadata)
 
             except Exception as e:
-                print(f"Failed to process image {source_path}: {e}")
+                print(f"Failed to download image {idx + 1} from {url}: {e}")
                 continue
+
+        if not image_metadata:
+            raise Exception("Failed to download any images")
 
         return image_metadata
 
     except Exception as e:
         raise Exception(f"Failed to fetch images from Google: {str(e)}")
 
-    finally:
-        # Clean up temp directory
-        try:
-            for file in temp_dir.glob("*"):
-                file.unlink()
-            temp_dir.rmdir()
-        except:
-            pass
+
+def _scrape_google_images(query: str, limit: int) -> List[str]:
+    """
+    Scrape Google Images search results for image URLs.
+
+    Args:
+        query: Search query
+        limit: Maximum number of URLs to return
+
+    Returns:
+        List of image URLs
+    """
+    # URL encode the query
+    search_url = f"https://www.google.com/search?q={query.replace(' ', '+')}&tbm=isch"
+
+    # Headers to mimic a browser
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Referer': 'https://www.google.com/',
+    }
+
+    try:
+        # Make request to Google Images
+        with httpx.Client(timeout=30.0, follow_redirects=True) as client:
+            response = client.get(search_url, headers=headers)
+            response.raise_for_status()
+
+        # Parse HTML
+        soup = BeautifulSoup(response.text, 'lxml')
+
+        # Extract image URLs from various possible locations
+        image_urls = []
+
+        # Method 1: Look for img tags with specific attributes
+        for img in soup.find_all('img'):
+            src = img.get('src') or img.get('data-src')
+            if src and src.startswith('http') and 'gstatic' not in src:
+                image_urls.append(src)
+                if len(image_urls) >= limit * 2:  # Get extras in case some fail
+                    break
+
+        # Method 2: Extract URLs from script tags (backup method)
+        if len(image_urls) < limit:
+            scripts = soup.find_all('script')
+            for script in scripts:
+                if script.string:
+                    # Look for URLs in the format ["https://..."]
+                    urls = re.findall(r'https?://[^"\']+\.(?:jpg|jpeg|png|webp)', script.string)
+                    for url in urls:
+                        if 'encrypted' not in url and url not in image_urls:
+                            image_urls.append(url)
+                            if len(image_urls) >= limit * 2:
+                                break
+
+        # Filter and deduplicate
+        filtered_urls = []
+        seen = set()
+        for url in image_urls:
+            # Skip base64, very small images, and duplicates
+            if url not in seen and not url.startswith('data:'):
+                filtered_urls.append(url)
+                seen.add(url)
+                if len(filtered_urls) >= limit * 2:
+                    break
+
+        print(f"Found {len(filtered_urls)} image URLs for query: {query}")
+        return filtered_urls[:limit * 2]  # Return extras in case some fail to download
+
+    except Exception as e:
+        print(f"Error scraping Google Images: {e}")
+        return []
+
+
+def _download_and_process_image(
+    url: str,
+    watch_id: str,
+    idx: int,
+    upload_dir: Path
+) -> Optional[dict]:
+    """
+    Download and process a single image.
+
+    Args:
+        url: Image URL
+        watch_id: Watch UUID
+        idx: Image index
+        upload_dir: Upload directory path
+
+    Returns:
+        Image metadata dict or None if failed
+    """
+    try:
+        # Download image with timeout
+        with httpx.Client(timeout=30.0, follow_redirects=True) as client:
+            response = client.get(url)
+            response.raise_for_status()
+
+            # Check content type
+            content_type = response.headers.get('content-type', '')
+            if 'image' not in content_type:
+                print(f"URL does not point to an image: {content_type}")
+                return None
+
+            # Load image
+            img_data = BytesIO(response.content)
+
+            with Image.open(img_data) as img:
+                # Skip very small images (likely icons or logos)
+                if img.width < 200 or img.height < 200:
+                    print(f"Image too small: {img.width}x{img.height}")
+                    return None
+
+                # Generate unique filename
+                file_name = f"google_{idx + 1}_{uuid.uuid4().hex[:8]}.jpg"
+                dest_path = upload_dir / file_name
+
+                # Convert RGBA to RGB if necessary
+                if img.mode in ('RGBA', 'LA', 'P'):
+                    background = Image.new('RGB', img.size, (255, 255, 255))
+                    if img.mode == 'P':
+                        img = img.convert('RGBA')
+                    background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                    img = background
+
+                # Save to final location
+                img.save(dest_path, 'JPEG', quality=85, optimize=True)
+
+                # Get image dimensions and file size
+                width, height = img.size
+                file_size = dest_path.stat().st_size
+
+            # Create metadata
+            return {
+                'file_path': f"{watch_id}/{file_name}",
+                'file_name': file_name,
+                'file_size': file_size,
+                'mime_type': 'image/jpeg',
+                'width': width,
+                'height': height,
+                'source': 'google_images',
+                'is_primary': idx == 0,  # First image is primary
+                'sort_order': idx
+            }
+
+    except Exception as e:
+        print(f"Error downloading image from {url}: {e}")
+        return None
 
 
 async def fetch_watch_images_from_urls(

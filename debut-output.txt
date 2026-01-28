@@ -1,0 +1,152 @@
+=========================================
+COMPREHENSIVE DIAGNOSTICS
+=========================================
+
+1. CONTAINER STATUS:
+-------------------
+NAME                     IMAGE                               COMMAND                  SERVICE    CREATED         STATUS                   PORTS
+watch-tracker-backend    watch-collection-tracker-backend    "/bin/sh -c 'alembic…"   backend    7 minutes ago   Up 3 minutes (healthy)   8000/tcp
+watch-tracker-db         postgres:16-alpine                  "docker-entrypoint.s…"   postgres   7 minutes ago   Up 7 minutes (healthy)   5432/tcp
+watch-tracker-frontend   watch-collection-tracker-frontend   "/docker-entrypoint.…"   frontend   7 minutes ago   Up 7 minutes             80/tcp
+watch-tracker-nginx      watch-collection-tracker-nginx      "/docker-entrypoint.…"   nginx      7 minutes ago   Up 7 minutes             0.0.0.0:80->80/tcp, [::]:80->80/tcp, 443/tcp
+
+2. CHECK FRONTEND BUILD:
+------------------------
+Checking if frontend has built files...
+total 20
+drwxr-xr-x    1 root     root          4096 Jan 27 20:17 .
+drwxr-xr-x    1 root     root          4096 Dec 18 00:29 ..
+-rw-r--r--    1 root     root           497 Dec  9 19:41 50x.html
+drwxr-xr-x    2 root     root          4096 Jan 27 20:17 assets
+-rw-r--r--    1 root     root           471 Jan 27 20:17 index.html
+
+3. CHECK FRONTEND INTERNALLY:
+-----------------------------
+Testing frontend container from inside:
+
+4. CHECK BACKEND INTERNALLY:
+----------------------------
+Testing backend container from inside:
+{"status":"healthy"}
+5. NGINX ACCESS TO FRONTEND:
+----------------------------
+Testing if nginx can reach frontend:
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Watch Collection Tracker</title>
+    <script type="module" crossorigin src="/assets/index-CptHi2a2.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BjUkVnMX.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+
+6. NGINX ACCESS TO BACKEND:
+---------------------------
+Testing if nginx can reach backend:
+{"status":"healthy"}
+7. EXTERNAL ACCESS:
+-------------------
+Testing from host machine:
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Watch Collection Tracker</title>
+    <script type="module" crossorigin src="/assets/index-CptHi2a2.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BjUkVnMX.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
+
+8. NGINX LOGS (last 30 lines):
+-------------------------------
+watch-tracker-nginx  | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+watch-tracker-nginx  | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+watch-tracker-nginx  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+watch-tracker-nginx  | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+watch-tracker-nginx  | 10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
+watch-tracker-nginx  | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+watch-tracker-nginx  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+watch-tracker-nginx  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+watch-tracker-nginx  | /docker-entrypoint.sh: Configuration complete; ready for start up
+watch-tracker-nginx  | 172.19.0.1 - - [27/Jan/2026:20:22:55 +0000] "GET / HTTP/1.1" 200 471 "-" "curl/8.18.0" "-"
+watch-tracker-nginx  | 172.19.0.1 - - [27/Jan/2026:20:22:55 +0000] "GET /api/v1/auth/me HTTP/1.1" 403 30 "-" "curl/8.18.0" "-"
+watch-tracker-nginx  | 172.19.0.1 - - [27/Jan/2026:20:29:42 +0000] "GET / HTTP/1.1" 200 471 "-" "curl/8.18.0" "-"
+
+9. FRONTEND LOGS (last 30 lines):
+----------------------------------
+watch-tracker-frontend  | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+watch-tracker-frontend  | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+watch-tracker-frontend  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+watch-tracker-frontend  | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+watch-tracker-frontend  | 10-listen-on-ipv6-by-default.sh: info: /etc/nginx/conf.d/default.conf differs from the packaged version
+watch-tracker-frontend  | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+watch-tracker-frontend  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+watch-tracker-frontend  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+watch-tracker-frontend  | /docker-entrypoint.sh: Configuration complete; ready for start up
+watch-tracker-frontend  | 2026/01/27 20:22:17 [notice] 1#1: using the "epoll" event method
+watch-tracker-frontend  | 2026/01/27 20:22:17 [notice] 1#1: nginx/1.29.4
+watch-tracker-frontend  | 2026/01/27 20:22:17 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
+watch-tracker-frontend  | 2026/01/27 20:22:17 [notice] 1#1: OS: Linux 6.12.63-1-MANJARO
+watch-tracker-frontend  | 2026/01/27 20:22:17 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1024:524288
+watch-tracker-frontend  | 2026/01/27 20:22:17 [notice] 1#1: start worker processes
+watch-tracker-frontend  | 2026/01/27 20:22:17 [notice] 1#1: start worker process 29
+watch-tracker-frontend  | 2026/01/27 20:22:17 [notice] 1#1: start worker process 30
+watch-tracker-frontend  | 2026/01/27 20:22:17 [notice] 1#1: start worker process 31
+watch-tracker-frontend  | 2026/01/27 20:22:17 [notice] 1#1: start worker process 32
+watch-tracker-frontend  | 172.19.0.5 - - [27/Jan/2026:20:22:55 +0000] "GET / HTTP/1.0" 200 471 "-" "curl/8.18.0" "172.19.0.1"
+watch-tracker-frontend  | 172.19.0.5 - - [27/Jan/2026:20:29:42 +0000] "GET / HTTP/1.1" 200 471 "-" "Wget" "-"
+watch-tracker-frontend  | 172.19.0.5 - - [27/Jan/2026:20:29:42 +0000] "GET / HTTP/1.0" 200 471 "-" "curl/8.18.0" "172.19.0.1"
+
+10. BACKEND LOGS (last 30 lines):
+----------------------------------
+watch-tracker-backend  | INFO  [alembic.runtime.migration] Running upgrade  -> 001, initial schema
+watch-tracker-backend  | INFO  [alembic.runtime.migration] Running upgrade 001 -> 002, seed reference data
+watch-tracker-backend  | INFO:     Started server process [8]
+watch-tracker-backend  | INFO:     Waiting for application startup.
+watch-tracker-backend  | INFO:     Application startup complete.
+watch-tracker-backend  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+watch-tracker-backend  | INFO:     127.0.0.1:53148 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:53158 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     172.19.0.5:55786 - "GET /api/v1/auth/me HTTP/1.0" 403 Forbidden
+watch-tracker-backend  | INFO:     127.0.0.1:48430 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:37728 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:33040 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:46770 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:57018 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:43268 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:48758 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+watch-tracker-backend  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+watch-tracker-backend  | INFO:     Started server process [8]
+watch-tracker-backend  | INFO:     Waiting for application startup.
+watch-tracker-backend  | INFO:     Application startup complete.
+watch-tracker-backend  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+watch-tracker-backend  | INFO:     127.0.0.1:35636 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:47618 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:58530 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:35184 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:44318 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:47942 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     127.0.0.1:54414 - "GET /health HTTP/1.1" 200 OK
+watch-tracker-backend  | INFO:     172.19.0.5:53828 - "GET /health HTTP/1.1" 200 OK
+
+11. NETWORK CONNECTIVITY:
+-------------------------
+        "Containers": {
+            "0fc620dfcb76e320033fe719197b5044e6c746f6322a0d46b24af5d68f5241ec": {
+                "Name": "watch-tracker-db",
+                "EndpointID": "a6301c6063fb5252d2a108bd341c21da17f949f2fd9596652671320e0544d819",
+                "MacAddress": "86:60:59:6d:d6:59",
+                "IPv4Address": "172.19.0.2/16",
+

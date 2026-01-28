@@ -22,7 +22,8 @@ qrcode[pil]==7.4.2
 reportlab==4.0.9
 
 # Google Images scraper (for auto-sourcing images)
-google-images-download==2.8.0
+beautifulsoup4==4.12.3
+lxml==5.1.0
 
 # Validation
 pydantic==2.5.3
