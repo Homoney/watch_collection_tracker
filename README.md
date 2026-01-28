@@ -12,6 +12,8 @@ A modern web application for watch collectors to track their collections with mu
 - **Service History**: Track maintenance records, costs, schedule future services, attach documents
 - **Market Value Tracking**: Historical value tracking, ROI calculations, appreciation/depreciation analytics
 - **Performance Analytics**: Watch-level and collection-level analytics with trend indicators
+- **Interactive Dashboards**: Recharts visualizations with line charts, bar charts, and pie charts
+- **Collection Analytics**: Brand value breakdown, top/worst performers, distribution percentages
 - **Multi-Currency Support**: USD, EUR, GBP, CHF, JPY, AUD, CAD
 - **Document Management**: Upload service receipts, warranties, certificates (PDF, JPG, PNG)
 - **Export & Backup**: Full database dumps and JSON exports
@@ -398,16 +400,26 @@ docker-compose up -d
 ### ✅ Phase 5: Market Value Tracking & Analytics (COMPLETED)
 - Market value schemas and CRUD API endpoints
 - Watch-level analytics endpoint (ROI, returns, value changes)
-- Collection-level analytics endpoint
+- Collection-level analytics endpoint with brand breakdown
 - MarketValueHistory component with timeline view
 - MarketValueForm component with date pickers
 - WatchAnalytics component with performance metrics
+- ValueChart component with Recharts LineChart (historical trends)
+- CollectionAnalytics component with comprehensive dashboard
+  - Total collection value and watch count cards
+  - Average ROI with color-coded trend indicators
+  - Top/worst performer identification
+  - Bar chart for value distribution by brand
+  - Pie chart for collection distribution percentages
+  - Brand performance table with detailed metrics
+- AnalyticsPage with dedicated dashboard view
+  - Currency selector for multi-currency support
+  - Integrated navigation menu access
 - Historical value tracking over time
 - ROI and annualized return calculations
 - 30-day, 90-day, 1-year value change tracking
 - Smart current value management (date-aware updates)
-- Multi-currency support
-- Recharts library integration for future chart components
+- Multi-currency support (USD, EUR, GBP, CHF, JPY, AUD, CAD)
 
 ### 🚧 Phase 6: Advanced Features (NEXT)
 - PDF export of collection
