@@ -11,12 +11,12 @@ export default function Navbar() {
   const navLinkClass = (path: string) =>
     `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
       isActive(path)
-        ? 'bg-blue-700 text-white'
-        : 'text-blue-100 hover:bg-blue-600 hover:text-white'
+        ? 'bg-blue-700 dark:bg-gray-700 text-white'
+        : 'text-blue-100 dark:text-gray-300 hover:bg-blue-600 dark:hover:bg-gray-700 hover:text-white'
     }`
 
   return (
-    <nav className="bg-blue-600 shadow-lg">
+    <nav className="bg-blue-600 dark:bg-gray-800 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-8">

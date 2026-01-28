@@ -29,16 +29,16 @@ export default function DashboardPage() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-600">Welcome to your watch collection</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Welcome to your watch collection</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Watches</p>
-                <p className="mt-2 text-3xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Watches</p>
+                <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
                   {watchesLoading ? '-' : watchesData?.total || 0}
                 </p>
               </div>
@@ -63,8 +63,8 @@ export default function DashboardPage() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Value</p>
-                <p className="mt-2 text-3xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Value</p>
+                <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
                   {watchesLoading ? '-' : formatCurrency(totalValue)}
                 </p>
               </div>
@@ -89,8 +89,8 @@ export default function DashboardPage() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Collections</p>
-                <p className="mt-2 text-3xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Collections</p>
+                <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
                   {collectionsLoading ? '-' : collections?.length || 0}
                 </p>
               </div>
@@ -116,7 +116,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Recent Watches</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Watches</h2>
               <Link to="/watches">
                 <Button variant="ghost" size="sm">
                   View All
@@ -130,7 +130,7 @@ export default function DashboardPage() {
               </div>
             ) : watchesData?.items.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-600 mb-4">No watches yet</p>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">No watches yet</p>
                 <Link to="/watches">
                   <Button>Add Your First Watch</Button>
                 </Link>
@@ -141,11 +141,11 @@ export default function DashboardPage() {
                   <Link
                     key={watch.id}
                     to={`/watches/${watch.id}`}
-                    className="block p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="block p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-medium text-gray-900">
+                        <p className="font-medium text-gray-900 dark:text-white">
                           {watch.brand?.name} {watch.model}
                         </p>
                         {watch.reference_number && (
@@ -153,7 +153,7 @@ export default function DashboardPage() {
                         )}
                       </div>
                       {watch.purchase_price && (
-                        <p className="text-sm font-medium text-gray-900">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
                           {formatCurrency(Number(watch.purchase_price))}
                         </p>
                       )}
@@ -166,7 +166,7 @@ export default function DashboardPage() {
 
           <Card className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900">Collections</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Collections</h2>
             </div>
 
             {collectionsLoading ? (
@@ -175,7 +175,7 @@ export default function DashboardPage() {
               </div>
             ) : collections?.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-600">No collections yet</p>
+                <p className="text-gray-600 dark:text-gray-400">No collections yet</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -183,7 +183,7 @@ export default function DashboardPage() {
                   <Link
                     key={collection.id}
                     to={`/watches?collection_id=${collection.id}`}
-                    className="block p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="block p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     <div className="flex justify-between items-center">
                       <div className="flex items-center space-x-3">
@@ -191,9 +191,9 @@ export default function DashboardPage() {
                           className="w-4 h-4 rounded-full"
                           style={{ backgroundColor: collection.color }}
                         />
-                        <p className="font-medium text-gray-900">{collection.name}</p>
+                        <p className="font-medium text-gray-900 dark:text-white">{collection.name}</p>
                       </div>
-                      <p className="text-sm text-gray-600">{collection.watch_count} watches</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{collection.watch_count} watches</p>
                     </div>
                   </Link>
                 ))}
@@ -203,7 +203,7 @@ export default function DashboardPage() {
         </div>
 
         <Card className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link to="/watches">
               <Button className="w-full">View All Watches</Button>
