@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FileDown } from 'lucide-react'
+import { FileDown, Download } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import AppLayout from '@/components/layout/AppLayout'
 import WatchForm from '@/components/watches/WatchForm'
 import ImageUpload from '@/components/watches/ImageUpload'
@@ -36,6 +37,8 @@ export default function WatchDetailPage() {
   const { data: watch, isLoading, error } = useWatch(id)
   const updateMutation = useUpdateWatch()
   const deleteMutation = useDeleteWatch()
+  const queryClient = useQueryClient()
+  const [isFetchingImages, setIsFetchingImages] = useState(false)
 
   const handleUpdate = async (data: WatchUpdate) => {
     if (!id) return
@@ -141,6 +144,22 @@ export default function WatchDetailPage() {
     setEditingMarketValue(undefined)
   }
 
+  const handleFetchGoogleImages = async () => {
+    if (!id) return
+    setIsFetchingImages(true)
+    try {
+      await api.post(`/v1/watches/${id}/fetch-images`)
+      // Invalidate queries to refetch watch data with new images
+      queryClient.invalidateQueries({ queryKey: ['watches', id] })
+      queryClient.invalidateQueries({ queryKey: ['watches'] })
+    } catch (error: any) {
+      console.error('Failed to fetch images:', error)
+      alert(error.response?.data?.detail || 'Failed to fetch images from Google')
+    } finally {
+      setIsFetchingImages(false)
+    }
+  }
+
   if (isLoading) {
     return (
       <AppLayout>
@@ -207,19 +226,37 @@ export default function WatchDetailPage() {
         </div>
 
         <Card className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             Images {watch.images?.length > 0 && `(${watch.images.length})`}
           </h2>
 
           <div className="space-y-6">
-            <ImageGallery
-              watchId={watch.id}
-              images={watch.images || []}
-              onImageClick={(index) => setLightboxIndex(index)}
-            />
+            {!watch.images || watch.images.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  No images yet. Upload your own or fetch from Google Images.
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Button
+                    onClick={handleFetchGoogleImages}
+                    disabled={isFetchingImages}
+                    variant="secondary"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    {isFetchingImages ? 'Fetching Images...' : 'Fetch from Google Images'}
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <ImageGallery
+                watchId={watch.id}
+                images={watch.images || []}
+                onImageClick={(index) => setLightboxIndex(index)}
+              />
+            )}
 
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-sm font-medium text-gray-900 mb-3">Upload New Images</h3>
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Upload New Images</h3>
               <ImageUpload watchId={watch.id} />
             </div>
           </div>

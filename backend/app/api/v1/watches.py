@@ -19,6 +19,8 @@ from app.schemas.watch import (
 )
 from app.utils.qr_code import generate_watch_qr_code
 from app.utils.pdf_export import generate_watch_pdf, generate_collection_pdf
+from app.utils.google_images import fetch_watch_images
+from app.models.watch_image import WatchImage, ImageSourceEnum
 
 router = APIRouter()
 
@@ -435,3 +437,95 @@ def export_all_watches_pdf(
             "Content-Disposition": f'attachment; filename="{filename}"'
         }
     )
+
+
+@router.post("/{watch_id}/fetch-images", status_code=status.HTTP_201_CREATED)
+def fetch_google_images(
+    watch_id: UUID,
+    limit: int = Query(default=3, ge=1, le=5, description="Number of images to fetch"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Fetch watch images from Google Images.
+    Only works if the watch currently has no images.
+    """
+    # Verify watch exists and belongs to user
+    watch = db.query(Watch).options(
+        joinedload(Watch.brand),
+        joinedload(Watch.images)
+    ).filter(
+        Watch.id == watch_id,
+        Watch.user_id == current_user.id
+    ).first()
+
+    if not watch:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Watch not found"
+        )
+
+    # Check if watch already has images
+    if watch.images:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Watch already has images. Delete existing images first to auto-fetch."
+        )
+
+    # Get brand and model
+    brand_name = watch.brand.name if watch.brand else "watch"
+    model = watch.model
+
+    try:
+        # Fetch images from Google
+        image_metadata_list = fetch_watch_images(
+            brand=brand_name,
+            model=model,
+            watch_id=str(watch_id),
+            limit=limit
+        )
+
+        if not image_metadata_list:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No images found for this watch"
+            )
+
+        # Create database records for each image
+        created_images = []
+        for metadata in image_metadata_list:
+            image = WatchImage(
+                watch_id=watch_id,
+                file_path=metadata['file_path'],
+                file_name=metadata['file_name'],
+                file_size=metadata['file_size'],
+                mime_type=metadata['mime_type'],
+                width=metadata.get('width'),
+                height=metadata.get('height'),
+                is_primary=metadata['is_primary'],
+                sort_order=metadata['sort_order'],
+                source=ImageSourceEnum.GOOGLE_IMAGES
+            )
+            db.add(image)
+            created_images.append(image)
+
+        db.commit()
+
+        # Refresh to get IDs
+        for image in created_images:
+            db.refresh(image)
+
+        # Return image schemas
+        from app.schemas.watch_image import WatchImageResponse
+        return {
+            "message": f"Successfully fetched {len(created_images)} images",
+            "images": [WatchImageResponse.model_validate(img).model_dump() for img in created_images]
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to fetch images: {str(e)}"
+        )
