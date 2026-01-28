@@ -397,7 +397,7 @@ export const marketValuesApi = {
 
   getCollectionAnalytics: async (currency = 'USD'): Promise<CollectionAnalytics> => {
     const response = await api.get<CollectionAnalytics>(
-      `/v1/watches/collection/analytics?currency=${currency}`
+      `/v1/collection-analytics?currency=${currency}`
     )
     return response.data
   },

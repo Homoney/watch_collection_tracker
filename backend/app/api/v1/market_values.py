@@ -21,6 +21,96 @@ from app.schemas.market_value import (
 )
 
 router = APIRouter()
+collection_analytics_router = APIRouter()
+
+
+@collection_analytics_router.get("/collection-analytics", response_model=CollectionAnalytics)
+def get_collection_analytics(
+    currency: str = Query("USD", description="Base currency for analytics"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Get analytics for the entire collection: total value, ROI, breakdowns by brand/collection.
+    Note: This simplified version assumes all values are in the same currency.
+    """
+    # Get all watches for the user
+    watches = db.query(Watch).filter(Watch.user_id == current_user.id).all()
+
+    total_watches = len(watches)
+    total_current_value = Decimal('0')
+    total_purchase_price = Decimal('0')
+
+    watch_rois = []
+    value_by_brand = {}
+    value_by_collection = {}
+
+    for watch in watches:
+        # Sum current values
+        if watch.current_market_value and watch.current_market_currency == currency:
+            total_current_value += watch.current_market_value
+
+        # Sum purchase prices
+        if watch.purchase_price and watch.purchase_currency == currency:
+            total_purchase_price += watch.purchase_price
+
+        # Calculate individual ROI
+        if watch.current_market_value and watch.purchase_price and watch.current_market_currency == watch.purchase_currency == currency:
+            roi = float((watch.current_market_value - watch.purchase_price) / watch.purchase_price * 100)
+            watch_rois.append({
+                'watch_id': str(watch.id),
+                'model': watch.model,
+                'brand': watch.brand.name if watch.brand else 'Unknown',
+                'roi': roi,
+                'current_value': float(watch.current_market_value),
+                'purchase_price': float(watch.purchase_price),
+            })
+
+        # Value by brand
+        if watch.brand and watch.current_market_value and watch.current_market_currency == currency:
+            brand_name = watch.brand.name
+            if brand_name not in value_by_brand:
+                value_by_brand[brand_name] = Decimal('0')
+            value_by_brand[brand_name] += watch.current_market_value
+
+        # Value by collection
+        if watch.collection and watch.current_market_value and watch.current_market_currency == currency:
+            collection_name = watch.collection.name
+            if collection_name not in value_by_collection:
+                value_by_collection[collection_name] = Decimal('0')
+            value_by_collection[collection_name] += watch.current_market_value
+
+    # Calculate total return and average ROI
+    total_return = total_current_value - total_purchase_price
+    average_roi = sum(w['roi'] for w in watch_rois) / len(watch_rois) if watch_rois else 0.0
+
+    # Sort watches by ROI
+    sorted_rois = sorted(watch_rois, key=lambda x: x['roi'], reverse=True)
+    top_performers = sorted_rois[:5]
+    worst_performers = sorted_rois[-5:] if len(sorted_rois) > 5 else []
+
+    # Count total valuations
+    total_valuations = db.query(func.count(MarketValue.id)).join(Watch).filter(
+        Watch.user_id == current_user.id
+    ).scalar() or 0
+
+    # Convert Decimal to float for JSON serialization
+    value_by_brand_float = {k: float(v) for k, v in value_by_brand.items()}
+    value_by_collection_float = {k: float(v) for k, v in value_by_collection.items()}
+
+    return CollectionAnalytics(
+        total_watches=total_watches,
+        total_current_value=total_current_value,
+        total_purchase_price=total_purchase_price,
+        currency=currency,
+        total_return=total_return,
+        average_roi=average_roi,
+        top_performers=top_performers,
+        worst_performers=worst_performers,
+        value_by_brand=value_by_brand_float,
+        value_by_collection=value_by_collection_float,
+        total_valuations=total_valuations,
+    )
 
 
 def verify_watch_ownership(watch_id: UUID, current_user: User, db: Session) -> Watch:
@@ -320,90 +410,3 @@ def get_watch_analytics(
     )
 
 
-@router.get("/collection/analytics", response_model=CollectionAnalytics)
-def get_collection_analytics(
-    currency: str = Query("USD", description="Base currency for analytics"),
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get analytics for the entire collection: total value, ROI, breakdowns by brand/collection.
-    Note: This simplified version assumes all values are in the same currency.
-    """
-    # Get all watches for the user
-    watches = db.query(Watch).filter(Watch.user_id == current_user.id).all()
-
-    total_watches = len(watches)
-    total_current_value = Decimal('0')
-    total_purchase_price = Decimal('0')
-
-    watch_rois = []
-    value_by_brand = {}
-    value_by_collection = {}
-
-    for watch in watches:
-        # Sum current values
-        if watch.current_market_value and watch.current_market_currency == currency:
-            total_current_value += watch.current_market_value
-
-        # Sum purchase prices
-        if watch.purchase_price and watch.purchase_currency == currency:
-            total_purchase_price += watch.purchase_price
-
-        # Calculate individual ROI
-        if watch.current_market_value and watch.purchase_price and watch.current_market_currency == watch.purchase_currency == currency:
-            roi = float((watch.current_market_value - watch.purchase_price) / watch.purchase_price * 100)
-            watch_rois.append({
-                'watch_id': str(watch.id),
-                'model': watch.model,
-                'brand': watch.brand.name if watch.brand else 'Unknown',
-                'roi': roi,
-                'current_value': float(watch.current_market_value),
-                'purchase_price': float(watch.purchase_price),
-            })
-
-        # Value by brand
-        if watch.brand and watch.current_market_value and watch.current_market_currency == currency:
-            brand_name = watch.brand.name
-            if brand_name not in value_by_brand:
-                value_by_brand[brand_name] = Decimal('0')
-            value_by_brand[brand_name] += watch.current_market_value
-
-        # Value by collection
-        if watch.collection and watch.current_market_value and watch.current_market_currency == currency:
-            collection_name = watch.collection.name
-            if collection_name not in value_by_collection:
-                value_by_collection[collection_name] = Decimal('0')
-            value_by_collection[collection_name] += watch.current_market_value
-
-    # Calculate total return and average ROI
-    total_return = total_current_value - total_purchase_price
-    average_roi = sum(w['roi'] for w in watch_rois) / len(watch_rois) if watch_rois else 0.0
-
-    # Sort watches by ROI
-    sorted_rois = sorted(watch_rois, key=lambda x: x['roi'], reverse=True)
-    top_performers = sorted_rois[:5]
-    worst_performers = sorted_rois[-5:] if len(sorted_rois) > 5 else []
-
-    # Count total valuations
-    total_valuations = db.query(func.count(MarketValue.id)).join(Watch).filter(
-        Watch.user_id == current_user.id
-    ).scalar() or 0
-
-    # Convert Decimal to float for JSON serialization
-    value_by_brand_float = {k: float(v) for k, v in value_by_brand.items()}
-    value_by_collection_float = {k: float(v) for k, v in value_by_collection.items()}
-
-    return CollectionAnalytics(
-        total_watches=total_watches,
-        total_current_value=total_current_value,
-        total_purchase_price=total_purchase_price,
-        currency=currency,
-        total_return=total_return,
-        average_roi=average_roi,
-        top_performers=top_performers,
-        worst_performers=worst_performers,
-        value_by_brand=value_by_brand_float,
-        value_by_collection=value_by_collection_float,
-        total_valuations=total_valuations,
-    )

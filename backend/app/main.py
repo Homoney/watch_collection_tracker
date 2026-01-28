@@ -25,7 +25,10 @@ app.include_router(collections.router, prefix="/api/v1/collections", tags=["Coll
 app.include_router(watches.router, prefix="/api/v1/watches", tags=["Watches"])
 app.include_router(images.router, prefix="/api/v1/watches", tags=["Images"])
 app.include_router(service_history.router, prefix="/api/v1/watches", tags=["Service History"])
-app.include_router(market_values.router, prefix="/api/v1/watches", tags=["Market Values"])
+# Market values - register collection analytics separately to avoid path conflicts
+import app.api.v1.market_values as mv
+app.include_router(mv.collection_analytics_router, prefix="/api/v1", tags=["Analytics"])
+app.include_router(mv.router, prefix="/api/v1/watches", tags=["Market Values"])
 app.include_router(saved_searches.router, prefix="/api/v1/saved-searches", tags=["Saved Searches"])
 
 
