@@ -18,6 +18,7 @@ from app.schemas.watch import (
     PaginatedWatchResponse
 )
 from app.utils.qr_code import generate_watch_qr_code
+from app.utils.pdf_export import generate_watch_pdf, generate_collection_pdf
 
 router = APIRouter()
 
@@ -326,5 +327,111 @@ def get_watch_qr_code(
         media_type="image/png",
         headers={
             "Content-Disposition": f'inline; filename="watch-{watch_id}-qr.png"'
+        }
+    )
+
+
+@router.get("/{watch_id}/export/pdf")
+def export_watch_pdf(
+    watch_id: UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Export a single watch as a PDF document.
+    Includes all watch details, images, service history, and analytics.
+    """
+    # Load watch with all relationships
+    watch = db.query(Watch).options(
+        joinedload(Watch.brand),
+        joinedload(Watch.movement_type),
+        joinedload(Watch.collection),
+        joinedload(Watch.images),
+        joinedload(Watch.service_history)
+    ).filter(
+        Watch.id == watch_id,
+        Watch.user_id == current_user.id
+    ).first()
+
+    if not watch:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Watch not found"
+        )
+
+    # Convert to dict for PDF generation
+    from app.schemas.watch import WatchResponse
+    watch_data = WatchResponse.model_validate(watch).model_dump()
+
+    # Generate PDF
+    pdf_buffer = generate_watch_pdf(watch_data)
+
+    # Safe filename
+    brand_name = watch.brand.name if watch.brand else "Unknown"
+    model = watch.model.replace('/', '-').replace(' ', '_')
+    filename = f"{brand_name}_{model}.pdf".replace(' ', '_')
+
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        }
+    )
+
+
+@router.get("/export/pdf")
+def export_all_watches_pdf(
+    collection_id: Optional[UUID] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Export all user watches (or watches in a specific collection) as a PDF document.
+    """
+    # Build query
+    query = db.query(Watch).options(
+        joinedload(Watch.brand),
+        joinedload(Watch.collection),
+        joinedload(Watch.images)
+    ).filter(Watch.user_id == current_user.id)
+
+    # Filter by collection if specified
+    if collection_id:
+        query = query.filter(Watch.collection_id == collection_id)
+
+    watches = query.order_by(Watch.brand_id, Watch.model).all()
+
+    if not watches:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No watches found"
+        )
+
+    # Convert to list of dicts
+    from app.schemas.watch import WatchListResponse
+    watches_data = [WatchListResponse.model_validate(w).model_dump() for w in watches]
+
+    # Determine collection name
+    if collection_id:
+        collection = db.query(Collection).filter(
+            Collection.id == collection_id,
+            Collection.user_id == current_user.id
+        ).first()
+        collection_name = collection.name if collection else "Watch Collection"
+    else:
+        collection_name = "My Watch Collection"
+
+    # Generate PDF
+    pdf_buffer = generate_collection_pdf(watches_data, collection_name)
+
+    # Safe filename
+    filename = f"{collection_name.replace(' ', '_')}.pdf"
+
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
         }
     )

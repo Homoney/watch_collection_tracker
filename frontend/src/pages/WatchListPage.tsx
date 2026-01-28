@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
+import { FileDown } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import WatchList from '@/components/watches/WatchList'
 import WatchFilters from '@/components/watches/WatchFilters'
@@ -10,6 +11,7 @@ import Button from '@/components/common/Button'
 import { useWatches, useCreateWatch, useDeleteWatch } from '@/hooks/useWatches'
 import { useBrands, useMovementTypes } from '@/hooks/useReferenceData'
 import { useCollections } from '@/hooks/useCollections'
+import { api } from '@/lib/api'
 import type { WatchFilters as WatchFiltersType, WatchListItem, WatchCreate } from '@/types'
 
 export default function WatchListPage() {
@@ -86,6 +88,39 @@ export default function WatchListPage() {
     }
   }
 
+  const handleExportAllPDF = async () => {
+    try {
+      // Build query params for collection filter if active
+      const params = new URLSearchParams()
+      if (filters.collection_id) {
+        params.append('collection_id', filters.collection_id)
+      }
+
+      const response = await api.get(`/v1/watches/export/pdf?${params.toString()}`, {
+        responseType: 'blob'
+      })
+
+      // Create blob URL and trigger download
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+
+      // Generate filename
+      const collectionName = filters.collection_id
+        ? collections?.find(c => c.id === filters.collection_id)?.name || 'Collection'
+        : 'My_Watch_Collection'
+      link.download = `${collectionName.replace(' ', '_')}.pdf`
+
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Failed to export PDF:', error)
+    }
+  }
+
   const totalPages = data ? Math.ceil(data.total / limit) : 0
 
   if (error) {
@@ -110,7 +145,13 @@ export default function WatchListPage() {
               </p>
             )}
           </div>
-          <Button onClick={() => setIsAddModalOpen(true)}>Add Watch</Button>
+          <div className="flex gap-3">
+            <Button onClick={handleExportAllPDF} variant="secondary" disabled={!data || data.total === 0}>
+              <FileDown className="h-4 w-4 mr-2" />
+              Export All PDF
+            </Button>
+            <Button onClick={() => setIsAddModalOpen(true)}>Add Watch</Button>
+          </div>
         </div>
 
         {/* Filter Chips */}

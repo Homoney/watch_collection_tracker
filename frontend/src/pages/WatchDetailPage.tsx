@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { FileDown } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import WatchForm from '@/components/watches/WatchForm'
 import ImageUpload from '@/components/watches/ImageUpload'
@@ -18,6 +19,7 @@ import Badge from '@/components/common/Badge'
 import Spinner from '@/components/common/Spinner'
 import Card from '@/components/common/Card'
 import { useWatch, useUpdateWatch, useDeleteWatch } from '@/hooks/useWatches'
+import { api } from '@/lib/api'
 import type { WatchUpdate, ServiceHistory, MarketValue } from '@/types'
 
 export default function WatchDetailPage() {
@@ -52,6 +54,33 @@ export default function WatchDetailPage() {
       navigate('/watches')
     } catch (error) {
       console.error('Failed to delete watch:', error)
+    }
+  }
+
+  const handleExportPDF = async () => {
+    if (!id) return
+    try {
+      const response = await api.get(`/v1/watches/${id}/export/pdf`, {
+        responseType: 'blob'
+      })
+
+      // Create blob URL and trigger download
+      const blob = new Blob([response.data], { type: 'application/pdf' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+
+      // Generate filename
+      const brandName = watch?.brand?.name || 'Watch'
+      const model = watch?.model.replace('/', '-').replace(' ', '_') || 'Export'
+      link.download = `${brandName}_${model}.pdf`.replace(' ', '_')
+
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Failed to export PDF:', error)
     }
   }
 
@@ -166,6 +195,10 @@ export default function WatchDetailPage() {
             )}
           </div>
           <div className="flex gap-3">
+            <Button onClick={handleExportPDF} variant="secondary">
+              <FileDown className="h-4 w-4 mr-2" />
+              Export PDF
+            </Button>
             <Button onClick={() => setIsEditModalOpen(true)}>Edit</Button>
             <Button variant="danger" onClick={() => setIsDeleteModalOpen(true)}>
               Delete
