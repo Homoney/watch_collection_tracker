@@ -31,6 +31,9 @@ export default function Navbar() {
               <Link to="/watches" className={navLinkClass('/watches')}>
                 Watches
               </Link>
+              <Link to="/collections" className={navLinkClass('/collections')}>
+                Collections
+              </Link>
             </div>
           </div>
 

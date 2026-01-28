@@ -46,7 +46,9 @@ class Watch(Base):
     complications = Column(JSONB, default=[])
 
     # Condition
-    condition = Column(Enum(ConditionEnum))
+    condition = Column(
+        Enum(ConditionEnum, values_callable=lambda x: [e.value for e in x])
+    )
 
     # Market value tracking
     current_market_value = Column(Numeric(12, 2))
