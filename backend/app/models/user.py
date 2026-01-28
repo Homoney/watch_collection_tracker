@@ -34,3 +34,4 @@ class User(Base):
     # Relationships
     collections = relationship("Collection", back_populates="user", cascade="all, delete-orphan")
     watches = relationship("Watch", back_populates="user", cascade="all, delete-orphan")
+    saved_searches = relationship("SavedSearch", back_populates="user", cascade="all, delete-orphan")

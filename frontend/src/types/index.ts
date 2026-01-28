@@ -336,3 +336,23 @@ export interface PaginatedResponse<T> {
   limit: number
   offset: number
 }
+
+// Saved Searches
+export interface SavedSearch {
+  id: string
+  user_id: string
+  name: string
+  filters: WatchFilters
+  created_at: string
+  updated_at: string
+}
+
+export interface SavedSearchCreate {
+  name: string
+  filters: WatchFilters
+}
+
+export interface SavedSearchUpdate {
+  name?: string
+  filters?: WatchFilters
+}

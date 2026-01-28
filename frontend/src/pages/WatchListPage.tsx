@@ -3,10 +3,13 @@ import { useSearchParams } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
 import WatchList from '@/components/watches/WatchList'
 import WatchFilters from '@/components/watches/WatchFilters'
+import FilterChips from '@/components/watches/FilterChips'
 import WatchForm from '@/components/watches/WatchForm'
 import Modal from '@/components/common/Modal'
 import Button from '@/components/common/Button'
 import { useWatches, useCreateWatch, useDeleteWatch } from '@/hooks/useWatches'
+import { useBrands, useMovementTypes } from '@/hooks/useReferenceData'
+import { useCollections } from '@/hooks/useCollections'
 import type { WatchFilters as WatchFiltersType, WatchListItem, WatchCreate } from '@/types'
 
 export default function WatchListPage() {
@@ -39,12 +42,28 @@ export default function WatchListPage() {
   }, [filters, setSearchParams])
 
   const { data, isLoading, error } = useWatches(filters, limit, page * limit)
+  const { data: brands } = useBrands()
+  const { data: movementTypes } = useMovementTypes()
+  const { data: collections } = useCollections()
   const createMutation = useCreateWatch()
   const deleteMutation = useDeleteWatch()
 
   const handleFiltersChange = (newFilters: WatchFiltersType) => {
     setFilters(newFilters)
     setPage(0)
+  }
+
+  const handleRemoveFilter = (filterKey: keyof WatchFiltersType) => {
+    const newFilters = { ...filters }
+    delete newFilters[filterKey]
+    handleFiltersChange(newFilters)
+  }
+
+  const handleClearAllFilters = () => {
+    handleFiltersChange({
+      sort_by: 'created_at',
+      sort_order: 'desc',
+    })
   }
 
   const handleCreateWatch = async (data: WatchCreate) => {
@@ -84,15 +103,25 @@ export default function WatchListPage() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">My Watches</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Watches</h1>
             {data && (
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
                 {data.total} {data.total === 1 ? 'watch' : 'watches'} in your collection
               </p>
             )}
           </div>
           <Button onClick={() => setIsAddModalOpen(true)}>Add Watch</Button>
         </div>
+
+        {/* Filter Chips */}
+        <FilterChips
+          filters={filters}
+          brands={brands}
+          movementTypes={movementTypes}
+          collections={collections}
+          onRemoveFilter={handleRemoveFilter}
+          onClearAll={handleClearAllFilters}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           <div className="lg:col-span-1">

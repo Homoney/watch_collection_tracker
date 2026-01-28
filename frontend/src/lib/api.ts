@@ -27,6 +27,9 @@ import type {
   MarketValueUpdate,
   WatchAnalytics,
   CollectionAnalytics,
+  SavedSearch,
+  SavedSearchCreate,
+  SavedSearchUpdate,
 } from '@/types'
 
 // Use relative URL so it works from any hostname/IP
@@ -397,5 +400,35 @@ export const marketValuesApi = {
       `/v1/watches/collection/analytics?currency=${currency}`
     )
     return response.data
+  },
+}
+
+// Saved Searches API
+export const savedSearchesApi = {
+  list: async (): Promise<SavedSearch[]> => {
+    const response = await api.get<SavedSearch[]>('/v1/saved-searches')
+    return response.data
+  },
+
+  create: async (data: SavedSearchCreate): Promise<SavedSearch> => {
+    const response = await api.post<SavedSearch>('/v1/saved-searches', data)
+    return response.data
+  },
+
+  get: async (searchId: string): Promise<SavedSearch> => {
+    const response = await api.get<SavedSearch>(`/v1/saved-searches/${searchId}`)
+    return response.data
+  },
+
+  update: async (searchId: string, data: SavedSearchUpdate): Promise<SavedSearch> => {
+    const response = await api.put<SavedSearch>(
+      `/v1/saved-searches/${searchId}`,
+      data
+    )
+    return response.data
+  },
+
+  delete: async (searchId: string): Promise<void> => {
+    await api.delete(`/v1/saved-searches/${searchId}`)
   },
 }

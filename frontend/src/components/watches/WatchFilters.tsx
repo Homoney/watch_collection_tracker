@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import { ChevronDown, ChevronUp, Save, Star } from 'lucide-react'
 import Input from '@/components/common/Input'
 import Select from '@/components/common/Select'
 import Button from '@/components/common/Button'
 import { useBrands, useMovementTypes } from '@/hooks/useReferenceData'
 import { useCollections } from '@/hooks/useCollections'
+import { useSavedSearches, useCreateSavedSearch, useDeleteSavedSearch } from '@/hooks/useSavedSearches'
 import type { WatchFilters as WatchFiltersType } from '@/types'
 
 interface WatchFiltersProps {
@@ -37,9 +38,14 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
   const { data: brands } = useBrands()
   const { data: movementTypes } = useMovementTypes()
   const { data: collections } = useCollections()
+  const { data: savedSearches } = useSavedSearches()
+  const createSavedSearch = useCreateSavedSearch()
+  const deleteSavedSearch = useDeleteSavedSearch()
 
   const [search, setSearch] = useState(filters.search || '')
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [showSaveDialog, setShowSaveDialog] = useState(false)
+  const [searchName, setSearchName] = useState('')
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -72,16 +78,117 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
     filters.purchase_date_from ||
     filters.purchase_date_to
 
+  const handleSaveSearch = async () => {
+    if (!searchName.trim()) return
+
+    try {
+      await createSavedSearch.mutateAsync({
+        name: searchName.trim(),
+        filters: filters,
+      })
+      setSearchName('')
+      setShowSaveDialog(false)
+    } catch (error) {
+      console.error('Failed to save search:', error)
+    }
+  }
+
+  const handleLoadSearch = (savedSearch: any) => {
+    onFiltersChange(savedSearch.filters)
+    setSearch(savedSearch.filters.search || '')
+  }
+
+  const handleDeleteSearch = async (searchId: string) => {
+    try {
+      await deleteSavedSearch.mutateAsync(searchId)
+    } catch (error) {
+      console.error('Failed to delete search:', error)
+    }
+  }
+
   return (
     <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
-        {hasActiveFilters && (
-          <Button variant="ghost" size="sm" onClick={handleClearFilters}>
-            Clear All
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {hasActiveFilters && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowSaveDialog(!showSaveDialog)}
+              >
+                <Save className="h-4 w-4 mr-1" />
+                Save
+              </Button>
+              <Button variant="ghost" size="sm" onClick={handleClearFilters}>
+                Clear All
+              </Button>
+            </>
+          )}
+        </div>
       </div>
+
+      {/* Save Search Dialog */}
+      {showSaveDialog && (
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md space-y-2">
+          <label className="block text-sm font-medium text-gray-900 dark:text-white">
+            Save current filters as:
+          </label>
+          <div className="flex gap-2">
+            <Input
+              placeholder="Search name..."
+              value={searchName}
+              onChange={(e) => setSearchName(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSaveSearch()}
+            />
+            <Button size="sm" onClick={handleSaveSearch} disabled={!searchName.trim()}>
+              Save
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setShowSaveDialog(false)
+                setSearchName('')
+              }}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Saved Searches */}
+      {savedSearches && savedSearches.length > 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+            Saved Searches
+          </label>
+          <div className="space-y-1">
+            {savedSearches.map((savedSearch) => (
+              <div
+                key={savedSearch.id}
+                className="flex items-center justify-between p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                <button
+                  onClick={() => handleLoadSearch(savedSearch)}
+                  className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 flex-1 text-left"
+                >
+                  <Star className="h-4 w-4" />
+                  {savedSearch.name}
+                </button>
+                <button
+                  onClick={() => handleDeleteSearch(savedSearch.id)}
+                  className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Input
         placeholder="Search watches..."
