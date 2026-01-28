@@ -231,23 +231,26 @@ export interface Watch {
   purchase_currency: string
   case_diameter: number | null
   case_thickness: number | null
+  case_material: string | null
+  dial_color: string | null
+  strap_material: string | null
   lug_width: number | null
   water_resistance: number | null
   power_reserve: number | null
-  complications: string[]
   condition: ConditionEnum | null
   current_market_value: number | null
-  current_market_currency: string
+  current_market_currency: string | null
   last_value_update: string | null
   notes: string | null
   created_at: string
   updated_at: string
   brand?: Brand
   movement_type?: MovementType
+  complications?: Complication[]
   collection?: Collection
-  images: WatchImage[]
-  service_history: ServiceHistory[]
-  market_values: MarketValue[]
+  images?: WatchImage[]
+  service_history?: ServiceHistory[]
+  market_values?: MarketValue[]
 }
 
 export interface WatchCreate {
@@ -263,10 +266,13 @@ export interface WatchCreate {
   purchase_currency?: string
   case_diameter?: number | null
   case_thickness?: number | null
+  case_material?: string | null
+  dial_color?: string | null
+  strap_material?: string | null
   lug_width?: number | null
   water_resistance?: number | null
   power_reserve?: number | null
-  complications?: string[]
+  complication_ids?: string[]
   condition?: ConditionEnum | null
   current_market_value?: number | null
   current_market_currency?: string
@@ -287,10 +293,13 @@ export interface WatchUpdate {
   purchase_currency?: string
   case_diameter?: number | null
   case_thickness?: number | null
+  case_material?: string | null
+  dial_color?: string | null
+  strap_material?: string | null
   lug_width?: number | null
   water_resistance?: number | null
   power_reserve?: number | null
-  complications?: string[]
+  complication_ids?: string[]
   condition?: ConditionEnum | null
   current_market_value?: number | null
   current_market_currency?: string
@@ -355,4 +364,14 @@ export interface SavedSearchCreate {
 export interface SavedSearchUpdate {
   name?: string
   filters?: WatchFilters
+}
+
+// Comparison Context
+export interface ComparisonContextType {
+  selectedWatchIds: string[]
+  isCompareMode: boolean
+  toggleWatch: (id: string) => void
+  clearSelection: () => void
+  setCompareMode: (enabled: boolean) => void
+  canSelectMore: boolean
 }

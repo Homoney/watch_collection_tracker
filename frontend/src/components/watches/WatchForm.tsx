@@ -35,7 +35,7 @@ export default function WatchForm({
   const { data: collections } = useCollections()
 
   const [selectedComplications, setSelectedComplications] = useState<string[]>(
-    defaultValues?.complications || []
+    defaultValues?.complications?.map(c => c.id) || []
   )
 
   const {
@@ -45,7 +45,27 @@ export default function WatchForm({
   } = useForm<WatchCreate | WatchUpdate>({
     defaultValues: defaultValues
       ? {
-          ...defaultValues,
+          brand_id: defaultValues.brand_id,
+          model: defaultValues.model,
+          reference_number: defaultValues.reference_number,
+          serial_number: defaultValues.serial_number,
+          collection_id: defaultValues.collection_id,
+          movement_type_id: defaultValues.movement_type_id,
+          retailer: defaultValues.retailer,
+          purchase_price: defaultValues.purchase_price,
+          purchase_currency: defaultValues.purchase_currency,
+          case_diameter: defaultValues.case_diameter,
+          case_thickness: defaultValues.case_thickness,
+          case_material: defaultValues.case_material,
+          dial_color: defaultValues.dial_color,
+          strap_material: defaultValues.strap_material,
+          lug_width: defaultValues.lug_width,
+          water_resistance: defaultValues.water_resistance,
+          power_reserve: defaultValues.power_reserve,
+          condition: defaultValues.condition,
+          current_market_value: defaultValues.current_market_value,
+          current_market_currency: defaultValues.current_market_currency || defaultValues.purchase_currency,
+          notes: defaultValues.notes,
           purchase_date: defaultValues.purchase_date
             ? new Date(defaultValues.purchase_date).toISOString().split('T')[0]
             : undefined,
@@ -62,7 +82,7 @@ export default function WatchForm({
   const handleFormSubmit = (data: WatchCreate | WatchUpdate) => {
     const formattedData = {
       ...data,
-      complications: selectedComplications,
+      complication_ids: selectedComplications,
       purchase_date: data.purchase_date ? `${data.purchase_date}T00:00:00Z` : null,
       last_value_update: data.last_value_update ? `${data.last_value_update}T00:00:00Z` : null,
       purchase_price: data.purchase_price ? Number(data.purchase_price) : null,

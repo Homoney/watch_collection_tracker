@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { ComparisonProvider } from '@/contexts/ComparisonContext'
 import LoginPage from '@/pages/LoginPage'
 import RegisterPage from '@/pages/RegisterPage'
 import DashboardPage from '@/pages/DashboardPage'
@@ -7,6 +8,7 @@ import WatchListPage from '@/pages/WatchListPage'
 import WatchDetailPage from '@/pages/WatchDetailPage'
 import CollectionsPage from '@/pages/CollectionsPage'
 import AnalyticsPage from '@/pages/AnalyticsPage'
+import ComparePage from '@/pages/ComparePage'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -103,6 +105,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/compare"
+        element={
+          <ProtectedRoute>
+            <ComparePage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -120,7 +130,9 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      <AppRoutes />
+      <ComparisonProvider>
+        <AppRoutes />
+      </ComparisonProvider>
     </AuthProvider>
   )
 }

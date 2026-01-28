@@ -227,7 +227,7 @@ export default function WatchDetailPage() {
 
         <Card className="p-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            Images {watch.images?.length > 0 && `(${watch.images.length})`}
+            Images {watch.images && watch.images.length > 0 && `(${watch.images.length})`}
           </h2>
 
           <div className="space-y-6">
@@ -296,7 +296,7 @@ export default function WatchDetailPage() {
                     alt={`${watch.brand?.name} ${watch.model}`}
                     className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                     onClick={() => {
-                      const primaryIndex = watch.images.findIndex(img => img.is_primary)
+                      const primaryIndex = watch.images?.findIndex(img => img.is_primary) ?? -1
                       setLightboxIndex(primaryIndex >= 0 ? primaryIndex : 0)
                     }}
                   />
@@ -438,16 +438,16 @@ export default function WatchDetailPage() {
               </Card>
             )}
 
-            {watch.complications.length > 0 && (
+            {watch.complications && watch.complications.length > 0 && (
               <Card className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Complications</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Complications</h2>
                 <div className="flex flex-wrap gap-2">
                   {watch.complications.map((comp) => (
                     <span
-                      key={comp}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                      key={comp.id}
+                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                     >
-                      {comp}
+                      {comp.name}
                     </span>
                   ))}
                 </div>
@@ -464,7 +464,7 @@ export default function WatchDetailPage() {
                       <dd className="mt-1 text-sm text-gray-900">
                         {formatCurrency(
                           watch.current_market_value,
-                          watch.current_market_currency
+                          watch.current_market_currency || watch.purchase_currency
                         )}
                       </dd>
                     </div>

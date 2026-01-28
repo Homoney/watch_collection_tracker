@@ -1,25 +1,36 @@
 import { useState, useEffect } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { FileDown } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import WatchList from '@/components/watches/WatchList'
 import WatchFilters from '@/components/watches/WatchFilters'
 import FilterChips from '@/components/watches/FilterChips'
 import WatchForm from '@/components/watches/WatchForm'
+import ComparisonBar from '@/components/watches/ComparisonBar'
 import Modal from '@/components/common/Modal'
 import Button from '@/components/common/Button'
 import { useWatches, useCreateWatch, useDeleteWatch } from '@/hooks/useWatches'
 import { useBrands, useMovementTypes } from '@/hooks/useReferenceData'
 import { useCollections } from '@/hooks/useCollections'
+import { useComparison } from '@/contexts/ComparisonContext'
 import { api } from '@/lib/api'
 import type { WatchFilters as WatchFiltersType, WatchListItem, WatchCreate } from '@/types'
 
 export default function WatchListPage() {
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [deleteWatch, setDeleteWatch] = useState<WatchListItem | null>(null)
   const [page, setPage] = useState(0)
   const limit = 20
+
+  const {
+    selectedWatchIds,
+    isCompareMode,
+    setCompareMode,
+    toggleWatch,
+    clearSelection,
+  } = useComparison()
 
   const [filters, setFilters] = useState<WatchFiltersType>({
     collection_id: searchParams.get('collection_id') || undefined,
@@ -150,6 +161,12 @@ export default function WatchListPage() {
               <FileDown className="h-4 w-4 mr-2" />
               Export All PDF
             </Button>
+            <Button
+              onClick={() => setCompareMode(!isCompareMode)}
+              variant={isCompareMode ? 'primary' : 'secondary'}
+            >
+              {isCompareMode ? 'Exit Compare Mode' : 'Compare Mode'}
+            </Button>
             <Button onClick={() => setIsAddModalOpen(true)}>Add Watch</Button>
           </div>
         </div>
@@ -173,6 +190,9 @@ export default function WatchListPage() {
             <WatchList
               watches={data?.items || []}
               isLoading={isLoading}
+              isCompareMode={isCompareMode}
+              selectedWatchIds={selectedWatchIds}
+              onSelectionToggle={toggleWatch}
               onDelete={setDeleteWatch}
             />
 
@@ -202,6 +222,14 @@ export default function WatchListPage() {
           </div>
         </div>
       </div>
+
+      {selectedWatchIds.length > 0 && (
+        <ComparisonBar
+          selectedCount={selectedWatchIds.length}
+          onClear={clearSelection}
+          onCompare={() => navigate(`/compare?ids=${selectedWatchIds.join(',')}`)}
+        />
+      )}
 
       <Modal
         isOpen={isAddModalOpen}

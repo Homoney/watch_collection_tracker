@@ -6,11 +6,21 @@ import type { WatchListItem } from '@/types'
 
 interface WatchCardProps {
   watch: WatchListItem
+  isCompareMode?: boolean
+  isSelected?: boolean
+  onSelectionToggle?: (id: string) => void
   onEdit?: (watch: WatchListItem) => void
   onDelete?: (watch: WatchListItem) => void
 }
 
-export default function WatchCard({ watch, onEdit, onDelete }: WatchCardProps) {
+export default function WatchCard({
+  watch,
+  isCompareMode = false,
+  isSelected = false,
+  onSelectionToggle,
+  onEdit,
+  onDelete
+}: WatchCardProps) {
   const navigate = useNavigate()
 
   const formatCurrency = (amount: number | null, currency: string) => {
@@ -31,7 +41,9 @@ export default function WatchCard({ watch, onEdit, onDelete }: WatchCardProps) {
   }
 
   const handleCardClick = () => {
-    navigate(`/watches/${watch.id}`)
+    if (!isCompareMode) {
+      navigate(`/watches/${watch.id}`)
+    }
   }
 
   const handleEdit = (e: React.MouseEvent) => {
@@ -44,8 +56,31 @@ export default function WatchCard({ watch, onEdit, onDelete }: WatchCardProps) {
     onDelete?.(watch)
   }
 
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.stopPropagation()
+    onSelectionToggle?.(watch.id)
+  }
+
   return (
-    <Card onClick={handleCardClick} className="p-4 hover:shadow-lg transition-shadow">
+    <Card
+      onClick={handleCardClick}
+      className={`p-4 hover:shadow-lg transition-shadow relative ${
+        isSelected ? 'ring-2 ring-blue-500' : ''
+      }`}
+    >
+      {isCompareMode && (
+        <div className="absolute top-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={handleCheckboxChange}
+            className="h-5 w-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+          />
+        </div>
+      )}
+      {isSelected && (
+        <div className="absolute inset-0 bg-blue-500 bg-opacity-10 rounded-md pointer-events-none" />
+      )}
       <div className="flex flex-col h-full">
         <div className="flex-1">
           <div className="aspect-w-16 aspect-h-9 bg-gray-100 rounded-md mb-3 flex items-center justify-center overflow-hidden">

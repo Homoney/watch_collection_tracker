@@ -5,11 +5,22 @@ import type { WatchListItem } from '@/types'
 interface WatchListProps {
   watches: WatchListItem[]
   isLoading?: boolean
+  isCompareMode?: boolean
+  selectedWatchIds?: string[]
+  onSelectionToggle?: (id: string) => void
   onEdit?: (watch: WatchListItem) => void
   onDelete?: (watch: WatchListItem) => void
 }
 
-export default function WatchList({ watches, isLoading, onEdit, onDelete }: WatchListProps) {
+export default function WatchList({
+  watches,
+  isLoading,
+  isCompareMode = false,
+  selectedWatchIds = [],
+  onSelectionToggle,
+  onEdit,
+  onDelete
+}: WatchListProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -43,7 +54,15 @@ export default function WatchList({ watches, isLoading, onEdit, onDelete }: Watc
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
       {watches.map((watch) => (
-        <WatchCard key={watch.id} watch={watch} onEdit={onEdit} onDelete={onDelete} />
+        <WatchCard
+          key={watch.id}
+          watch={watch}
+          isCompareMode={isCompareMode}
+          isSelected={selectedWatchIds.includes(watch.id)}
+          onSelectionToggle={onSelectionToggle}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ))}
     </div>
   )
