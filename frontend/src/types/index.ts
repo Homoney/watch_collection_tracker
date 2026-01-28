@@ -201,10 +201,10 @@ export interface WatchPerformance {
 
 export interface CollectionAnalytics {
   total_watches: number
-  total_current_value: number
-  total_purchase_price: number
+  total_current_value: string  // Decimal as string
+  total_purchase_price: string  // Decimal as string
   currency: string
-  total_return: number
+  total_return: string  // Decimal as string
   average_roi: number
   top_performers: WatchPerformance[]
   worst_performers: WatchPerformance[]

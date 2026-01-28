@@ -34,6 +34,9 @@ export default function Navbar() {
               <Link to="/collections" className={navLinkClass('/collections')}>
                 Collections
               </Link>
+              <Link to="/analytics" className={navLinkClass('/analytics')}>
+                Analytics
+              </Link>
             </div>
           </div>
 

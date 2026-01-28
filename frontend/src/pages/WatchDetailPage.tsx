@@ -10,6 +10,7 @@ import ServiceHistoryForm from '@/components/watches/ServiceHistoryForm'
 import MarketValueHistory from '@/components/watches/MarketValueHistory'
 import MarketValueForm from '@/components/watches/MarketValueForm'
 import WatchAnalytics from '@/components/watches/WatchAnalytics'
+import ValueChart from '@/components/watches/ValueChart'
 import Modal from '@/components/common/Modal'
 import Button from '@/components/common/Button'
 import Badge from '@/components/common/Badge'
@@ -209,6 +210,8 @@ export default function WatchDetailPage() {
             onEditValue={handleEditMarketValue}
           />
         </Card>
+
+        <ValueChart watchId={watch.id} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
