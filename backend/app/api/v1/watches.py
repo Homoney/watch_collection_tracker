@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, func, desc, asc
 from typing import Optional
@@ -16,6 +17,7 @@ from app.schemas.watch import (
     WatchListResponse,
     PaginatedWatchResponse
 )
+from app.utils.qr_code import generate_watch_qr_code
 
 router = APIRouter()
 
@@ -290,3 +292,39 @@ def delete_watch(
     db.commit()
 
     return None
+
+
+@router.get("/{watch_id}/qr-code")
+def get_watch_qr_code(
+    watch_id: UUID,
+    base_url: str = Query(default="http://localhost:8080", description="Base URL for the watch detail page"),
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate a QR code for a watch that links to its detail page.
+    Returns a PNG image that can be downloaded, printed, or displayed.
+    """
+    # Verify watch exists and belongs to current user
+    watch = db.query(Watch).filter(
+        Watch.id == watch_id,
+        Watch.user_id == current_user.id
+    ).first()
+
+    if not watch:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Watch not found"
+        )
+
+    # Generate QR code
+    qr_buffer = generate_watch_qr_code(str(watch_id), base_url)
+
+    # Return as streaming response
+    return StreamingResponse(
+        qr_buffer,
+        media_type="image/png",
+        headers={
+            "Content-Disposition": f'inline; filename="watch-{watch_id}-qr.png"'
+        }
+    )
