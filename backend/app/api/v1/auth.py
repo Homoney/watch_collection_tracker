@@ -11,6 +11,7 @@ from app.core.security import (
     create_access_token, create_refresh_token, decode_token
 )
 from app.core.deps import get_current_user
+from app.utils.logging import log_security_event
 
 router = APIRouter()
 
@@ -38,6 +39,13 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
+    # Log successful registration
+    log_security_event(
+        "user_registered",
+        user_id=str(new_user.id),
+        email=new_user.email
+    )
+
     # Generate tokens
     access_token = create_access_token(data={"sub": str(new_user.id)})
     refresh_token = create_refresh_token(data={"sub": str(new_user.id)})
@@ -54,6 +62,11 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
     # Find user by email
     user = db.query(User).filter(User.email == user_data.email).first()
     if not user:
+        log_security_event(
+            "login_failed",
+            email=user_data.email,
+            details={"reason": "user_not_found"}
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
@@ -61,10 +74,23 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
 
     # Verify password
     if not verify_password(user_data.password, user.hashed_password):
+        log_security_event(
+            "login_failed",
+            user_id=str(user.id),
+            email=user.email,
+            details={"reason": "invalid_password"}
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password"
         )
+
+    # Log successful login
+    log_security_event(
+        "login_success",
+        user_id=str(user.id),
+        email=user.email
+    )
 
     # Generate tokens
     access_token = create_access_token(data={"sub": str(user.id)})

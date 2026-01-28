@@ -87,16 +87,21 @@ def list_watches(
     if purchase_date_to:
         query = query.filter(Watch.purchase_date <= purchase_date_to)
 
-    # Enhanced search across multiple fields including brand name
+    # Enhanced search with PostgreSQL full-text search for better performance
     if search:
-        search_term = f"%{search}%"
+        # Use full-text search for model field (indexed)
+        # Fall back to ILIKE for other fields (less common searches)
         query = query.join(Brand).filter(
             or_(
-                Watch.model.ilike(search_term),
-                Watch.reference_number.ilike(search_term),
-                Watch.serial_number.ilike(search_term),
-                Watch.notes.ilike(search_term),
-                Brand.name.ilike(search_term)
+                func.to_tsvector('english', Watch.model).op('@@')(
+                    func.plainto_tsquery('english', search)
+                ),
+                func.to_tsvector('english', Brand.name).op('@@')(
+                    func.plainto_tsquery('english', search)
+                ),
+                Watch.reference_number.ilike(f"%{search}%"),
+                Watch.serial_number.ilike(f"%{search}%"),
+                Watch.notes.ilike(f"%{search}%")
             )
         )
 

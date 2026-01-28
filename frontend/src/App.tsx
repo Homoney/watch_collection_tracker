@@ -1,14 +1,25 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
 import { ComparisonProvider } from '@/contexts/ComparisonContext'
-import LoginPage from '@/pages/LoginPage'
-import RegisterPage from '@/pages/RegisterPage'
-import DashboardPage from '@/pages/DashboardPage'
-import WatchListPage from '@/pages/WatchListPage'
-import WatchDetailPage from '@/pages/WatchDetailPage'
-import CollectionsPage from '@/pages/CollectionsPage'
-import AnalyticsPage from '@/pages/AnalyticsPage'
-import ComparePage from '@/pages/ComparePage'
+
+// Lazy load pages for code splitting
+const LoginPage = lazy(() => import('@/pages/LoginPage'))
+const RegisterPage = lazy(() => import('@/pages/RegisterPage'))
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'))
+const WatchListPage = lazy(() => import('@/pages/WatchListPage'))
+const WatchDetailPage = lazy(() => import('@/pages/WatchDetailPage'))
+const CollectionsPage = lazy(() => import('@/pages/CollectionsPage'))
+const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'))
+const ComparePage = lazy(() => import('@/pages/ComparePage'))
+const WatchSettingPage = lazy(() => import('@/pages/WatchSettingPage'))
+
+// Loading component for Suspense fallback
+const LoadingSpinner = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="text-xl">Loading...</div>
+  </div>
+)
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated, isLoading } = useAuth()
@@ -48,7 +59,8 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
 
 function AppRoutes() {
   return (
-    <Routes>
+    <Suspense fallback={<LoadingSpinner />}>
+      <Routes>
       <Route
         path="/login"
         element={
@@ -113,6 +125,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <WatchSettingPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -124,6 +144,7 @@ function AppRoutes() {
         </div>
       } />
     </Routes>
+    </Suspense>
   )
 }
 

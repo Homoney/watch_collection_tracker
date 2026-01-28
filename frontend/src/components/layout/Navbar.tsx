@@ -37,6 +37,9 @@ export default function Navbar() {
               <Link to="/analytics" className={navLinkClass('/analytics')}>
                 Analytics
               </Link>
+              <Link to="/settings" className={navLinkClass('/settings')}>
+                Settings
+              </Link>
             </div>
           </div>
 

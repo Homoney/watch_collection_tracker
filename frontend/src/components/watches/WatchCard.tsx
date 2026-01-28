@@ -1,3 +1,4 @@
+import { memo, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Card from '@/components/common/Card'
 import Badge from '@/components/common/Badge'
@@ -13,7 +14,7 @@ interface WatchCardProps {
   onDelete?: (watch: WatchListItem) => void
 }
 
-export default function WatchCard({
+const WatchCard = memo(function WatchCard({
   watch,
   isCompareMode = false,
   isSelected = false,
@@ -40,26 +41,26 @@ export default function WatchCard({
     })
   }
 
-  const handleCardClick = () => {
+  const handleCardClick = useCallback(() => {
     if (!isCompareMode) {
       navigate(`/watches/${watch.id}`)
     }
-  }
+  }, [isCompareMode, navigate, watch.id])
 
-  const handleEdit = (e: React.MouseEvent) => {
+  const handleEdit = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     onEdit?.(watch)
-  }
+  }, [onEdit, watch])
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation()
     onDelete?.(watch)
-  }
+  }, [onDelete, watch])
 
-  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCheckboxChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     e.stopPropagation()
     onSelectionToggle?.(watch.id)
-  }
+  }, [onSelectionToggle, watch.id])
 
   return (
     <Card
@@ -89,6 +90,8 @@ export default function WatchCard({
                 src={watch.primary_image.url}
                 alt={`${watch.brand?.name} ${watch.model}`}
                 className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
               />
             ) : (
               <svg
@@ -170,4 +173,6 @@ export default function WatchCard({
       </div>
     </Card>
   )
-}
+})
+
+export default WatchCard

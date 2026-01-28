@@ -10,8 +10,7 @@ psycopg2-binary==2.9.9
 
 # Authentication and security
 python-jose[cryptography]==3.3.0
-passlib==1.7.4
-bcrypt==3.2.2
+bcrypt==4.1.2
 python-dotenv==1.0.0
 
 # Image processing
@@ -35,3 +34,15 @@ httpx==0.26.0
 
 # CORS
 python-multipart==0.0.6
+
+# Testing
+pytest==8.0.0
+pytest-asyncio==0.23.5
+pytest-cov==4.1.0
+faker==22.6.0
+
+# Production server
+gunicorn==21.2.0
+
+# Caching
+redis==5.0.1
