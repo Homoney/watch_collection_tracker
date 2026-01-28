@@ -320,6 +320,12 @@ export interface WatchFilters {
   movement_type_id?: string
   condition?: ConditionEnum
   search?: string
+  min_price?: number
+  max_price?: number
+  min_value?: number
+  max_value?: number
+  purchase_date_from?: string
+  purchase_date_to?: string
   sort_by?: string
   sort_order?: 'asc' | 'desc'
 }

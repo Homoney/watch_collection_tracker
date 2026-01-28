@@ -27,6 +27,12 @@ def list_watches(
     movement_type_id: Optional[UUID] = None,
     condition: Optional[ConditionEnum] = None,
     search: Optional[str] = None,
+    min_price: Optional[float] = None,
+    max_price: Optional[float] = None,
+    min_value: Optional[float] = None,
+    max_value: Optional[float] = None,
+    purchase_date_from: Optional[str] = None,
+    purchase_date_to: Optional[str] = None,
     sort_by: str = Query(default="created_at", regex="^(created_at|purchase_date|purchase_price|model)$"),
     sort_order: str = Query(default="desc", regex="^(asc|desc)$"),
     limit: int = Query(default=20, ge=1, le=100),
@@ -34,7 +40,7 @@ def list_watches(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """List watches with filtering, search, sorting, and pagination"""
+    """List watches with advanced filtering, search, sorting, and pagination"""
     # Base query with relationships loaded
     query = db.query(Watch).options(
         joinedload(Watch.brand),
@@ -55,13 +61,37 @@ def list_watches(
     if condition:
         query = query.filter(Watch.condition == condition)
 
+    # Price range filters
+    if min_price is not None:
+        query = query.filter(Watch.purchase_price >= min_price)
+
+    if max_price is not None:
+        query = query.filter(Watch.purchase_price <= max_price)
+
+    # Market value range filters
+    if min_value is not None:
+        query = query.filter(Watch.current_market_value >= min_value)
+
+    if max_value is not None:
+        query = query.filter(Watch.current_market_value <= max_value)
+
+    # Date range filters
+    if purchase_date_from:
+        query = query.filter(Watch.purchase_date >= purchase_date_from)
+
+    if purchase_date_to:
+        query = query.filter(Watch.purchase_date <= purchase_date_to)
+
+    # Enhanced search across multiple fields including brand name
     if search:
         search_term = f"%{search}%"
-        query = query.filter(
+        query = query.join(Brand).filter(
             or_(
                 Watch.model.ilike(search_term),
                 Watch.reference_number.ilike(search_term),
-                Watch.serial_number.ilike(search_term)
+                Watch.serial_number.ilike(search_term),
+                Watch.notes.ilike(search_term),
+                Brand.name.ilike(search_term)
             )
         )
 
