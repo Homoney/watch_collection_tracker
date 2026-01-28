@@ -5,13 +5,18 @@ import WatchForm from '@/components/watches/WatchForm'
 import ImageUpload from '@/components/watches/ImageUpload'
 import ImageGallery from '@/components/watches/ImageGallery'
 import ImageLightbox from '@/components/common/ImageLightbox'
+import ServiceHistoryList from '@/components/watches/ServiceHistoryList'
+import ServiceHistoryForm from '@/components/watches/ServiceHistoryForm'
+import MarketValueHistory from '@/components/watches/MarketValueHistory'
+import MarketValueForm from '@/components/watches/MarketValueForm'
+import WatchAnalytics from '@/components/watches/WatchAnalytics'
 import Modal from '@/components/common/Modal'
 import Button from '@/components/common/Button'
 import Badge from '@/components/common/Badge'
 import Spinner from '@/components/common/Spinner'
 import Card from '@/components/common/Card'
 import { useWatch, useUpdateWatch, useDeleteWatch } from '@/hooks/useWatches'
-import type { WatchUpdate } from '@/types'
+import type { WatchUpdate, ServiceHistory, MarketValue } from '@/types'
 
 export default function WatchDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -19,6 +24,10 @@ export default function WatchDetailPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [isServiceFormOpen, setIsServiceFormOpen] = useState(false)
+  const [editingService, setEditingService] = useState<ServiceHistory | undefined>(undefined)
+  const [isMarketValueFormOpen, setIsMarketValueFormOpen] = useState(false)
+  const [editingMarketValue, setEditingMarketValue] = useState<MarketValue | undefined>(undefined)
 
   const { data: watch, isLoading, error } = useWatch(id)
   const updateMutation = useUpdateWatch()
@@ -59,6 +68,46 @@ export default function WatchDetailPage() {
       month: 'long',
       day: 'numeric',
     })
+  }
+
+  const handleAddService = () => {
+    setEditingService(undefined)
+    setIsServiceFormOpen(true)
+  }
+
+  const handleEditService = (service: ServiceHistory) => {
+    setEditingService(service)
+    setIsServiceFormOpen(true)
+  }
+
+  const handleServiceFormSuccess = () => {
+    setIsServiceFormOpen(false)
+    setEditingService(undefined)
+  }
+
+  const handleServiceFormCancel = () => {
+    setIsServiceFormOpen(false)
+    setEditingService(undefined)
+  }
+
+  const handleAddMarketValue = () => {
+    setEditingMarketValue(undefined)
+    setIsMarketValueFormOpen(true)
+  }
+
+  const handleEditMarketValue = (value: MarketValue) => {
+    setEditingMarketValue(value)
+    setIsMarketValueFormOpen(true)
+  }
+
+  const handleMarketValueFormSuccess = () => {
+    setIsMarketValueFormOpen(false)
+    setEditingMarketValue(undefined)
+  }
+
+  const handleMarketValueFormCancel = () => {
+    setIsMarketValueFormOpen(false)
+    setEditingMarketValue(undefined)
   }
 
   if (isLoading) {
@@ -139,6 +188,26 @@ export default function WatchDetailPage() {
               <ImageUpload watchId={watch.id} />
             </div>
           </div>
+        </Card>
+
+        <Card className="p-6">
+          <ServiceHistoryList
+            watchId={watch.id}
+            onAddService={handleAddService}
+            onEditService={handleEditService}
+          />
+        </Card>
+
+        <Card className="p-6">
+          <WatchAnalytics watchId={watch.id} />
+        </Card>
+
+        <Card className="p-6">
+          <MarketValueHistory
+            watchId={watch.id}
+            onAddValue={handleAddMarketValue}
+            onEditValue={handleEditMarketValue}
+          />
         </Card>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -400,6 +469,24 @@ export default function WatchDetailPage() {
           currentIndex={lightboxIndex}
           onClose={() => setLightboxIndex(null)}
           onNavigate={setLightboxIndex}
+        />
+      )}
+
+      {isServiceFormOpen && (
+        <ServiceHistoryForm
+          watchId={watch.id}
+          service={editingService}
+          onSuccess={handleServiceFormSuccess}
+          onCancel={handleServiceFormCancel}
+        />
+      )}
+
+      {isMarketValueFormOpen && (
+        <MarketValueForm
+          watchId={watch.id}
+          marketValue={editingMarketValue}
+          onSuccess={handleMarketValueFormSuccess}
+          onCancel={handleMarketValueFormCancel}
         />
       )}
     </AppLayout>

@@ -1,8 +1,9 @@
 # Claude Context - Watch Collection Tracker
 
-**Last Updated**: 2026-01-27
-**Current Phase**: Phase 3 Complete ✓
-**Commit**: `e0942bf` - Implement Phase 3 image upload and management system
+**Last Updated**: 2026-01-28
+**Current Phase**: Phase 5 Complete ✓
+**Previous Commit**: `e0942bf` - Implement Phase 3 image upload and management system
+**Latest Changes**: Phase 5 - Market value tracking and analytics implementation
 
 ---
 
@@ -40,7 +41,7 @@ A full-stack watch collection management application with multi-user support, bu
 - Filtering, sorting, and pagination
 - Watch cards UI with collections integration
 
-### ✅ Phase 3: Image Upload and Management (Complete - Just Finished!)
+### ✅ Phase 3: Image Upload and Management (Complete)
 **Backend**:
 - File upload utilities with validation (`backend/app/utils/file_upload.py`)
 - Image CRUD API endpoints (`backend/app/api/v1/images.py`)
@@ -65,6 +66,67 @@ A full-stack watch collection management application with multi-user support, bu
 - ✓ Full-screen lightbox with keyboard navigation
 - ✓ Nginx serves images from `/uploads/` with caching
 
+### ✅ Phase 4: Service History & Maintenance Tracking (Complete - Just Finished!)
+**Backend**:
+- Service history schemas (`backend/app/schemas/service_history.py`)
+- Service history CRUD API endpoints (`backend/app/api/v1/service_history.py`)
+- Service document upload/management endpoints
+- Extended file upload utilities for documents (PDF, JPG, PNG)
+- Secure file storage in `/app/storage/uploads/service-docs/{watch_id}/{service_id}/`
+- Cascade delete: service → documents
+- Watch ownership verification on all operations
+
+**Frontend**:
+- ServiceHistoryList component with timeline view (`frontend/src/components/watches/ServiceHistoryList.tsx`)
+- ServiceHistoryForm component with date pickers (`frontend/src/components/watches/ServiceHistoryForm.tsx`)
+- ServiceDocuments component for document management (`frontend/src/components/watches/ServiceDocuments.tsx`)
+- React Query hooks for service history operations (`frontend/src/hooks/useServiceHistory.ts`)
+- Integrated service history into WatchDetailPage
+- Added date-fns for date formatting
+
+**Features**:
+- ✓ Create, edit, delete service records with full details
+- ✓ Service date, provider, type, description, cost with currency
+- ✓ Optional next service due date with overdue alerts
+- ✓ Upload documents (PDF, JPG, PNG, max 10MB)
+- ✓ Download and delete documents
+- ✓ Timeline view sorted by date (most recent first)
+- ✓ Expandable document sections
+- ✓ File type validation and size limits
+- ✓ Nginx serves documents from `/uploads/service-docs/` with caching
+
+### ✅ Phase 5: Market Value Tracking & Analytics (Complete - Just Finished!)
+**Backend**:
+- Market value schemas (`backend/app/schemas/market_value.py`)
+- Market value CRUD API endpoints (`backend/app/api/v1/market_values.py`)
+- Watch-level analytics endpoint with ROI calculations
+- Collection-level analytics endpoint (prepared for future dashboard)
+- Fixed enum serialization for ValueSourceEnum
+- Smart current value tracking (only updates when value is more recent)
+- Recalculation logic on update/delete operations
+
+**Frontend**:
+- MarketValueHistory component with timeline view (`frontend/src/components/watches/MarketValueHistory.tsx`)
+- MarketValueForm component with date pickers (`frontend/src/components/watches/MarketValueForm.tsx`)
+- WatchAnalytics component showing performance metrics (`frontend/src/components/watches/WatchAnalytics.tsx`)
+- React Query hooks for market value operations (`frontend/src/hooks/useMarketValues.ts`)
+- Integrated market values and analytics into WatchDetailPage
+- Added recharts library for future charting components
+
+**Features**:
+- ✓ Create, edit, delete market value records with dates
+- ✓ Track historical values over time
+- ✓ Multiple value sources (manual, chrono24, api)
+- ✓ Currency support (USD, EUR, GBP, CHF, JPY, AUD, CAD)
+- ✓ ROI calculation (percentage return on investment)
+- ✓ Total return calculation (absolute profit/loss)
+- ✓ Annualized return calculation (time-adjusted performance)
+- ✓ Value change tracking (30 days, 90 days, 1 year)
+- ✓ Timeline view with percentage change indicators
+- ✓ Current value automatically tracks most recent valuation
+- ✓ Performance analytics cards with color-coded metrics
+- ✓ Watch ownership verification on all operations
+
 ---
 
 ## Current Architecture
@@ -76,8 +138,11 @@ A full-stack watch collection management application with multi-user support, bu
 **MovementTypes**: Reference data for watch movements
 **Complications**: Reference data for watch features
 **Collections**: User-created collections with color coding
-**Watches**: Main entity with specifications, purchase info, market value
+**Watches**: Main entity with specifications, purchase info, current market value
 **WatchImages**: Images linked to watches with primary designation
+**ServiceHistory**: Service records linked to watches with dates, costs, and maintenance info
+**ServiceDocument**: Documents (receipts, certificates) linked to service records
+**MarketValue**: Historical market values linked to watches for tracking appreciation/depreciation
 
 ### File Structure
 
@@ -86,19 +151,23 @@ watch-collection-tracker/
 ├── backend/
 │   ├── app/
 │   │   ├── api/v1/
-│   │   │   ├── auth.py           # User authentication
-│   │   │   ├── reference.py      # Reference data (brands, etc.)
-│   │   │   ├── collections.py    # Collections CRUD
-│   │   │   ├── watches.py        # Watches CRUD
-│   │   │   └── images.py         # Image upload/management (NEW)
+│   │   │   ├── auth.py              # User authentication
+│   │   │   ├── reference.py         # Reference data (brands, etc.)
+│   │   │   ├── collections.py       # Collections CRUD
+│   │   │   ├── watches.py           # Watches CRUD
+│   │   │   ├── images.py            # Image upload/management
+│   │   │   ├── service_history.py   # Service history CRUD
+│   │   │   └── market_values.py     # Market value tracking & analytics (NEW - Phase 5)
 │   │   ├── core/
-│   │   │   ├── security.py       # JWT & password hashing
-│   │   │   └── deps.py           # Dependencies (auth)
-│   │   ├── models/               # SQLAlchemy models
-│   │   ├── schemas/              # Pydantic schemas
-│   │   │   └── watch_image.py    # Image schemas (NEW)
+│   │   │   ├── security.py          # JWT & password hashing
+│   │   │   └── deps.py              # Dependencies (auth)
+│   │   ├── models/                  # SQLAlchemy models
+│   │   ├── schemas/                 # Pydantic schemas
+│   │   │   ├── watch_image.py       # Image schemas
+│   │   │   ├── service_history.py   # Service history schemas
+│   │   │   └── market_value.py      # Market value schemas (NEW - Phase 5)
 │   │   ├── utils/
-│   │   │   └── file_upload.py    # File handling utilities (NEW)
+│   │   │   └── file_upload.py       # File handling utilities (updated)
 │   │   ├── config.py             # Settings
 │   │   ├── database.py           # DB connection
 │   │   └── main.py               # FastAPI app
@@ -108,27 +177,38 @@ watch-collection-tracker/
 │   ├── src/
 │   │   ├── components/
 │   │   │   ├── common/
-│   │   │   │   └── ImageLightbox.tsx  # Full-screen viewer (NEW)
+│   │   │   │   └── ImageLightbox.tsx          # Full-screen viewer
 │   │   │   ├── watches/
-│   │   │   │   ├── ImageUpload.tsx    # Upload component (NEW)
-│   │   │   │   ├── ImageGallery.tsx   # Gallery component (NEW)
-│   │   │   │   ├── WatchCard.tsx      # Updated with images
+│   │   │   │   ├── ImageUpload.tsx            # Upload component
+│   │   │   │   ├── ImageGallery.tsx           # Gallery component
+│   │   │   │   ├── ServiceHistoryList.tsx     # Service timeline
+│   │   │   │   ├── ServiceHistoryForm.tsx     # Service form
+│   │   │   │   ├── ServiceDocuments.tsx       # Document manager
+│   │   │   │   ├── MarketValueHistory.tsx     # Market value timeline (NEW - Phase 5)
+│   │   │   │   ├── MarketValueForm.tsx        # Market value form (NEW - Phase 5)
+│   │   │   │   ├── WatchAnalytics.tsx         # Performance analytics (NEW - Phase 5)
+│   │   │   │   ├── WatchCard.tsx              # Updated with images
 │   │   │   │   └── WatchForm.tsx
 │   │   │   └── layout/
 │   │   ├── hooks/
 │   │   │   ├── useWatches.ts
-│   │   │   └── useWatchImages.ts      # Image hooks (NEW)
+│   │   │   ├── useWatchImages.ts              # Image hooks
+│   │   │   ├── useServiceHistory.ts           # Service history hooks
+│   │   │   └── useMarketValues.ts             # Market value hooks (NEW - Phase 5)
 │   │   ├── lib/
-│   │   │   └── api.ts                 # API client (updated)
+│   │   │   └── api.ts                         # API client (updated)
 │   │   ├── pages/
-│   │   │   └── WatchDetailPage.tsx    # Updated with image section
-│   │   ├── types/index.ts             # TypeScript types (updated)
+│   │   │   └── WatchDetailPage.tsx            # Updated with service history section
+│   │   ├── types/index.ts                     # TypeScript types (updated)
 │   │   └── App.tsx
-│   └── package.json                   # Added lucide-react
+│   └── package.json                           # Added lucide-react, date-fns, recharts
 ├── nginx/
 │   └── nginx.conf                # Reverse proxy + static files
 ├── storage/
-│   ├── uploads/                  # User-uploaded images (watch_id subdirs)
+│   ├── uploads/                  # User-uploaded files
+│   │   ├── {watch_id}/           # Watch images
+│   │   └── service-docs/         # Service documents (NEW - Phase 4)
+│   │       └── {watch_id}/{service_id}/
 │   └── backups/                  # Database backups
 └── docker-compose.yml
 ```
@@ -162,7 +242,7 @@ watch-collection-tracker/
 - `PUT /api/v1/watches/{id}` - Update watch
 - `DELETE /api/v1/watches/{id}` - Delete watch (cascades to images)
 
-### Images (NEW - Phase 3)
+### Images (Phase 3)
 - `POST /api/v1/watches/{watch_id}/images` - Upload image
 - `GET /api/v1/watches/{watch_id}/images` - List watch images
 - `PATCH /api/v1/watches/{watch_id}/images/{image_id}` - Update metadata
@@ -170,19 +250,44 @@ watch-collection-tracker/
 
 **Image URLs**: `/uploads/{watch_id}/{filename}` (served by Nginx)
 
+### Service History (NEW - Phase 4)
+- `POST /api/v1/watches/{watch_id}/service-history` - Create service record
+- `GET /api/v1/watches/{watch_id}/service-history` - List service records (sorted by date)
+- `GET /api/v1/watches/{watch_id}/service-history/{service_id}` - Get single service record
+- `PUT /api/v1/watches/{watch_id}/service-history/{service_id}` - Update service record
+- `DELETE /api/v1/watches/{watch_id}/service-history/{service_id}` - Delete service record (cascades to documents)
+- `POST /api/v1/watches/{watch_id}/service-history/{service_id}/documents` - Upload document
+- `GET /api/v1/watches/{watch_id}/service-history/{service_id}/documents` - List documents
+- `DELETE /api/v1/watches/{watch_id}/service-history/{service_id}/documents/{doc_id}` - Delete document
+
+**Document URLs**: `/uploads/service-docs/{watch_id}/{service_id}/{filename}` (served by Nginx)
+
+### Market Values (NEW - Phase 5)
+- `POST /api/v1/watches/{watch_id}/market-values` - Create market value record
+- `GET /api/v1/watches/{watch_id}/market-values` - List market values (sorted by date, most recent first)
+- `GET /api/v1/watches/{watch_id}/market-values/{value_id}` - Get single market value
+- `PUT /api/v1/watches/{watch_id}/market-values/{value_id}` - Update market value
+- `DELETE /api/v1/watches/{watch_id}/market-values/{value_id}` - Delete market value
+- `GET /api/v1/watches/{watch_id}/analytics` - Get watch-level performance analytics (ROI, returns, value changes)
+- `GET /api/v1/collection-analytics` - Get collection-wide analytics (total value, ROI breakdown, top performers)
+
 ---
 
 ## Testing Credentials
 
-**Test User** (created during Phase 3 testing):
+**Test User**:
 - Email: `imagetest@example.com`
 - Password: `testpass123`
 
-**Test Watch** (has 2 uploaded images):
+**Test Watch** (has images, service history, and market values):
 - Watch ID: `f98edb57-b35c-4b7e-846f-b04bd95ceb75`
 - Model: "Test Model"
 - Brand: Rolex
+- Purchase Price: $5,000
+- Current Market Value: $15,000 (200% ROI)
 - Images: test_img1.jpg, test_img2.jpg (600x400px)
+- Service Records: 2 service records (Full Service 2025, Regulation 2023)
+- Market Values: 4 historical values spanning 1 year
 
 ---
 
@@ -227,6 +332,105 @@ watch-collection-tracker/
 - Watch ownership verified on all operations
 - Files stored in isolated watch-specific directories
 - Delete operations verify paths are within upload directory
+
+### Service History System
+
+**File Validation**:
+- Allowed types: PDF, JPG, PNG
+- Max size: 10MB (configurable)
+- Client-side validation in ServiceDocuments component
+- Server-side validation in file_upload.py
+
+**Storage Structure**:
+```
+/app/storage/uploads/service-docs/
+  └── {watch_id}/
+      └── {service_id}/
+          ├── receipt.pdf
+          ├── certificate.jpg
+          └── warranty.png
+```
+
+**Service Record Fields**:
+- service_date (required) - Date of service
+- provider (required) - Service provider name (max 200 chars)
+- service_type (optional) - Type of service (max 100 chars)
+- description (optional) - Detailed description
+- cost (optional) - Service cost (Decimal, must be >= 0)
+- cost_currency (default "USD") - Three-letter currency code
+- next_service_due (optional) - Date when next service is due
+- documents (relationship) - Attached receipts, certificates, etc.
+
+**Document Metadata**:
+- File path (relative to upload dir)
+- File name (sanitized)
+- File size (bytes)
+- MIME type
+- Created timestamp
+- Computed URL field
+
+**Business Logic**:
+- Service records sorted by service_date descending (most recent first)
+- Overdue service alerts when next_service_due < today
+- Cascade delete: deleting service removes all associated documents
+- Documents eager loaded with service records
+
+**Security**:
+- Watch ownership verified on all operations
+- Service ownership verified through watch relationship
+- Filename sanitization prevents directory traversal
+- Physical file deletion on document removal
+- File type and size validation enforced
+
+### Market Value System
+
+**Market Value Fields**:
+- value (required) - Market value amount (Decimal, must be >= 0)
+- currency (default "USD") - Three-letter currency code
+- source (default "manual") - Source of valuation: manual, chrono24, api
+- notes (optional) - Additional notes about the valuation
+- recorded_at (required) - Date/time of the valuation
+
+**Current Value Logic**:
+- Watch model stores `current_market_value`, `current_market_currency`, and `last_value_update`
+- Creating a market value only updates watch's current value if recorded_at >= last_value_update
+- Updating a market value recalculates current value (always finds the latest)
+- Deleting a market value recalculates current value (falls back to second-most-recent)
+- Ensures historical values can be added without overwriting current value
+
+**Analytics Calculations**:
+- **ROI Percentage**: `(current_value - purchase_price) / purchase_price * 100`
+- **Total Return**: `current_value - purchase_price` (absolute profit/loss)
+- **Annualized Return**: `((current_value / purchase_price) ^ (1 / years_held) - 1) * 100`
+- **Value Changes**: Compares current value to value at time period ago (30d, 90d, 1y)
+- All calculations require same-currency comparison (no automatic conversion)
+
+**Watch Analytics Response**:
+- Current value and currency
+- Purchase price and currency (from watch record)
+- Total return and ROI percentage
+- Annualized return (if purchase date available)
+- Value changes over time periods (30d, 90d, 1y)
+- Total valuation count
+- First and latest valuation dates
+
+**Collection Analytics** (Prepared for future dashboard):
+- Total collection value (sum of current values, per currency)
+- Average ROI across all watches
+- Brand-level breakdown (value, count, average ROI per brand)
+- Top performers (highest ROI watches)
+- Worst performers (lowest ROI watches)
+
+**Business Logic**:
+- Market values sorted by recorded_at descending (most recent first)
+- Only same-currency comparisons supported (simplified, no exchange rates)
+- Null handling for watches without purchase price or current value
+- Time-based queries filter by recorded_at date
+
+**Security**:
+- Watch ownership verified on all operations
+- Market value ownership verified through watch relationship
+- Input validation for positive values and valid currencies
 
 ### Database Enum Issue (Fixed)
 
@@ -323,6 +527,11 @@ docker-compose build --no-cache frontend
 ls -lh storage/uploads/{watch_id}/
 ```
 
+### View Service Documents
+```bash
+ls -lh storage/uploads/service-docs/{watch_id}/{service_id}/
+```
+
 ### Test Image Upload (curl)
 ```bash
 TOKEN="your_jwt_token"
@@ -331,6 +540,33 @@ WATCH_ID="watch_uuid"
 curl -X POST "http://localhost:8080/api/v1/watches/$WATCH_ID/images" \
   -H "Authorization: Bearer $TOKEN" \
   -F "file=@/path/to/image.jpg"
+```
+
+### Test Service History Creation (curl)
+```bash
+TOKEN="your_jwt_token"
+WATCH_ID="watch_uuid"
+
+curl -X POST "http://localhost:8080/api/v1/watches/$WATCH_ID/service-history" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"service_date":"2025-01-15T00:00:00","provider":"Rolex Service Center","service_type":"Full Service","cost":850.00,"cost_currency":"USD"}'
+```
+
+### Test Market Value Creation (curl)
+```bash
+TOKEN="your_jwt_token"
+WATCH_ID="watch_uuid"
+
+# Create current market value
+curl -X POST "http://localhost:8080/api/v1/watches/$WATCH_ID/market-values" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"value":15000.00,"currency":"USD","source":"manual","notes":"Current market estimate","recorded_at":"2026-01-28T00:00:00"}'
+
+# Get watch analytics
+curl -X GET "http://localhost:8080/api/v1/watches/$WATCH_ID/analytics" \
+  -H "Authorization: Bearer $TOKEN"
 ```
 
 ---
@@ -353,28 +589,22 @@ curl -X POST "http://localhost:8080/api/v1/watches/$WATCH_ID/images" \
 
 ---
 
-## Next Steps (Phases 4-6)
+## Next Steps (Phase 6+)
 
-### Phase 4: Service History & Maintenance Tracking
-- Service records linked to watches
-- Maintenance schedules and reminders
-- Service cost tracking
-- Service provider management
-
-### Phase 5: Market Value Tracking & Analytics
-- Manual market value updates
-- Historical value tracking over time
-- Price appreciation/depreciation analytics
-- Collection value summaries
-- Charts and graphs for trends
-
-### Phase 6: Advanced Features
+### Phase 6: Advanced Features (Next)
 - PDF export of collection
 - QR code generation for watches
 - Google Images auto-fetch
 - Advanced search and filtering
 - Watch comparison views
 - Public collection sharing (optional)
+
+### Optional Phase 5 Enhancements
+- ValueChart component with recharts (line/area chart showing value trends)
+- CollectionAnalytics component (dashboard with brand breakdown, top performers)
+- Analytics Dashboard page (dedicated analytics view)
+- Automatic data fetching from Chrono24 API
+- Exchange rate support for multi-currency comparisons
 
 ---
 
@@ -440,16 +670,48 @@ HTTP_PORT=8080
 
 ## Testing
 
-### Manual Testing Checklist (Phase 3)
-- [ ] Upload image via drag-and-drop
-- [ ] Upload multiple images at once
-- [ ] Set image as primary
-- [ ] Delete image
-- [ ] View image in lightbox
-- [ ] Navigate between images with arrow keys
-- [ ] Verify primary image shows on watch card
-- [ ] Test file validation (wrong type, too large)
-- [ ] Verify physical file deletion
+### Manual Testing Checklist (Phase 3 - Images)
+- [x] Upload image via drag-and-drop
+- [x] Upload multiple images at once
+- [x] Set image as primary
+- [x] Delete image
+- [x] View image in lightbox
+- [x] Navigate between images with arrow keys
+- [x] Verify primary image shows on watch card
+- [x] Test file validation (wrong type, too large)
+- [x] Verify physical file deletion
+
+### Manual Testing Checklist (Phase 4 - Service History)
+- [x] Create service record with all fields
+- [x] Create service record with only required fields
+- [x] Edit service record
+- [x] Delete service record
+- [x] Upload document (PDF, JPG, PNG)
+- [x] Download document
+- [x] Delete document
+- [x] Verify overdue service alerts
+- [x] Test document file validation (wrong type, too large)
+- [x] Verify physical document file deletion
+- [x] Verify cascade delete (service → documents)
+- [x] Test timeline view sorting
+- [x] Test expandable document sections
+
+### Manual Testing Checklist (Phase 5 - Market Values)
+- [x] Create market value record with current date
+- [x] Create market value record with historical date
+- [x] Verify older values don't override current value
+- [x] Verify newer values do update current value
+- [x] Edit market value record
+- [x] Verify edit recalculates current value
+- [x] Delete market value record
+- [x] Verify delete recalculates current value
+- [x] Test watch analytics endpoint (ROI, returns, value changes)
+- [x] Verify timeline view with percentage changes
+- [x] Test multiple currencies (same-currency comparisons)
+- [x] Verify value source tracking (manual, chrono24, api)
+- [x] Test notes field (optional)
+- [x] Test date range filtering
+- [x] Verify watch ownership on all operations
 
 ### API Testing (curl examples)
 See "Test Image Upload" section above for curl commands.
@@ -540,13 +802,26 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - **API schemas**: `backend/app/schemas/`
 - **File upload utilities**: `backend/app/utils/file_upload.py`
 - **Image endpoints**: `backend/app/api/v1/images.py`
+- **Service history endpoints**: `backend/app/api/v1/service_history.py`
+- **Service history schemas**: `backend/app/schemas/service_history.py`
+- **Market value endpoints**: `backend/app/api/v1/market_values.py` (NEW - Phase 5)
+- **Market value schemas**: `backend/app/schemas/market_value.py` (NEW - Phase 5)
 
 ### Frontend
 - **API client**: `frontend/src/lib/api.ts`
 - **Type definitions**: `frontend/src/types/index.ts`
 - **React Query hooks**: `frontend/src/hooks/`
+  - `useWatchImages.ts` - Image operations
+  - `useServiceHistory.ts` - Service history operations
+  - `useMarketValues.ts` - Market value operations (NEW - Phase 5)
 - **Reusable components**: `frontend/src/components/common/`
 - **Watch components**: `frontend/src/components/watches/`
+  - `ServiceHistoryList.tsx` - Timeline view
+  - `ServiceHistoryForm.tsx` - Service form
+  - `ServiceDocuments.tsx` - Document manager
+  - `MarketValueHistory.tsx` - Value timeline (NEW - Phase 5)
+  - `MarketValueForm.tsx` - Value form (NEW - Phase 5)
+  - `WatchAnalytics.tsx` - Performance analytics (NEW - Phase 5)
 - **Pages**: `frontend/src/pages/`
 
 ### Infrastructure
@@ -577,7 +852,7 @@ interface WatchImage {
 }
 ```
 
-### API Response Format
+### API Response Format (Watch Image)
 ```json
 {
   "id": "uuid",
@@ -593,6 +868,127 @@ interface WatchImage {
   "source": "user_upload",
   "created_at": "2026-01-28T00:00:00",
   "url": "/uploads/watch_id/image.jpg"
+}
+```
+
+### Service History Fields
+```typescript
+interface ServiceHistory {
+  id: string
+  watch_id: string
+  service_date: string          // ISO datetime
+  provider: string              // Required, max 200 chars
+  service_type: string | null   // Optional, max 100 chars
+  description: string | null    // Optional
+  cost: number | null           // Optional, must be >= 0
+  cost_currency: string         // Default "USD", 3 chars
+  next_service_due: string | null  // ISO datetime, optional
+  created_at: string            // ISO timestamp
+  updated_at: string            // ISO timestamp
+  documents: ServiceDocument[]  // Array of documents
+}
+
+interface ServiceDocument {
+  id: string
+  service_history_id: string
+  file_path: string             // "watch_id/service_id/filename"
+  file_name: string             // "filename.pdf"
+  file_size: number             // bytes
+  mime_type: string             // "application/pdf"
+  created_at: string            // ISO timestamp
+  url: string                   // "/uploads/service-docs/..."
+}
+```
+
+### API Response Format (Service History)
+```json
+{
+  "id": "uuid",
+  "watch_id": "uuid",
+  "service_date": "2025-01-15T00:00:00",
+  "provider": "Rolex Service Center",
+  "service_type": "Full Service",
+  "description": "Complete overhaul",
+  "cost": "850.00",
+  "cost_currency": "USD",
+  "next_service_due": "2030-01-15T00:00:00",
+  "created_at": "2026-01-28T14:40:23.052151",
+  "updated_at": "2026-01-28T14:40:23.052153",
+  "documents": [
+    {
+      "id": "doc-uuid",
+      "service_history_id": "service-uuid",
+      "file_path": "watch-id/service-id/receipt.pdf",
+      "file_name": "receipt.pdf",
+      "file_size": 45823,
+      "mime_type": "application/pdf",
+      "created_at": "2026-01-28T14:42:06.563296",
+      "url": "/uploads/service-docs/watch-id/service-id/receipt.pdf"
+    }
+  ]
+}
+```
+
+### Market Value Fields
+```typescript
+interface MarketValue {
+  id: string
+  watch_id: string
+  value: string                     // Decimal as string
+  currency: string                  // 3-letter currency code
+  source: 'manual' | 'chrono24' | 'api'
+  notes: string | null              // Optional notes
+  recorded_at: string               // ISO datetime
+}
+
+interface WatchAnalytics {
+  watch_id: string
+  current_value: string | null      // Decimal as string
+  current_currency: string
+  purchase_price: string | null     // Decimal as string
+  purchase_currency: string
+  total_return: string | null       // Decimal as string
+  roi_percentage: number | null     // Percentage
+  annualized_return: number | null  // Percentage (time-adjusted)
+  value_change_30d: string | null   // Decimal as string
+  value_change_90d: string | null   // Decimal as string
+  value_change_1y: string | null    // Decimal as string
+  total_valuations: number          // Count of historical values
+  first_valuation_date: string | null  // ISO datetime
+  latest_valuation_date: string | null // ISO datetime
+}
+```
+
+### API Response Format (Market Value)
+```json
+{
+  "id": "uuid",
+  "watch_id": "uuid",
+  "value": "15000.00",
+  "currency": "USD",
+  "source": "manual",
+  "notes": "Current market estimate",
+  "recorded_at": "2026-01-28T00:00:00"
+}
+```
+
+### API Response Format (Watch Analytics)
+```json
+{
+  "watch_id": "uuid",
+  "current_value": "15000.00",
+  "current_currency": "USD",
+  "purchase_price": "5000.00",
+  "purchase_currency": "USD",
+  "total_return": "10000.00",
+  "roi_percentage": 200.0,
+  "annualized_return": null,
+  "value_change_30d": "1500.00",
+  "value_change_90d": "1500.00",
+  "value_change_1y": "3000.00",
+  "total_valuations": 4,
+  "first_valuation_date": "2025-01-28T00:00:00",
+  "latest_valuation_date": "2026-01-28T00:00:00"
 }
 ```
 
@@ -612,32 +1008,44 @@ interface WatchImage {
 
 ---
 
-## Session Summary (2026-01-27)
+## Session Summary (2026-01-28)
 
 **What We Did**:
-1. Implemented complete Phase 3 image upload and management
-2. Created backend file upload utilities with security
-3. Built image CRUD API endpoints
-4. Added frontend components (upload, gallery, lightbox)
-5. Integrated image management into watch detail page
-6. Fixed database enum issue
-7. Tested all functionality end-to-end
-8. Committed and pushed to GitHub
+1. Implemented complete Phase 4 service history and maintenance tracking
+2. Implemented complete Phase 5 market value tracking and analytics
+3. Created backend market value schemas and CRUD + analytics API endpoints
+4. Fixed enum serialization issue for ValueSourceEnum (same pattern as Phase 4)
+5. Implemented smart current value tracking (only updates when value is more recent)
+6. Built frontend components (MarketValueHistory, MarketValueForm, WatchAnalytics)
+7. Created React Query hooks for market value operations
+8. Integrated market values and analytics into watch detail page
+9. Tested all functionality end-to-end (CRUD, analytics, edge cases)
+10. Added recharts library for future charting enhancements
 
-**Files Created** (16 total):
-- 3 backend files (images.py, watch_image.py, file_upload.py)
-- 4 frontend components (ImageUpload, ImageGallery, ImageLightbox, useWatchImages)
-- 9 modified files (watches.py, WatchCard, WatchDetailPage, types, api.ts, etc.)
+**Files Created/Modified** (Phase 4 + Phase 5 combined):
+- **Phase 4**: 2 backend files created, 2 backend modified, 4 frontend created, 4 frontend modified
+- **Phase 5**: 2 backend files created, 2 backend modified, 3 frontend created, 4 frontend modified
 
-**Test Results**: ✅ All tests passed
-- Image upload: ✓
-- File storage: ✓
-- Primary image management: ✓
-- Image deletion: ✓
-- Nginx static serving: ✓
-- Frontend build: ✓
+**Test Results**: ✅ All Phase 5 endpoints tested and working
+- Create market value (with proper date handling): ✓
+- Verify older values don't override current: ✓
+- Verify newer values do update current: ✓
+- List market values (sorted by date): ✓
+- Update market value (recalculates current): ✓
+- Delete market value (recalculates current): ✓
+- Watch analytics endpoint (ROI, returns, value changes): ✓
+- Value change calculations (30d, 90d, 1y): ✓
+- Watch ownership verification: ✓
+- Multiple currency support: ✓
 
-**Ready for**: Phase 4 (Service History) or Phase 5 (Market Value Tracking)
+**Test Data**:
+- 4 market values created spanning 1 year
+- Purchase price: $5,000
+- Current value: $15,000
+- ROI: 200%
+- 1-year appreciation: $3,000
+
+**Ready for**: Phase 6 (Advanced Features) or Phase 5 optional enhancements (charts, dashboards)
 
 ---
 

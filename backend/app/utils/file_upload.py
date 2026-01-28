@@ -19,6 +19,16 @@ ALLOWED_MIME_TYPES = [
 # Allowed file extensions
 ALLOWED_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp"]
 
+# Allowed MIME types for document uploads (receipts, certificates, etc.)
+ALLOWED_DOCUMENT_MIME_TYPES = [
+    "application/pdf",
+    "image/jpeg",
+    "image/png",
+]
+
+# Allowed document extensions
+ALLOWED_DOCUMENT_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png"]
+
 
 def validate_image_file(file: UploadFile) -> Tuple[bool, str]:
     """
@@ -159,6 +169,91 @@ def save_uploaded_file(
         "mime_type": file.content_type or "image/jpeg",
         "width": width,
         "height": height,
+    }
+
+
+def validate_document_file(file: UploadFile) -> Tuple[bool, str]:
+    """
+    Validate that the uploaded file is a valid document (PDF or image).
+
+    Args:
+        file: The uploaded file to validate
+
+    Returns:
+        Tuple of (is_valid, error_message)
+    """
+    # Check MIME type
+    if file.content_type not in ALLOWED_DOCUMENT_MIME_TYPES:
+        allowed_types_str = ", ".join(ALLOWED_DOCUMENT_MIME_TYPES)
+        return False, f"Invalid file type. Allowed types: {allowed_types_str}"
+
+    # Check file extension
+    if file.filename:
+        ext = Path(file.filename).suffix.lower()
+        if ext not in ALLOWED_DOCUMENT_EXTENSIONS:
+            allowed_ext_str = ", ".join(ALLOWED_DOCUMENT_EXTENSIONS)
+            return False, f"Invalid file extension. Allowed extensions: {allowed_ext_str}"
+
+    return True, ""
+
+
+def save_service_document(
+    file: UploadFile,
+    watch_id: uuid.UUID,
+    service_id: uuid.UUID,
+    upload_dir: str = settings.UPLOAD_DIR
+) -> dict:
+    """
+    Save a service document to disk and return metadata.
+
+    Args:
+        file: The uploaded file
+        watch_id: The UUID of the watch
+        service_id: The UUID of the service history record
+        upload_dir: Base directory for uploads
+
+    Returns:
+        Dictionary containing file metadata:
+        {
+            'file_path': str,      # Relative path from upload_dir
+            'file_name': str,      # Sanitized filename
+            'file_size': int,      # File size in bytes
+            'mime_type': str       # MIME type
+        }
+    """
+    # Create service-specific directory
+    service_dir = Path(upload_dir) / "service-docs" / str(watch_id) / str(service_id)
+    service_dir.mkdir(parents=True, exist_ok=True)
+
+    # Sanitize filename
+    sanitized_name = sanitize_filename(file.filename or "document.pdf")
+
+    # Handle duplicate filenames by appending a counter
+    file_path = service_dir / sanitized_name
+    counter = 1
+    name_stem = Path(sanitized_name).stem
+    name_ext = Path(sanitized_name).suffix
+    while file_path.exists():
+        sanitized_name = f"{name_stem}_{counter}{name_ext}"
+        file_path = service_dir / sanitized_name
+        counter += 1
+
+    # Save file to disk
+    with open(file_path, "wb") as buffer:
+        content = file.file.read()
+        buffer.write(content)
+
+    # Get file size
+    file_size = file_path.stat().st_size
+
+    # Build relative path (watch_id/service_id/filename)
+    relative_path = f"{watch_id}/{service_id}/{sanitized_name}"
+
+    return {
+        "file_path": relative_path,
+        "file_name": sanitized_name,
+        "file_size": file_size,
+        "mime_type": file.content_type or "application/pdf",
     }
 
 

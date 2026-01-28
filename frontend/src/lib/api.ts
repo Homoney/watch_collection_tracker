@@ -18,6 +18,15 @@ import type {
   PaginatedResponse,
   WatchImage,
   WatchImageUpdate,
+  ServiceHistory,
+  ServiceHistoryCreate,
+  ServiceHistoryUpdate,
+  ServiceDocument,
+  MarketValue,
+  MarketValueCreate,
+  MarketValueUpdate,
+  WatchAnalytics,
+  CollectionAnalytics,
 } from '@/types'
 
 // Use relative URL so it works from any hostname/IP
@@ -241,5 +250,152 @@ export const imagesApi = {
 
   delete: async (watchId: string, imageId: string): Promise<void> => {
     await api.delete(`/v1/watches/${watchId}/images/${imageId}`)
+  },
+}
+
+// Service History API
+export const serviceHistoryApi = {
+  list: async (watchId: string): Promise<ServiceHistory[]> => {
+    const response = await api.get<ServiceHistory[]>(
+      `/v1/watches/${watchId}/service-history`
+    )
+    return response.data
+  },
+
+  create: async (
+    watchId: string,
+    data: ServiceHistoryCreate
+  ): Promise<ServiceHistory> => {
+    const response = await api.post<ServiceHistory>(
+      `/v1/watches/${watchId}/service-history`,
+      data
+    )
+    return response.data
+  },
+
+  get: async (watchId: string, serviceId: string): Promise<ServiceHistory> => {
+    const response = await api.get<ServiceHistory>(
+      `/v1/watches/${watchId}/service-history/${serviceId}`
+    )
+    return response.data
+  },
+
+  update: async (
+    watchId: string,
+    serviceId: string,
+    data: ServiceHistoryUpdate
+  ): Promise<ServiceHistory> => {
+    const response = await api.put<ServiceHistory>(
+      `/v1/watches/${watchId}/service-history/${serviceId}`,
+      data
+    )
+    return response.data
+  },
+
+  delete: async (watchId: string, serviceId: string): Promise<void> => {
+    await api.delete(`/v1/watches/${watchId}/service-history/${serviceId}`)
+  },
+
+  // Document operations
+  uploadDocument: async (
+    watchId: string,
+    serviceId: string,
+    file: File
+  ): Promise<ServiceDocument> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await api.post<ServiceDocument>(
+      `/v1/watches/${watchId}/service-history/${serviceId}/documents`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+    return response.data
+  },
+
+  listDocuments: async (
+    watchId: string,
+    serviceId: string
+  ): Promise<ServiceDocument[]> => {
+    const response = await api.get<ServiceDocument[]>(
+      `/v1/watches/${watchId}/service-history/${serviceId}/documents`
+    )
+    return response.data
+  },
+
+  deleteDocument: async (
+    watchId: string,
+    serviceId: string,
+    docId: string
+  ): Promise<void> => {
+    await api.delete(
+      `/v1/watches/${watchId}/service-history/${serviceId}/documents/${docId}`
+    )
+  },
+}
+
+// Market Values API
+export const marketValuesApi = {
+  list: async (
+    watchId: string,
+    params?: { start_date?: string; end_date?: string; limit?: number }
+  ): Promise<MarketValue[]> => {
+    const queryParams = new URLSearchParams()
+    if (params?.start_date) queryParams.append('start_date', params.start_date)
+    if (params?.end_date) queryParams.append('end_date', params.end_date)
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+
+    const response = await api.get<MarketValue[]>(
+      `/v1/watches/${watchId}/market-values?${queryParams.toString()}`
+    )
+    return response.data
+  },
+
+  create: async (
+    watchId: string,
+    data: MarketValueCreate
+  ): Promise<MarketValue> => {
+    const response = await api.post<MarketValue>(
+      `/v1/watches/${watchId}/market-values`,
+      data
+    )
+    return response.data
+  },
+
+  get: async (watchId: string, valueId: string): Promise<MarketValue> => {
+    const response = await api.get<MarketValue>(
+      `/v1/watches/${watchId}/market-values/${valueId}`
+    )
+    return response.data
+  },
+
+  update: async (
+    watchId: string,
+    valueId: string,
+    data: MarketValueUpdate
+  ): Promise<MarketValue> => {
+    const response = await api.put<MarketValue>(
+      `/v1/watches/${watchId}/market-values/${valueId}`,
+      data
+    )
+    return response.data
+  },
+
+  delete: async (watchId: string, valueId: string): Promise<void> => {
+    await api.delete(`/v1/watches/${watchId}/market-values/${valueId}`)
+  },
+
+  // Analytics
+  getWatchAnalytics: async (watchId: string): Promise<WatchAnalytics> => {
+    const response = await api.get<WatchAnalytics>(
+      `/v1/watches/${watchId}/analytics`
+    )
+    return response.data
+  },
+
+  getCollectionAnalytics: async (currency = 'USD'): Promise<CollectionAnalytics> => {
+    const response = await api.get<CollectionAnalytics>(
+      `/v1/watches/collection/analytics?currency=${currency}`
+    )
+    return response.data
   },
 }

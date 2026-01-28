@@ -99,6 +99,120 @@ export interface WatchImageUpdate {
   sort_order?: number
 }
 
+// Service History
+export interface ServiceDocument {
+  id: string
+  service_history_id: string
+  file_path: string
+  file_name: string
+  file_size: number
+  mime_type: string
+  created_at: string
+  url: string
+}
+
+export interface ServiceHistory {
+  id: string
+  watch_id: string
+  service_date: string
+  provider: string
+  service_type: string | null
+  description: string | null
+  cost: number | null
+  cost_currency: string
+  next_service_due: string | null
+  created_at: string
+  updated_at: string
+  documents: ServiceDocument[]
+}
+
+export interface ServiceHistoryCreate {
+  service_date: string
+  provider: string
+  service_type?: string
+  description?: string
+  cost?: number
+  cost_currency?: string
+  next_service_due?: string
+}
+
+export interface ServiceHistoryUpdate {
+  service_date?: string
+  provider?: string
+  service_type?: string
+  description?: string
+  cost?: number
+  cost_currency?: string
+  next_service_due?: string
+}
+
+// Market Values
+export interface MarketValue {
+  id: string
+  watch_id: string
+  value: number
+  currency: string
+  source: string  // 'manual' | 'chrono24' | 'api'
+  notes: string | null
+  recorded_at: string
+}
+
+export interface MarketValueCreate {
+  value: number
+  currency?: string
+  source?: string
+  notes?: string
+  recorded_at?: string
+}
+
+export interface MarketValueUpdate {
+  value?: number
+  currency?: string
+  source?: string
+  notes?: string
+  recorded_at?: string
+}
+
+export interface WatchAnalytics {
+  watch_id: string
+  current_value: number | null
+  current_currency: string
+  purchase_price: number | null
+  purchase_currency: string
+  total_return: number | null
+  roi_percentage: number | null
+  annualized_return: number | null
+  value_change_30d: number | null
+  value_change_90d: number | null
+  value_change_1y: number | null
+  total_valuations: number
+  first_valuation_date: string | null
+  latest_valuation_date: string | null
+}
+
+export interface WatchPerformance {
+  watch_id: string
+  model: string
+  brand: string
+  roi: number
+  current_value: number
+  purchase_price: number
+}
+
+export interface CollectionAnalytics {
+  total_watches: number
+  total_current_value: number
+  total_purchase_price: number
+  currency: string
+  total_return: number
+  average_roi: number
+  top_performers: WatchPerformance[]
+  worst_performers: WatchPerformance[]
+  value_by_brand: Record<string, number>
+  value_by_collection: Record<string, number>
+  total_valuations: number
+}
+
 // Watches
 export type ConditionEnum = 'mint' | 'excellent' | 'good' | 'fair' | 'poor'
 
@@ -132,6 +246,8 @@ export interface Watch {
   movement_type?: MovementType
   collection?: Collection
   images: WatchImage[]
+  service_history: ServiceHistory[]
+  market_values: MarketValue[]
 }
 
 export interface WatchCreate {

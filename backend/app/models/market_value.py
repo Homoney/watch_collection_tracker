@@ -24,7 +24,11 @@ class MarketValue(Base):
     currency = Column(String(3), default="USD", nullable=False)
 
     # Source tracking
-    source = Column(Enum(ValueSourceEnum), default=ValueSourceEnum.MANUAL, nullable=False)
+    source = Column(
+        Enum(ValueSourceEnum, values_callable=lambda x: [e.value for e in x]),
+        default=ValueSourceEnum.MANUAL,
+        nullable=False
+    )
     notes = Column(Text)
 
     # Timestamp

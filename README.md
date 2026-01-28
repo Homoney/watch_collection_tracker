@@ -6,15 +6,15 @@ A modern web application for watch collectors to track their collections with mu
 
 - **Multi-User Support**: Secure authentication with JWT tokens, isolated user data
 - **Watch Management**: Track brand, model, reference numbers, purchase info, specifications
-- **Image Management**: Multiple images per watch, auto-source from Google Images
+- **Image Management**: Multiple images per watch with drag-and-drop upload, full-screen lightbox
 - **Collections**: Organize watches into multiple collections (Current, Wishlist, Sold, etc.)
 - **Search & Filter**: Advanced filtering by brand, price, movement type, complications
-- **Statistics Dashboard**: Total value, average price, brand breakdown
-- **Service History**: Track maintenance, costs, and schedule future services
-- **Market Value Tracking**: Monitor watch values over time
-- **Multi-Currency Support**: USD, EUR, GBP, CHF
+- **Service History**: Track maintenance records, costs, schedule future services, attach documents
+- **Market Value Tracking**: Historical value tracking, ROI calculations, appreciation/depreciation analytics
+- **Performance Analytics**: Watch-level and collection-level analytics with trend indicators
+- **Multi-Currency Support**: USD, EUR, GBP, CHF, JPY, AUD, CAD
+- **Document Management**: Upload service receipts, warranties, certificates (PDF, JPG, PNG)
 - **Export & Backup**: Full database dumps and JSON exports
-- **Dark Mode**: Complete theme support
 - **Responsive Design**: Works on desktop and mobile
 
 ## Tech Stack
@@ -34,7 +34,9 @@ A modern web application for watch collectors to track their collections with mu
 - **TanStack Query** - Data fetching and caching
 - **React Router** - Client-side routing
 - **React Hook Form** - Form management
-- **Zustand** - Lightweight state management
+- **Recharts** - Charting library for data visualization
+- **Lucide React** - Icon library
+- **date-fns** - Date formatting and manipulation
 
 ### Infrastructure
 - **Docker** - Containerization
@@ -71,8 +73,10 @@ watch-collection-tracker/
 │   ├── Dockerfile
 │   └── nginx.conf
 ├── storage/               # Persistent storage
-│   ├── uploads/          # Watch images
-│   └── backups/          # Export files
+│   ├── uploads/          # User-uploaded files
+│   │   ├── {watch_id}/   # Watch images
+│   │   └── service-docs/ # Service documents
+│   └── backups/          # Database backups
 ├── docker-compose.yml
 ├── .env.example
 └── README.md
@@ -122,15 +126,17 @@ docker-compose logs -f
 ```
 
 6. **Access the application**
-- Frontend: http://localhost
-- API Docs: http://localhost/api/docs
-- Health Check: http://localhost/health
+- Frontend: http://localhost:8080
+- API Docs: http://localhost:8080/api/docs
+- Health Check: http://localhost:8080/health
 
 ### First Time Setup
 
-1. Visit http://localhost
+1. Visit http://localhost:8080
 2. Click "Sign up" to create your account
 3. Start adding watches to your collection!
+
+**Note**: The application runs on port 8080 by default to avoid conflicts with K3s (Kubernetes).
 
 ## Development
 
@@ -194,7 +200,7 @@ docker-compose logs -f nginx
 
 ## API Documentation
 
-Once the application is running, visit http://localhost/api/docs for interactive API documentation powered by Swagger UI.
+Once the application is running, visit http://localhost:8080/api/docs for interactive API documentation powered by Swagger UI.
 
 ### Key Endpoints
 
@@ -207,19 +213,48 @@ Once the application is running, visit http://localhost/api/docs for interactive
 - `POST /api/v1/auth/change-password` - Change password
 - `POST /api/v1/auth/logout` - Logout
 
-#### Collections (Coming in Phase 2)
-- `GET /api/v1/collections` - List collections
-- `POST /api/v1/collections` - Create collection
-- `GET /api/v1/collections/:id` - Get collection details
-- `PUT /api/v1/collections/:id` - Update collection
-- `DELETE /api/v1/collections/:id` - Delete collection
+#### Reference Data
+- `GET /api/v1/reference/brands` - List brands
+- `GET /api/v1/reference/movement-types` - List movement types
+- `GET /api/v1/reference/complications` - List complications
 
-#### Watches (Coming in Phase 2)
-- `GET /api/v1/watches` - List watches with filters
-- `POST /api/v1/watches` - Add new watch
-- `GET /api/v1/watches/:id` - Get watch details
-- `PUT /api/v1/watches/:id` - Update watch
-- `DELETE /api/v1/watches/:id` - Delete watch
+#### Collections
+- `GET /api/v1/collections/` - List collections
+- `POST /api/v1/collections/` - Create collection
+- `GET /api/v1/collections/{id}` - Get collection details
+- `PUT /api/v1/collections/{id}` - Update collection
+- `DELETE /api/v1/collections/{id}` - Delete collection
+
+#### Watches
+- `GET /api/v1/watches/` - List watches with filters (paginated)
+- `POST /api/v1/watches/` - Add new watch
+- `GET /api/v1/watches/{id}` - Get watch details with images and service history
+- `PUT /api/v1/watches/{id}` - Update watch
+- `DELETE /api/v1/watches/{id}` - Delete watch (cascades to images and service records)
+
+#### Images
+- `POST /api/v1/watches/{watch_id}/images` - Upload image
+- `GET /api/v1/watches/{watch_id}/images` - List watch images
+- `PATCH /api/v1/watches/{watch_id}/images/{image_id}` - Update metadata (set primary)
+- `DELETE /api/v1/watches/{watch_id}/images/{image_id}` - Delete image
+
+#### Service History
+- `POST /api/v1/watches/{watch_id}/service-history` - Create service record
+- `GET /api/v1/watches/{watch_id}/service-history` - List service records
+- `GET /api/v1/watches/{watch_id}/service-history/{service_id}` - Get service record
+- `PUT /api/v1/watches/{watch_id}/service-history/{service_id}` - Update service record
+- `DELETE /api/v1/watches/{watch_id}/service-history/{service_id}` - Delete service record
+- `POST /api/v1/watches/{watch_id}/service-history/{service_id}/documents` - Upload document
+- `DELETE /api/v1/watches/{watch_id}/service-history/{service_id}/documents/{doc_id}` - Delete document
+
+#### Market Values
+- `POST /api/v1/watches/{watch_id}/market-values` - Create market value record
+- `GET /api/v1/watches/{watch_id}/market-values` - List market values (sorted by date)
+- `GET /api/v1/watches/{watch_id}/market-values/{value_id}` - Get market value
+- `PUT /api/v1/watches/{watch_id}/market-values/{value_id}` - Update market value
+- `DELETE /api/v1/watches/{watch_id}/market-values/{value_id}` - Delete market value
+- `GET /api/v1/watches/{watch_id}/analytics` - Get watch performance analytics (ROI, returns, value changes)
+- `GET /api/v1/collection-analytics` - Get collection-wide analytics (total value, brand breakdown, top performers)
 
 ## Database Schema
 
@@ -327,46 +362,67 @@ docker-compose up -d
 ## Development Roadmap
 
 ### ✅ Phase 1: Foundation (COMPLETED)
-- Project structure and Docker setup
-- Authentication (register, login, JWT tokens)
-- Basic frontend with login/register pages
-- Database schema and migrations
+- Docker Compose infrastructure
+- PostgreSQL database with migrations
+- FastAPI backend with authentication (JWT)
+- React frontend with routing
+- Nginx reverse proxy + static file serving
+- User registration and login
 
-### 🚧 Phase 2: Core CRUD (In Progress)
-- Collection management
-- Watch CRUD operations
-- Watch list/grid with filters
-- Watch detail page
+### ✅ Phase 2: Core CRUD Operations (COMPLETED)
+- Reference data (Brands, Movement Types, Complications)
+- Collections CRUD with color coding
+- Watches CRUD with full specifications
+- Filtering, sorting, and pagination
+- Watch cards UI with collections integration
 
-### 📋 Phase 3: Images
-- File upload and validation
-- Image gallery component
-- Google Images integration
-- Image optimization
+### ✅ Phase 3: Image Upload and Management (COMPLETED)
+- File upload utilities with validation
+- Image CRUD API endpoints
+- Image schemas with computed URLs
+- Primary image management
+- ImageUpload component with drag-and-drop
+- ImageGallery component with grid layout
+- ImageLightbox component for full-screen viewing
+- Secure file storage and Nginx static serving
 
-### 📋 Phase 4: Statistics
-- Dashboard with charts
-- Currency conversion
-- Value tracking visualization
-- Brand distribution
+### ✅ Phase 4: Service History & Maintenance Tracking (COMPLETED)
+- Service history schemas and API endpoints
+- Service document upload/management (PDF, JPG, PNG)
+- ServiceHistoryList component with timeline view
+- ServiceHistoryForm component with date pickers
+- ServiceDocuments component for document management
+- Overdue service alerts
+- Cascade delete: service → documents
 
-### 📋 Phase 5: Service History
-- Service records management
-- Document uploads
-- Service reminders
-- Timeline view
+### ✅ Phase 5: Market Value Tracking & Analytics (COMPLETED)
+- Market value schemas and CRUD API endpoints
+- Watch-level analytics endpoint (ROI, returns, value changes)
+- Collection-level analytics endpoint
+- MarketValueHistory component with timeline view
+- MarketValueForm component with date pickers
+- WatchAnalytics component with performance metrics
+- Historical value tracking over time
+- ROI and annualized return calculations
+- 30-day, 90-day, 1-year value change tracking
+- Smart current value management (date-aware updates)
+- Multi-currency support
+- Recharts library integration for future chart components
 
-### 📋 Phase 6: Advanced Features
-- Export (JSON, CSV, full backup)
-- Social sharing
-- Dark mode
-- Mobile responsiveness
+### 🚧 Phase 6: Advanced Features (NEXT)
+- PDF export of collection
+- QR code generation for watches
+- Google Images auto-fetch
+- Advanced search and filtering
+- Watch comparison views
+- Public collection sharing (optional)
 
 ### 📋 Phase 7: Production Ready
 - Unit and integration tests
 - Security audit
 - Performance optimization
-- Documentation
+- Complete documentation
+- Deployment guides
 
 ## Contributing
 
