@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { QrCode, Download, Printer } from 'lucide-react'
 import Button from '@/components/common/Button'
+import { api } from '@/lib/api'
 
 interface WatchQRCodeProps {
   watchId: string
@@ -8,12 +9,46 @@ interface WatchQRCodeProps {
 
 export default function WatchQRCode({ watchId }: WatchQRCodeProps) {
   const [showQR, setShowQR] = useState(false)
+  const [qrCodeBlobUrl, setQrCodeBlobUrl] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
   const baseUrl = window.location.origin
-  const qrCodeUrl = `/api/v1/watches/${watchId}/qr-code?base_url=${encodeURIComponent(baseUrl)}`
+
+  // Fetch QR code image with auth token when showQR becomes true
+  useEffect(() => {
+    if (showQR && !qrCodeBlobUrl) {
+      fetchQRCode()
+    }
+  }, [showQR, watchId])
+
+  // Cleanup blob URL on unmount
+  useEffect(() => {
+    return () => {
+      if (qrCodeBlobUrl) {
+        URL.revokeObjectURL(qrCodeBlobUrl)
+      }
+    }
+  }, [qrCodeBlobUrl])
+
+  const fetchQRCode = async () => {
+    setIsLoading(true)
+    try {
+      const response = await api.get(
+        `/v1/watches/${watchId}/qr-code?base_url=${encodeURIComponent(baseUrl)}`,
+        { responseType: 'blob' }
+      )
+      const blobUrl = URL.createObjectURL(response.data)
+      setQrCodeBlobUrl(blobUrl)
+    } catch (error) {
+      console.error('Failed to fetch QR code:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleDownload = () => {
+    if (!qrCodeBlobUrl) return
     const link = document.createElement('a')
-    link.href = qrCodeUrl
+    link.href = qrCodeBlobUrl
     link.download = `watch-${watchId}-qr.png`
     document.body.appendChild(link)
     link.click()
@@ -21,7 +56,8 @@ export default function WatchQRCode({ watchId }: WatchQRCodeProps) {
   }
 
   const handlePrint = () => {
-    const printWindow = window.open(qrCodeUrl, '_blank')
+    if (!qrCodeBlobUrl) return
+    const printWindow = window.open(qrCodeBlobUrl, '_blank')
     if (printWindow) {
       printWindow.onload = () => {
         printWindow.print()
@@ -64,11 +100,21 @@ export default function WatchQRCode({ watchId }: WatchQRCodeProps) {
 
       <div className="space-y-4">
         <div className="flex justify-center p-4 bg-white rounded-lg border border-gray-200">
-          <img
-            src={qrCodeUrl}
-            alt="Watch QR Code"
-            className="w-64 h-64"
-          />
+          {isLoading ? (
+            <div className="w-64 h-64 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            </div>
+          ) : qrCodeBlobUrl ? (
+            <img
+              src={qrCodeBlobUrl}
+              alt="Watch QR Code"
+              className="w-64 h-64"
+            />
+          ) : (
+            <div className="w-64 h-64 flex items-center justify-center text-gray-400">
+              Failed to load QR code
+            </div>
+          )}
         </div>
 
         <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
@@ -76,11 +122,11 @@ export default function WatchQRCode({ watchId }: WatchQRCodeProps) {
         </p>
 
         <div className="flex gap-3 justify-center">
-          <Button onClick={handleDownload} variant="secondary">
+          <Button onClick={handleDownload} variant="secondary" disabled={!qrCodeBlobUrl || isLoading}>
             <Download className="h-4 w-4 mr-2" />
             Download
           </Button>
-          <Button onClick={handlePrint} variant="secondary">
+          <Button onClick={handlePrint} variant="secondary" disabled={!qrCodeBlobUrl || isLoading}>
             <Printer className="h-4 w-4 mr-2" />
             Print
           </Button>
