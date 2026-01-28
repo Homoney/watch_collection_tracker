@@ -38,7 +38,8 @@ def list_watches(
     # Base query with relationships loaded
     query = db.query(Watch).options(
         joinedload(Watch.brand),
-        joinedload(Watch.collection)
+        joinedload(Watch.collection),
+        joinedload(Watch.images)
     ).filter(Watch.user_id == current_user.id)
 
     # Apply filters
@@ -77,8 +78,14 @@ def list_watches(
     # Apply pagination
     watches = query.offset(offset).limit(limit).all()
 
-    # Convert to list response format
-    items = [WatchListResponse.model_validate(watch) for watch in watches]
+    # Convert to list response format with primary image
+    items = []
+    for watch in watches:
+        watch_dict = WatchListResponse.model_validate(watch).model_dump()
+        # Find and attach primary image
+        primary_image = next((img for img in watch.images if img.is_primary), None)
+        watch_dict['primary_image'] = primary_image
+        items.append(WatchListResponse(**watch_dict))
 
     return PaginatedWatchResponse(
         items=items,
@@ -135,7 +142,7 @@ def create_watch(
     db.refresh(new_watch)
 
     # Load relationships
-    db.refresh(new_watch, ["brand", "movement_type", "collection"])
+    db.refresh(new_watch, ["brand", "movement_type", "collection", "images"])
 
     return WatchResponse.model_validate(new_watch)
 
@@ -150,7 +157,8 @@ def get_watch(
     watch = db.query(Watch).options(
         joinedload(Watch.brand),
         joinedload(Watch.movement_type),
-        joinedload(Watch.collection)
+        joinedload(Watch.collection),
+        joinedload(Watch.images)
     ).filter(
         Watch.id == watch_id,
         Watch.user_id == current_user.id
@@ -225,7 +233,7 @@ def update_watch(
     db.refresh(watch)
 
     # Load relationships
-    db.refresh(watch, ["brand", "movement_type", "collection"])
+    db.refresh(watch, ["brand", "movement_type", "collection", "images"])
 
     return WatchResponse.model_validate(watch)
 

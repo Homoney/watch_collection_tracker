@@ -48,20 +48,28 @@ export default function WatchCard({ watch, onEdit, onDelete }: WatchCardProps) {
     <Card onClick={handleCardClick} className="p-4 hover:shadow-lg transition-shadow">
       <div className="flex flex-col h-full">
         <div className="flex-1">
-          <div className="aspect-w-16 aspect-h-9 bg-gray-100 rounded-md mb-3 flex items-center justify-center">
-            <svg
-              className="w-16 h-16 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+          <div className="aspect-w-16 aspect-h-9 bg-gray-100 rounded-md mb-3 flex items-center justify-center overflow-hidden">
+            {watch.primary_image ? (
+              <img
+                src={watch.primary_image.url}
+                alt={`${watch.brand?.name} ${watch.model}`}
+                className="w-full h-full object-cover"
               />
-            </svg>
+            ) : (
+              <svg
+                className="w-16 h-16 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            )}
           </div>
 
           <div className="mb-2">

@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
 import WatchForm from '@/components/watches/WatchForm'
+import ImageUpload from '@/components/watches/ImageUpload'
+import ImageGallery from '@/components/watches/ImageGallery'
+import ImageLightbox from '@/components/common/ImageLightbox'
 import Modal from '@/components/common/Modal'
 import Button from '@/components/common/Button'
 import Badge from '@/components/common/Badge'
@@ -15,6 +18,7 @@ export default function WatchDetailPage() {
   const navigate = useNavigate()
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const { data: watch, isLoading, error } = useWatch(id)
   const updateMutation = useUpdateWatch()
@@ -118,23 +122,54 @@ export default function WatchDetailPage() {
           </div>
         </div>
 
+        <Card className="p-6">
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            Images {watch.images?.length > 0 && `(${watch.images.length})`}
+          </h2>
+
+          <div className="space-y-6">
+            <ImageGallery
+              watchId={watch.id}
+              images={watch.images || []}
+              onImageClick={(index) => setLightboxIndex(index)}
+            />
+
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-sm font-medium text-gray-900 mb-3">Upload New Images</h3>
+              <ImageUpload watchId={watch.id} />
+            </div>
+          </div>
+        </Card>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1">
             <Card className="p-6">
-              <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-                <svg
-                  className="w-24 h-24 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
+                {watch.images?.[0] ? (
+                  <img
+                    src={watch.images.find(img => img.is_primary)?.url || watch.images[0].url}
+                    alt={`${watch.brand?.name} ${watch.model}`}
+                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => {
+                      const primaryIndex = watch.images.findIndex(img => img.is_primary)
+                      setLightboxIndex(primaryIndex >= 0 ? primaryIndex : 0)
+                    }}
                   />
-                </svg>
+                ) : (
+                  <svg
+                    className="w-24 h-24 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                )}
               </div>
               {watch.condition && (
                 <div className="mb-4">
@@ -358,6 +393,15 @@ export default function WatchDetailPage() {
           </div>
         </div>
       </Modal>
+
+      {lightboxIndex !== null && watch.images && watch.images.length > 0 && (
+        <ImageLightbox
+          images={watch.images}
+          currentIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          onNavigate={setLightboxIndex}
+        />
+      )}
     </AppLayout>
   )
 }

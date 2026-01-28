@@ -75,6 +75,30 @@ export interface CollectionUpdate {
   is_default?: boolean
 }
 
+// Watch Images
+export type ImageSource = 'user_upload' | 'google_images' | 'url_import'
+
+export interface WatchImage {
+  id: string
+  watch_id: string
+  file_path: string
+  file_name: string
+  file_size: number
+  mime_type: string
+  width: number | null
+  height: number | null
+  is_primary: boolean
+  sort_order: number
+  source: ImageSource
+  created_at: string
+  url: string
+}
+
+export interface WatchImageUpdate {
+  is_primary?: boolean
+  sort_order?: number
+}
+
 // Watches
 export type ConditionEnum = 'mint' | 'excellent' | 'good' | 'fair' | 'poor'
 
@@ -107,6 +131,7 @@ export interface Watch {
   brand?: Brand
   movement_type?: MovementType
   collection?: Collection
+  images: WatchImage[]
 }
 
 export interface WatchCreate {
@@ -170,6 +195,7 @@ export interface WatchListItem {
   created_at: string
   brand?: Brand
   collection?: Collection
+  primary_image: WatchImage | null
 }
 
 export interface WatchFilters {

@@ -34,7 +34,7 @@ class WatchImage(Base):
     sort_order = Column(Integer, default=0)
 
     # Source tracking
-    source = Column(Enum(ImageSourceEnum), default=ImageSourceEnum.USER_UPLOAD, nullable=False)
+    source = Column(Enum(ImageSourceEnum, values_callable=lambda x: [e.value for e in x]), default=ImageSourceEnum.USER_UPLOAD, nullable=False)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

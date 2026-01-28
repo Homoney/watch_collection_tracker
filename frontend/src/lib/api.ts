@@ -16,6 +16,8 @@ import type {
   WatchListItem,
   WatchFilters,
   PaginatedResponse,
+  WatchImage,
+  WatchImageUpdate,
 } from '@/types'
 
 // Use relative URL so it works from any hostname/IP
@@ -200,5 +202,44 @@ export const watchesApi = {
 
   delete: async (id: string): Promise<void> => {
     await api.delete(`/v1/watches/${id}`)
+  },
+}
+
+// Images API
+export const imagesApi = {
+  upload: async (watchId: string, file: File): Promise<WatchImage> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await api.post<WatchImage>(
+      `/v1/watches/${watchId}/images`,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      }
+    )
+    return response.data
+  },
+
+  list: async (watchId: string): Promise<WatchImage[]> => {
+    const response = await api.get<WatchImage[]>(
+      `/v1/watches/${watchId}/images`
+    )
+    return response.data
+  },
+
+  update: async (
+    watchId: string,
+    imageId: string,
+    data: WatchImageUpdate
+  ): Promise<WatchImage> => {
+    const response = await api.patch<WatchImage>(
+      `/v1/watches/${watchId}/images/${imageId}`,
+      data
+    )
+    return response.data
+  },
+
+  delete: async (watchId: string, imageId: string): Promise<void> => {
+    await api.delete(`/v1/watches/${watchId}/images/${imageId}`)
   },
 }

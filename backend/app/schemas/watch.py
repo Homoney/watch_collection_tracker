@@ -4,6 +4,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Optional, List
 from app.models.watch import ConditionEnum
+from app.schemas.watch_image import WatchImageResponse
 
 
 class WatchBase(BaseModel):
@@ -115,6 +116,7 @@ class WatchResponse(WatchBase):
     brand: Optional[BrandInWatch] = None
     movement_type: Optional[MovementTypeInWatch] = None
     collection: Optional[CollectionInWatch] = None
+    images: List[WatchImageResponse] = []
 
     class Config:
         from_attributes = True
@@ -133,6 +135,7 @@ class WatchListResponse(BaseModel):
     created_at: datetime
     brand: Optional[BrandInWatch] = None
     collection: Optional[CollectionInWatch] = None
+    primary_image: Optional[WatchImageResponse] = None
 
     class Config:
         from_attributes = True
