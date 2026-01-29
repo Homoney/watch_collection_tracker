@@ -33,7 +33,6 @@ const mockWatch: Partial<Watch> = {
     updated_at: '2024-01-01T00:00:00'
   },
   complications: [],
-  case_material: 'Stainless Steel',
   case_diameter: 40,
   water_resistance: 300,
   purchase_date: '2020-01-15T00:00:00',
@@ -97,7 +96,8 @@ describe('WatchCard', () => {
   it('displays purchase price', () => {
     renderWithProviders(<WatchCard watch={mockWatch} />)
 
-    expect(screen.getByText(/9000/)).toBeInTheDocument()
+    // Price is formatted as currency, e.g., "$9,000.00"
+    expect(screen.getByText(/\$9,000/)).toBeInTheDocument()
   })
 
   it('calls onSelectionToggle when in compare mode', () => {
