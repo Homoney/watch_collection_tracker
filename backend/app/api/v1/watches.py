@@ -448,12 +448,14 @@ def export_all_watches_pdf(
 def fetch_google_images(
     watch_id: UUID,
     limit: int = Query(default=3, ge=1, le=5, description="Number of images to fetch"),
+    offset: int = Query(default=0, ge=0, description="Number of images to skip (for pagination)"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     """
     Fetch watch images from Google Images.
-    Only works if the watch currently has no images.
+    Supports fetching multiple batches via offset parameter.
+    Uses brand + reference number for more accurate search.
     """
     # Verify watch exists and belongs to user
     watch = db.query(Watch).options(
@@ -470,16 +472,15 @@ def fetch_google_images(
             detail="Watch not found"
         )
 
-    # Check if watch already has images
-    if watch.images:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Watch already has images. Delete existing images first to auto-fetch."
-        )
-
-    # Get brand and model
+    # Get brand, model, and reference number
     brand_name = watch.brand.name if watch.brand else "watch"
     model = watch.model
+    reference_number = watch.reference_number
+
+    # Get current max sort_order for this watch to append new images
+    max_sort_order = db.query(func.max(WatchImage.sort_order)).filter(
+        WatchImage.watch_id == watch_id
+    ).scalar() or -1
 
     try:
         # Fetch images from Google
@@ -487,7 +488,9 @@ def fetch_google_images(
             brand=brand_name,
             model=model,
             watch_id=str(watch_id),
-            limit=limit
+            limit=limit,
+            reference_number=reference_number,
+            offset=offset
         )
 
         if not image_metadata_list:
@@ -498,7 +501,9 @@ def fetch_google_images(
 
         # Create database records for each image
         created_images = []
-        for metadata in image_metadata_list:
+        for idx, metadata in enumerate(image_metadata_list):
+            # Adjust sort_order to append after existing images
+            # Only set first image as primary if watch has no images yet
             image = WatchImage(
                 watch_id=watch_id,
                 file_path=metadata['file_path'],
@@ -507,8 +512,8 @@ def fetch_google_images(
                 mime_type=metadata['mime_type'],
                 width=metadata.get('width'),
                 height=metadata.get('height'),
-                is_primary=metadata['is_primary'],
-                sort_order=metadata['sort_order'],
+                is_primary=(max_sort_order == -1 and idx == 0),  # Only first if no existing images
+                sort_order=max_sort_order + 1 + idx,
                 source=ImageSourceEnum.GOOGLE_IMAGES
             )
             db.add(image)

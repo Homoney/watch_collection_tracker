@@ -39,6 +39,7 @@ export default function WatchDetailPage() {
   const deleteMutation = useDeleteWatch()
   const queryClient = useQueryClient()
   const [isFetchingImages, setIsFetchingImages] = useState(false)
+  const [imageOffset, setImageOffset] = useState(0)
 
   const handleUpdate = async (data: WatchUpdate) => {
     if (!id) return
@@ -148,10 +149,12 @@ export default function WatchDetailPage() {
     if (!id) return
     setIsFetchingImages(true)
     try {
-      await api.post(`/v1/watches/${id}/fetch-images`)
+      await api.post(`/v1/watches/${id}/fetch-images?offset=${imageOffset}`)
       // Invalidate queries to refetch watch data with new images
       queryClient.invalidateQueries({ queryKey: ['watches', id] })
       queryClient.invalidateQueries({ queryKey: ['watches'] })
+      // Increment offset for next fetch
+      setImageOffset((prev) => prev + 3)
     } catch (error: any) {
       console.error('Failed to fetch images:', error)
       alert(error.response?.data?.detail || 'Failed to fetch images from Google')
@@ -248,11 +251,23 @@ export default function WatchDetailPage() {
                 </div>
               </div>
             ) : (
-              <ImageGallery
-                watchId={watch.id}
-                images={watch.images || []}
-                onImageClick={(index) => setLightboxIndex(index)}
-              />
+              <>
+                <ImageGallery
+                  watchId={watch.id}
+                  images={watch.images || []}
+                  onImageClick={(index) => setLightboxIndex(index)}
+                />
+                <div className="flex justify-center pt-4">
+                  <Button
+                    onClick={handleFetchGoogleImages}
+                    disabled={isFetchingImages}
+                    variant="secondary"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    {isFetchingImages ? 'Loading More Images...' : 'Load More Images from Google'}
+                  </Button>
+                </div>
+              </>
             )}
 
             <div className="border-t border-gray-200 dark:border-gray-700 pt-6">

@@ -14,7 +14,9 @@ def fetch_watch_images(
     model: str,
     watch_id: str,
     limit: int = 3,
-    storage_path: str = "/app/storage"
+    storage_path: str = "/app/storage",
+    reference_number: Optional[str] = None,
+    offset: int = 0
 ) -> List[dict]:
     """
     Fetch watch images from Google Images using web scraping.
@@ -25,6 +27,8 @@ def fetch_watch_images(
         watch_id: UUID of the watch
         limit: Number of images to fetch (default: 3)
         storage_path: Base storage path
+        reference_number: Optional reference number for more accurate search
+        offset: Number of images to skip (for pagination)
 
     Returns:
         List of image metadata dicts with file info
@@ -32,37 +36,52 @@ def fetch_watch_images(
     Raises:
         Exception: If image fetching fails
     """
-    # Create search query
-    search_query = f"{brand} {model} watch"
+    # Create search query - prefer reference number for accuracy
+    if reference_number:
+        search_query = f"{brand} {reference_number} watch"
+    else:
+        search_query = f"{brand} {model} watch"
 
     # Create upload directory for this watch
     upload_dir = Path(storage_path) / "uploads" / watch_id
     upload_dir.mkdir(parents=True, exist_ok=True)
 
     try:
-        # Fetch image URLs from Google Images
-        image_urls = _scrape_google_images(search_query, limit)
+        # Fetch more image URLs than needed to account for offset and failures
+        # Request double the needed amount to ensure we have enough after filtering
+        fetch_count = offset + limit + 10
+        image_urls = _scrape_google_images(search_query, fetch_count)
 
         if not image_urls:
             raise Exception("No images found in search results")
 
+        # Skip offset images and take the next 'limit' images
+        urls_to_fetch = image_urls[offset:offset + limit + 10]  # Get extras in case some fail
+
+        if not urls_to_fetch:
+            raise Exception("No more images available at this offset")
+
         # Download and process images
         image_metadata = []
 
-        for idx, url in enumerate(image_urls[:limit]):
+        for idx, url in enumerate(urls_to_fetch):
+            # Stop once we have enough successful downloads
+            if len(image_metadata) >= limit:
+                break
+
             try:
-                # Download image
+                # Download image (use offset + idx for unique file naming)
                 metadata = _download_and_process_image(
                     url,
                     watch_id,
-                    idx,
+                    offset + idx,
                     upload_dir
                 )
                 if metadata:
                     image_metadata.append(metadata)
 
             except Exception as e:
-                print(f"Failed to download image {idx + 1} from {url}: {e}")
+                print(f"Failed to download image {offset + idx + 1} from {url}: {e}")
                 continue
 
         if not image_metadata:
