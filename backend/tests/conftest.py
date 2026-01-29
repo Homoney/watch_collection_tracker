@@ -122,7 +122,7 @@ def test_brand(test_db: Session) -> Brand:
     """
     Create a test brand.
     """
-    brand = Brand(name="Rolex", country="Switzerland")
+    brand = Brand(name="Rolex")
     test_db.add(brand)
     test_db.commit()
     test_db.refresh(brand)

@@ -23,7 +23,8 @@ export default function RegisterPage() {
     setIsLoading(true)
 
     try {
-      const { confirmPassword: _confirmPassword, ...registerData } = data
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { confirmPassword, ...registerData } = data
       await registerUser(registerData)
     } catch (err: unknown) {
       const error = err as { response?: { data?: { detail?: string } } }
