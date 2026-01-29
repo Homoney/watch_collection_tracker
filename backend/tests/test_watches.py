@@ -5,9 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
-from app.models.watch import Watch
-from app.models.brand import Brand
-from app.models.collection import Collection
+from app.models import Brand, Collection, Watch
 
 
 class TestCreateWatch:

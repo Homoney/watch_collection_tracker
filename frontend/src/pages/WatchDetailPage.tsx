@@ -155,9 +155,10 @@ export default function WatchDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['watches'] })
       // Increment offset for next fetch
       setImageOffset((prev) => prev + 3)
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } }
       console.error('Failed to fetch images:', error)
-      alert(error.response?.data?.detail || 'Failed to fetch images from Google')
+      alert(err.response?.data?.detail || 'Failed to fetch images from Google')
     } finally {
       setIsFetchingImages(false)
     }

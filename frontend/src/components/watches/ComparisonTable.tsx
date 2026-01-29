@@ -9,8 +9,8 @@ interface ComparisonTableProps {
 
 interface ComparisonRowProps {
   label: string
-  values: any[]
-  renderer?: (value: any, index: number) => React.ReactNode
+  values: unknown[]
+  renderer?: (value: unknown, index: number) => React.ReactNode
 }
 
 function ComparisonRow({ label, values, renderer }: ComparisonRowProps) {

@@ -36,7 +36,7 @@ export default function WatchListPage() {
     collection_id: searchParams.get('collection_id') || undefined,
     brand_id: searchParams.get('brand_id') || undefined,
     movement_type_id: searchParams.get('movement_type_id') || undefined,
-    condition: (searchParams.get('condition') as any) || undefined,
+    condition: searchParams.get('condition') || undefined,
     search: searchParams.get('search') || undefined,
     sort_by: searchParams.get('sort_by') || 'created_at',
     sort_order: (searchParams.get('sort_order') as 'asc' | 'desc') || 'desc',

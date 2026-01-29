@@ -97,8 +97,9 @@ export default function ImageUpload({ watchId, onUploadComplete }: ImageUploadPr
           watchId,
           file: preview.file,
         })
-      } catch (error: any) {
-        const message = error.response?.data?.detail || 'Upload failed'
+      } catch (error: unknown) {
+        const err = error as { response?: { data?: { detail?: string } } }
+        const message = err.response?.data?.detail || 'Upload failed'
         uploadErrors.push(`${preview.file.name}: ${message}`)
       }
     }

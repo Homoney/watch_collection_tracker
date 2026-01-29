@@ -21,8 +21,9 @@ export default function LoginPage() {
 
     try {
       await login(data)
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Login failed. Please try again.')
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } }
+      setError(error.response?.data?.detail || 'Login failed. Please try again.')
     } finally {
       setIsLoading(false)
     }

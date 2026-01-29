@@ -1,8 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
 import { renderWithProviders, screen } from '../test-utils'
 import WatchCard from '@/components/watches/WatchCard'
+import type { Watch } from '@/types'
 
-const mockWatch: any = {
+const mockWatch: Partial<Watch> = {
   id: '123',
   model: 'Submariner Date',
   brand: {
