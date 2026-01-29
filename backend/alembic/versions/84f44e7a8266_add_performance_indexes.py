@@ -32,27 +32,19 @@ def upgrade() -> None:
         ON watches USING gin(to_tsvector('english', model))
     """)
 
-    # Service history indexes
-    op.create_index('ix_service_history_watch_id', 'service_history', ['watch_id'])
+    # Service history indexes (watch_id index already exists in initial schema)
     op.create_index('ix_service_history_service_date', 'service_history', ['service_date'])
 
-    # Market value indexes
-    op.create_index('ix_market_values_watch_id', 'market_values', ['watch_id'])
-    op.create_index('ix_market_values_recorded_at', 'market_values', ['recorded_at'])
+    # Market value indexes (watch_id and recorded_at indexes already exist in initial schema)
 
-    # Watch image indexes
-    op.create_index('ix_watch_images_watch_id', 'watch_images', ['watch_id'])
+    # Watch image indexes (watch_id index already exists in initial schema)
     op.create_index('ix_watch_images_is_primary', 'watch_images', ['is_primary'])
 
 
 def downgrade() -> None:
-    # Drop indexes in reverse order
+    # Drop indexes in reverse order (only those created in this migration)
     op.drop_index('ix_watch_images_is_primary', table_name='watch_images')
-    op.drop_index('ix_watch_images_watch_id', table_name='watch_images')
-    op.drop_index('ix_market_values_recorded_at', table_name='market_values')
-    op.drop_index('ix_market_values_watch_id', table_name='market_values')
     op.drop_index('ix_service_history_service_date', table_name='service_history')
-    op.drop_index('ix_service_history_watch_id', table_name='service_history')
     op.drop_index('ix_watches_model_search', table_name='watches')
     op.drop_index('ix_watches_movement_type_id', table_name='watches')
     op.drop_index('ix_watches_collection_id', table_name='watches')
