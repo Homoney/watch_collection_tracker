@@ -206,11 +206,11 @@ export default function WatchDetailPage() {
               </svg>
               Back to Watches
             </button>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               {watch.brand?.name} {watch.model}
             </h1>
             {watch.reference_number && (
-              <p className="text-gray-600 mt-1">Reference: {watch.reference_number}</p>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">Reference: {watch.reference_number}</p>
             )}
           </div>
           <div className="flex gap-3">
@@ -341,56 +341,56 @@ export default function WatchDetailPage() {
 
           <div className="lg:col-span-2 space-y-6">
             <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Basic Information</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h2>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Brand</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{watch.brand?.name || 'N/A'}</dd>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Brand</dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.brand?.name || 'N/A'}</dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Model</dt>
-                  <dd className="mt-1 text-sm text-gray-900">{watch.model}</dd>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Model</dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.model}</dd>
                 </div>
                 {watch.reference_number && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Reference Number</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{watch.reference_number}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Reference Number</dt>
+                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.reference_number}</dd>
                   </div>
                 )}
                 {watch.serial_number && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Serial Number</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{watch.serial_number}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Serial Number</dt>
+                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.serial_number}</dd>
                   </div>
                 )}
                 {watch.movement_type && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Movement Type</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{watch.movement_type.name}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Movement Type</dt>
+                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.movement_type.name}</dd>
                   </div>
                 )}
               </dl>
             </Card>
 
             <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Purchase Information</h2>
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Purchase Information</h2>
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Purchase Date</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Purchase Date</dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">
                     {formatDate(watch.purchase_date)}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-sm font-medium text-gray-500">Purchase Price</dt>
-                  <dd className="mt-1 text-sm text-gray-900">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Purchase Price</dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">
                     {formatCurrency(watch.purchase_price, watch.purchase_currency)}
                   </dd>
                 </div>
                 {watch.retailer && (
                   <div>
-                    <dt className="text-sm font-medium text-gray-500">Retailer</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{watch.retailer}</dd>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Retailer</dt>
+                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.retailer}</dd>
                   </div>
                 )}
               </dl>
@@ -402,36 +402,36 @@ export default function WatchDetailPage() {
               watch.water_resistance ||
               watch.power_reserve) && (
               <Card className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Specifications</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Specifications</h2>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {watch.case_diameter && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Case Diameter</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{watch.case_diameter}mm</dd>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Case Diameter</dt>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.case_diameter}mm</dd>
                     </div>
                   )}
                   {watch.case_thickness && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Case Thickness</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{watch.case_thickness}mm</dd>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Case Thickness</dt>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.case_thickness}mm</dd>
                     </div>
                   )}
                   {watch.lug_width && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Lug Width</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{watch.lug_width}mm</dd>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Lug Width</dt>
+                      <dd className="mt-1 text-sm text-sm text-gray-900 dark:text-gray-300">{watch.lug_width}mm</dd>
                     </div>
                   )}
                   {watch.water_resistance && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Water Resistance</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{watch.water_resistance}m</dd>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Water Resistance</dt>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.water_resistance}m</dd>
                     </div>
                   )}
                   {watch.power_reserve && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Power Reserve</dt>
-                      <dd className="mt-1 text-sm text-gray-900">{watch.power_reserve} hours</dd>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Power Reserve</dt>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.power_reserve} hours</dd>
                     </div>
                   )}
                 </dl>
