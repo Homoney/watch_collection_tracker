@@ -18,6 +18,7 @@ export default function WatchQRCode({ watchId }: WatchQRCodeProps) {
     if (showQR && !qrCodeBlobUrl) {
       fetchQRCode()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showQR, watchId])
 
   // Cleanup blob URL on unmount

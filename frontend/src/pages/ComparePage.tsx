@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
 import ComparisonTable from '@/components/watches/ComparisonTable'
@@ -11,7 +11,10 @@ export default function ComparePage() {
   const navigate = useNavigate()
 
   // Parse IDs from URL
-  const watchIds = searchParams.get('ids')?.split(',').filter(Boolean) || []
+  const watchIds = useMemo(
+    () => searchParams.get('ids')?.split(',').filter(Boolean) || [],
+    [searchParams]
+  )
 
   // Validate count
   useEffect(() => {
@@ -21,7 +24,7 @@ export default function ComparePage() {
       // Take first 4 only
       navigate(`/compare?ids=${watchIds.slice(0, 4).join(',')}`, { replace: true })
     }
-  }, [watchIds.length, navigate])
+  }, [watchIds, navigate])
 
   // Fetch watches
   const { watches, isLoading, hasErrors } = useCompareWatches(watchIds.slice(0, 4))

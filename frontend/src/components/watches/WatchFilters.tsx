@@ -55,6 +55,7 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
     }, 500)
 
     return () => clearTimeout(timeoutId)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search])
 
   const handleClearFilters = () => {
