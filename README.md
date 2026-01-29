@@ -89,12 +89,38 @@ watch-collection-tracker/
 
 ## Quick Start
 
-### Prerequisites
+### Option 1: Docker Hub (Recommended for Users)
+
+The easiest way to get started is using our pre-built images from Docker Hub:
+
+**[📦 View on Docker Hub](https://hub.docker.com/r/homoney/watch-tracker-backend)**
+
+See **[DOCKER_HUB.md](./DOCKER_HUB.md)** for complete Docker Hub deployment instructions.
+
+Quick install:
+```bash
+# Download compose file and configuration
+curl -O https://raw.githubusercontent.com/Homoney/watch_collection_tracker/main/docker-compose.hub.yml
+curl -O https://raw.githubusercontent.com/Homoney/watch_collection_tracker/main/.env.example
+mkdir -p nginx storage/uploads
+curl -o nginx/nginx.conf https://raw.githubusercontent.com/Homoney/watch_collection_tracker/main/nginx/nginx.conf
+
+# Configure
+cp .env.example .env
+nano .env  # Set POSTGRES_PASSWORD and SECRET_KEY
+
+# Start
+docker-compose -f docker-compose.hub.yml up -d
+```
+
+### Option 2: Build from Source (For Developers)
+
+#### Prerequisites
 
 - Docker and Docker Compose
 - Git
 
-### Installation
+#### Installation
 
 1. **Clone the repository**
 ```bash
