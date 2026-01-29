@@ -376,3 +376,61 @@ export interface ComparisonContextType {
   setCompareMode: (enabled: boolean) => void
   canSelectMore: boolean
 }
+
+// Movement Accuracy
+export interface MovementAccuracyReadingCreate {
+  watch_seconds_position: 0 | 15 | 30 | 45
+  is_initial_reading: boolean
+  notes?: string | null
+  timezone?: string
+}
+
+export interface MovementAccuracyReadingUpdate {
+  watch_seconds_position?: 0 | 15 | 30 | 45
+  is_initial_reading?: boolean
+  notes?: string | null
+  timezone?: string
+}
+
+export interface MovementAccuracyReading {
+  id: string
+  watch_id: string
+  reference_time: string  // ISO datetime
+  watch_seconds_position: 0 | 15 | 30 | 45
+  is_initial_reading: boolean
+  is_atomic_source: boolean
+  notes: string | null
+  timezone: string
+  created_at: string
+  updated_at: string
+}
+
+export interface MovementAccuracyReadingWithDrift extends MovementAccuracyReading {
+  drift_seconds_per_day: number | null
+  hours_since_initial: number | null
+  paired_initial_id: string | null
+}
+
+export interface AccuracyAnalytics {
+  watch_id: string
+  total_readings: number
+  total_initial_readings: number
+  total_subsequent_readings: number
+  current_drift_spd: number | null
+  last_reading_date: string | null
+  average_drift_spd: number | null
+  best_accuracy_spd: number | null
+  worst_accuracy_spd: number | null
+  drift_7d_avg: number | null
+  drift_30d_avg: number | null
+  drift_90d_avg: number | null
+  first_reading_date: string | null
+  date_range_days: number | null
+}
+
+export interface AtomicTimeResponse {
+  current_time: string  // ISO datetime
+  is_atomic_source: boolean
+  timezone: string
+  unix_timestamp: number
+}

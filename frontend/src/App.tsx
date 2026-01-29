@@ -14,6 +14,7 @@ const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'))
 const ComparePage = lazy(() => import('@/pages/ComparePage'))
 const WatchSettingPage = lazy(() => import('@/pages/WatchSettingPage'))
 const AdminPage = lazy(() => import('@/pages/AdminPage'))
+const MovementAccuracyPage = lazy(() => import('@/pages/MovementAccuracyPage'))
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -121,6 +122,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <WatchDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/watches/:id/accuracy"
+        element={
+          <ProtectedRoute>
+            <MovementAccuracyPage />
           </ProtectedRoute>
         }
       />

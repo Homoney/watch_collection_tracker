@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FileDown, Download } from 'lucide-react'
+import { FileDown, Download, Clock } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import AppLayout from '@/components/layout/AppLayout'
 import WatchForm from '@/components/watches/WatchForm'
@@ -217,6 +217,10 @@ export default function WatchDetailPage() {
             )}
           </div>
           <div className="flex gap-3">
+            <Button onClick={() => navigate(`/watches/${id}/accuracy`)} variant="secondary">
+              <Clock className="h-4 w-4 mr-2" />
+              Movement Accuracy
+            </Button>
             <Button onClick={handleExportPDF} variant="secondary">
               <FileDown className="h-4 w-4 mr-2" />
               Export PDF

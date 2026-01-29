@@ -1,8 +1,8 @@
 # Claude Context - Watch Collection Tracker
 
 **Last Updated**: 2026-01-29
-**Current Phase**: Phase 8 Complete ✓ (User Management & Admin Panel)
-**Latest Changes**: Added role-based access control with admin panel, fixed dark mode text readability issues.
+**Current Phase**: Phase 9 Complete ✓ (Movement Accuracy Tracking)
+**Latest Changes**: Comprehensive movement accuracy tracking with atomic clock synchronization, drift calculations, analytics, and visualizations.
 
 ---
 
@@ -93,6 +93,34 @@ Reference data, Collections CRUD, Watches CRUD, filtering/sorting/pagination
 - Fixed dark mode text readability in input fields and select boxes
 - Fixed dark mode text readability in watch detail sections
 - Proper contrast colors for light and dark modes
+
+### ✅ Phase 9: Movement Accuracy Tracking
+**Overview**: Track watch movement accuracy over time by comparing against atomic clock reference.
+
+**Features**:
+- Real-time atomic clock display (WorldTimeAPI integration with fallback)
+- Second mark recording (0, 15, 30, 45) to eliminate human reaction time errors
+- Drift calculation in seconds per day (positive = fast, negative = slow)
+- Initial readings for baseline/reset points (after regulation, service, etc.)
+- Subsequent readings to measure drift since last initial
+- Automatic pairing of readings (finds most recent initial within 90 days)
+- Validation: minimum 6 hours between initial and subsequent, maximum 90 days
+- Analytics: current drift, average drift, best/worst accuracy, time-based trends (7d/30d/90d)
+- Recharts visualization showing drift over time with reference line at zero
+- Timeline view of all readings with drift calculations
+- Notes field for context (position, temperature, etc.)
+- Dark mode support with AppLayout integration
+
+**Technical Details**:
+- Backend: WorldTimeAPI for atomic time, graceful fallback to server time
+- Database: movement_accuracy_readings table with 4 indexes
+- API: 7 endpoints (atomic-time, CRUD operations, analytics)
+- Frontend: 6 new components (AtomicClock, Form, List, Analytics, Chart, Page)
+- React Query hooks with 1-second refresh for atomic time
+- Drift calculation: `((watch_elapsed - reference_elapsed) / hours_elapsed) * 24`
+- Color-coded accuracy indicators: green ≤5 spd, yellow ≤10 spd, red >10 spd
+
+**Access**: Watch Detail Page → "Movement Accuracy" button
 
 ---
 

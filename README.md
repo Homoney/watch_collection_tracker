@@ -15,6 +15,7 @@ A modern web application for watch collectors to track their collections with mu
 - **Performance Analytics**: Watch-level and collection-level analytics with trend indicators
 - **Interactive Dashboards**: Recharts visualizations with line charts, bar charts, and pie charts
 - **Collection Analytics**: Brand value breakdown, top/worst performers, distribution percentages
+- **Movement Accuracy Tracking**: Track watch accuracy with atomic clock synchronization, drift calculations in seconds per day, analytics and visualizations
 - **Multi-Currency Support**: USD, EUR, GBP, CHF, JPY, AUD, CAD
 - **Document Management**: Upload service receipts, warranties, certificates (PDF, JPG, PNG)
 - **Export & Backup**: Full database dumps and JSON exports

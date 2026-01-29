@@ -70,3 +70,4 @@ class Watch(Base):
     images = relationship("WatchImage", back_populates="watch", cascade="all, delete-orphan")
     service_history = relationship("ServiceHistory", back_populates="watch", cascade="all, delete-orphan")
     market_values = relationship("MarketValue", back_populates="watch", cascade="all, delete-orphan")
+    accuracy_readings = relationship("MovementAccuracyReading", back_populates="watch", cascade="all, delete-orphan")

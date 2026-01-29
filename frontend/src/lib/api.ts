@@ -30,6 +30,12 @@ import type {
   SavedSearch,
   SavedSearchCreate,
   SavedSearchUpdate,
+  MovementAccuracyReadingCreate,
+  MovementAccuracyReadingUpdate,
+  MovementAccuracyReading,
+  MovementAccuracyReadingWithDrift,
+  AccuracyAnalytics,
+  AtomicTimeResponse,
 } from '@/types'
 
 // Use relative URL so it works from any hostname/IP
@@ -456,5 +462,47 @@ export const usersApi = {
 
   delete: async (userId: string): Promise<void> => {
     await api.delete(`/v1/users/${userId}`)
+  },
+}
+
+// Movement Accuracy API
+export const movementAccuracyApi = {
+  getAtomicTime: async (timezone: string = 'UTC'): Promise<AtomicTimeResponse> => {
+    const response = await api.get<AtomicTimeResponse>(`/v1/atomic-time?tz=${timezone}`)
+    return response.data
+  },
+
+  create: async (watchId: string, data: MovementAccuracyReadingCreate): Promise<MovementAccuracyReading> => {
+    const response = await api.post<MovementAccuracyReading>(`/v1/watches/${watchId}/accuracy-readings`, data)
+    return response.data
+  },
+
+  list: async (watchId: string): Promise<MovementAccuracyReadingWithDrift[]> => {
+    const response = await api.get<MovementAccuracyReadingWithDrift[]>(`/v1/watches/${watchId}/accuracy-readings`)
+    return response.data
+  },
+
+  get: async (watchId: string, readingId: string): Promise<MovementAccuracyReadingWithDrift> => {
+    const response = await api.get<MovementAccuracyReadingWithDrift>(
+      `/v1/watches/${watchId}/accuracy-readings/${readingId}`
+    )
+    return response.data
+  },
+
+  update: async (watchId: string, readingId: string, data: MovementAccuracyReadingUpdate): Promise<MovementAccuracyReading> => {
+    const response = await api.put<MovementAccuracyReading>(
+      `/v1/watches/${watchId}/accuracy-readings/${readingId}`,
+      data
+    )
+    return response.data
+  },
+
+  delete: async (watchId: string, readingId: string): Promise<void> => {
+    await api.delete(`/v1/watches/${watchId}/accuracy-readings/${readingId}`)
+  },
+
+  getAnalytics: async (watchId: string): Promise<AccuracyAnalytics> => {
+    const response = await api.get<AccuracyAnalytics>(`/v1/watches/${watchId}/accuracy-analytics`)
+    return response.data
   },
 }
