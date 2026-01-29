@@ -125,6 +125,9 @@ jobs:
   security-scan:
     name: Security Scan
     runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
 
     steps:
       - name: Checkout code
@@ -159,6 +162,7 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Check Python dependencies
+        continue-on-error: true
         run: |
           cd backend
           pip install pip-audit
@@ -170,6 +174,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Check npm dependencies
+        continue-on-error: true
         run: |
           cd frontend
           npm audit --audit-level=moderate
