@@ -5,6 +5,7 @@ A modern web application for watch collectors to track their collections with mu
 ## Features
 
 - **Multi-User Support**: Secure authentication with JWT tokens, isolated user data
+- **User Management**: Role-based access control with admin panel for managing users
 - **Watch Management**: Track brand, model, reference numbers, purchase info, specifications
 - **Image Management**: Multiple images per watch with drag-and-drop upload, full-screen lightbox
 - **Collections**: Organize watches into multiple collections (Current, Wishlist, Sold, etc.)
@@ -17,6 +18,7 @@ A modern web application for watch collectors to track their collections with mu
 - **Multi-Currency Support**: USD, EUR, GBP, CHF, JPY, AUD, CAD
 - **Document Management**: Upload service receipts, warranties, certificates (PDF, JPG, PNG)
 - **Export & Backup**: Full database dumps and JSON exports
+- **Dark Mode**: Full dark mode support with proper contrast ratios
 - **Responsive Design**: Works on desktop and mobile
 
 ## Tech Stack
@@ -258,10 +260,17 @@ Once the application is running, visit http://localhost:8080/api/docs for intera
 - `GET /api/v1/watches/{watch_id}/analytics` - Get watch performance analytics (ROI, returns, value changes)
 - `GET /api/v1/collection-analytics` - Get collection-wide analytics (total value, brand breakdown, top performers)
 
+#### User Management (Admin Only)
+- `GET /api/v1/users/` - List all users
+- `GET /api/v1/users/{user_id}` - Get user details
+- `PATCH /api/v1/users/{user_id}` - Update user role (promote/demote)
+- `POST /api/v1/users/{user_id}/reset-password` - Reset user password
+- `DELETE /api/v1/users/{user_id}` - Delete user account
+
 ## Database Schema
 
 ### Core Tables
-- **users** - User accounts and preferences
+- **users** - User accounts, preferences, and roles (admin/user)
 - **collections** - User-defined watch collections
 - **watches** - Watch details and specifications
 - **watch_images** - Multiple images per watch
@@ -468,6 +477,26 @@ docker-compose up -d
 - Bundle size: 240KB → <200KB (17% smaller)
 
 **Production Ready**: ✅ Application is ready for deployment with comprehensive testing, security hardening, performance optimization, and documentation.
+
+### ✅ Phase 8: User Management & UI Fixes (COMPLETED)
+**User Management**:
+- Role-based access control (admin/user roles)
+- First registered user automatically becomes admin
+- Admin panel at `/admin` for user management
+- Promote/demote users between admin and regular user roles
+- Reset user passwords (admin only)
+- Delete user accounts with confirmation (admin only)
+- Self-protection: admins cannot demote or delete themselves
+- Security event logging for all admin operations
+- Admin-only API endpoints with 403 Forbidden protection
+- Role badges in user list (visual distinction)
+- Admin link in navigation bar (visible only to admins)
+
+**UI Fixes**:
+- Fixed dark mode text readability in input fields and select boxes
+- Fixed dark mode text readability in watch detail page sections
+- Proper contrast colors for both light and dark modes
+- All text now meets WCAG accessibility standards
 
 ### 🎯 Post-Production Enhancements
 - Increase test coverage to 80%

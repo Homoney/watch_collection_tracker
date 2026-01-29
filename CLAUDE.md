@@ -1,8 +1,8 @@
 # Claude Context - Watch Collection Tracker
 
-**Last Updated**: 2026-01-28
-**Current Phase**: Phase 7 Complete ✓ (Production Ready)
-**Latest Changes**: Comprehensive testing, security hardening, performance optimization, and documentation complete.
+**Last Updated**: 2026-01-29
+**Current Phase**: Phase 8 Complete ✓ (User Management & Admin Panel)
+**Latest Changes**: Added role-based access control with admin panel, fixed dark mode text readability issues.
 
 ---
 
@@ -77,12 +77,29 @@ Reference data, Collections CRUD, Watches CRUD, filtering/sorting/pagination
 **CI/CD**: 8-job pipeline (tests, security scanning, builds, integration tests)
 **Production**: docker-compose.prod.yml, health checks, resource limits, backups
 
+### ✅ Phase 8: User Management & UI Fixes
+**User Management**:
+- Role-based access control (admin/user roles)
+- First registered user automatically becomes admin
+- Admin panel for user management
+- Promote/demote users between roles
+- Reset user passwords (admin only)
+- Delete user accounts (admin only)
+- Self-protection (admins can't demote/delete themselves)
+- Security event logging for all admin actions
+- Admin-only API endpoints with 403 Forbidden protection
+
+**UI Fixes**:
+- Fixed dark mode text readability in input fields and select boxes
+- Fixed dark mode text readability in watch detail sections
+- Proper contrast colors for light and dark modes
+
 ---
 
 ## Architecture
 
 ### Database Schema
-- **Users**: Email/password auth, JWT tokens
+- **Users**: Email/password auth, JWT tokens, role (admin/user)
 - **Brands, MovementTypes, Complications**: Reference data
 - **Collections**: User collections with color coding
 - **Watches**: Specs, purchase info, current market value
@@ -94,8 +111,8 @@ Reference data, Collections CRUD, Watches CRUD, filtering/sorting/pagination
 ### Key Directories
 ```
 backend/app/
-  ├── api/v1/          # auth, reference, collections, watches, images, service_history, market_values
-  ├── core/            # security, deps
+  ├── api/v1/          # auth, reference, collections, watches, images, service_history, market_values, users
+  ├── core/            # security, deps (includes get_current_admin)
   ├── models/          # SQLAlchemy models
   ├── schemas/         # Pydantic schemas
   └── utils/           # file_upload
@@ -107,7 +124,7 @@ frontend/src/
   │   └── watches/     # Image*, Service*, MarketValue*, WatchAnalytics, ValueChart, Comparison*
   ├── contexts/        # ComparisonContext
   ├── hooks/           # useWatches, useWatchImages, useServiceHistory, useMarketValues, useCompareWatches
-  ├── pages/           # WatchDetailPage, AnalyticsPage, ComparePage
+  ├── pages/           # WatchDetailPage, AnalyticsPage, ComparePage, AdminPage
   └── lib/api.ts       # API client
 
 storage/
@@ -152,6 +169,13 @@ storage/
 - `GET|PUT|DELETE /api/v1/watches/{watch_id}/market-values/{value_id}`
 - `GET /api/v1/watches/{watch_id}/analytics` - Watch performance
 - `GET /api/v1/collection-analytics` - Collection-wide analytics
+
+### User Management (Admin Only)
+- `GET /api/v1/users/` - List all users
+- `GET /api/v1/users/{user_id}` - Get user details
+- `PATCH /api/v1/users/{user_id}` - Update user role
+- `POST /api/v1/users/{user_id}/reset-password` - Reset user password
+- `DELETE /api/v1/users/{user_id}` - Delete user
 
 ---
 
