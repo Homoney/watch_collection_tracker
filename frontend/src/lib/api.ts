@@ -436,7 +436,7 @@ export const savedSearchesApi = {
 // User Management API (Admin only)
 export const usersApi = {
   list: async (): Promise<User[]> => {
-    const response = await api.get<User[]>('/v1/users')
+    const response = await api.get<User[]>('/v1/users/')
     return response.data
   },
 
