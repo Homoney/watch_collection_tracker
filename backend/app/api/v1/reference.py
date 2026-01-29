@@ -1,9 +1,12 @@
+from typing import List
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from typing import List
+
 from app.database import get_db
-from app.models.reference import Brand, MovementType, Complication
-from app.schemas.reference import BrandResponse, MovementTypeResponse, ComplicationResponse
+from app.models.reference import Brand, Complication, MovementType
+from app.schemas.reference import (BrandResponse, ComplicationResponse,
+                                   MovementTypeResponse)
 
 router = APIRouter()
 
@@ -17,10 +20,18 @@ def list_brands(db: Session = Depends(get_db)):
 @router.get("/movement-types", response_model=List[MovementTypeResponse])
 def list_movement_types(db: Session = Depends(get_db)):
     """Get all movement types ordered by sort_order"""
-    return db.query(MovementType).order_by(MovementType.sort_order, MovementType.name).all()
+    return (
+        db.query(MovementType)
+        .order_by(MovementType.sort_order, MovementType.name)
+        .all()
+    )
 
 
 @router.get("/complications", response_model=List[ComplicationResponse])
 def list_complications(db: Session = Depends(get_db)):
     """Get all complications ordered by sort_order"""
-    return db.query(Complication).order_by(Complication.sort_order, Complication.name).all()
+    return (
+        db.query(Complication)
+        .order_by(Complication.sort_order, Complication.name)
+        .all()
+    )

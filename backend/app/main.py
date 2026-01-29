@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.v1 import (auth, collections, images, market_values,
+                        movement_accuracy, reference, saved_searches,
+                        service_history, users, watches)
 from app.config import settings
-from app.api.v1 import auth, reference, collections, watches, images, service_history, market_values, saved_searches, users, movement_accuracy
 from app.middleware.cache import CacheMiddleware
 
 app = FastAPI(
@@ -51,8 +54,14 @@ Authorization: Bearer <your_access_token>
         "name": "MIT",
     },
     openapi_tags=[
-        {"name": "Authentication", "description": "User authentication and registration"},
-        {"name": "Reference Data", "description": "Brands, movement types, and complications"},
+        {
+            "name": "Authentication",
+            "description": "User authentication and registration",
+        },
+        {
+            "name": "Reference Data",
+            "description": "Brands, movement types, and complications",
+        },
         {"name": "Collections", "description": "Watch collection management"},
         {"name": "Watches", "description": "Watch CRUD operations and search"},
         {"name": "Images", "description": "Watch image upload and management"},
@@ -61,8 +70,11 @@ Authorization: Bearer <your_access_token>
         {"name": "Analytics", "description": "Collection-wide performance analytics"},
         {"name": "Saved Searches", "description": "Save and manage watch searches"},
         {"name": "User Management", "description": "Admin-only user management"},
-        {"name": "Movement Accuracy", "description": "Watch movement accuracy tracking and drift calculations"},
-    ]
+        {
+            "name": "Movement Accuracy",
+            "description": "Watch movement accuracy tracking and drift calculations",
+        },
+    ],
 )
 
 # Cache middleware (must be before CORS)
@@ -79,20 +91,33 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
-app.include_router(reference.router, prefix="/api/v1/reference", tags=["Reference Data"])
-app.include_router(collections.router, prefix="/api/v1/collections", tags=["Collections"])
+app.include_router(
+    reference.router, prefix="/api/v1/reference", tags=["Reference Data"]
+)
+app.include_router(
+    collections.router, prefix="/api/v1/collections", tags=["Collections"]
+)
 app.include_router(watches.router, prefix="/api/v1/watches", tags=["Watches"])
 app.include_router(images.router, prefix="/api/v1/watches", tags=["Images"])
-app.include_router(service_history.router, prefix="/api/v1/watches", tags=["Service History"])
+app.include_router(
+    service_history.router, prefix="/api/v1/watches", tags=["Service History"]
+)
 # Market values - register collection analytics separately to avoid path conflicts
 import app.api.v1.market_values as mv
+
 app.include_router(mv.collection_analytics_router, prefix="/api/v1", tags=["Analytics"])
 app.include_router(mv.router, prefix="/api/v1/watches", tags=["Market Values"])
-app.include_router(saved_searches.router, prefix="/api/v1/saved-searches", tags=["Saved Searches"])
+app.include_router(
+    saved_searches.router, prefix="/api/v1/saved-searches", tags=["Saved Searches"]
+)
 app.include_router(users.router, prefix="/api/v1/users", tags=["User Management"])
 # Movement accuracy - atomic-time is public (no auth), watch-specific routes require auth
-app.include_router(movement_accuracy.atomic_time_router, prefix="/api/v1", tags=["Movement Accuracy"])
-app.include_router(movement_accuracy.router, prefix="/api/v1/watches", tags=["Movement Accuracy"])
+app.include_router(
+    movement_accuracy.atomic_time_router, prefix="/api/v1", tags=["Movement Accuracy"]
+)
+app.include_router(
+    movement_accuracy.router, prefix="/api/v1/watches", tags=["Movement Accuracy"]
+)
 
 
 @app.get("/")

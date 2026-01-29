@@ -1,28 +1,23 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
-from sqlalchemy.orm import Session
-from uuid import UUID
 from typing import List
-from app.database import get_db
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from sqlalchemy.orm import Session
+
+from app.config import settings
 from app.core.deps import get_current_user
+from app.database import get_db
 from app.models.user import User
 from app.models.watch import Watch
-from app.models.watch_image import WatchImage, ImageSourceEnum
-from app.schemas.watch_image import WatchImageResponse, UpdateImageRequest
-from app.utils.file_upload import (
-    validate_image_file,
-    save_uploaded_file,
-    delete_file
-)
-from app.config import settings
+from app.models.watch_image import ImageSourceEnum, WatchImage
+from app.schemas.watch_image import UpdateImageRequest, WatchImageResponse
+from app.utils.file_upload import (delete_file, save_uploaded_file,
+                                   validate_image_file)
 
 router = APIRouter()
 
 
-def verify_watch_ownership(
-    watch_id: UUID,
-    current_user: User,
-    db: Session
-) -> Watch:
+def verify_watch_ownership(watch_id: UUID, current_user: User, db: Session) -> Watch:
     """
     Verify that the watch exists and belongs to the current user.
 
@@ -37,26 +32,30 @@ def verify_watch_ownership(
     Raises:
         HTTPException: If watch not found or not owned by user
     """
-    watch = db.query(Watch).filter(
-        Watch.id == watch_id,
-        Watch.user_id == current_user.id
-    ).first()
+    watch = (
+        db.query(Watch)
+        .filter(Watch.id == watch_id, Watch.user_id == current_user.id)
+        .first()
+    )
 
     if not watch:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Watch not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Watch not found"
         )
 
     return watch
 
 
-@router.post("/{watch_id}/images", response_model=WatchImageResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{watch_id}/images",
+    response_model=WatchImageResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def upload_image(
     watch_id: UUID,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Upload an image for a watch.
@@ -72,10 +71,7 @@ async def upload_image(
     # Validate the uploaded file
     is_valid, error_msg = validate_image_file(file)
     if not is_valid:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_msg
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error_msg)
 
     # Check file size
     file.file.seek(0, 2)  # Seek to end
@@ -86,7 +82,7 @@ async def upload_image(
         max_size_mb = settings.MAX_UPLOAD_SIZE / (1024 * 1024)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File size exceeds maximum allowed size of {max_size_mb}MB"
+            detail=f"File size exceeds maximum allowed size of {max_size_mb}MB",
         )
 
     # Save file to disk
@@ -95,13 +91,13 @@ async def upload_image(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to save file: {str(e)}"
+            detail=f"Failed to save file: {str(e)}",
         )
 
     # Check if this is the first image for this watch
-    existing_images_count = db.query(WatchImage).filter(
-        WatchImage.watch_id == watch_id
-    ).count()
+    existing_images_count = (
+        db.query(WatchImage).filter(WatchImage.watch_id == watch_id).count()
+    )
 
     is_primary = existing_images_count == 0  # First image is primary by default
 
@@ -116,7 +112,7 @@ async def upload_image(
         height=file_metadata["height"],
         is_primary=is_primary,
         sort_order=existing_images_count,
-        source=ImageSourceEnum.USER_UPLOAD
+        source=ImageSourceEnum.USER_UPLOAD,
     )
 
     db.add(watch_image)
@@ -130,7 +126,7 @@ async def upload_image(
 def list_images(
     watch_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     List all images for a watch, ordered by sort_order.
@@ -139,9 +135,12 @@ def list_images(
     watch = verify_watch_ownership(watch_id, current_user, db)
 
     # Query images
-    images = db.query(WatchImage).filter(
-        WatchImage.watch_id == watch_id
-    ).order_by(WatchImage.sort_order).all()
+    images = (
+        db.query(WatchImage)
+        .filter(WatchImage.watch_id == watch_id)
+        .order_by(WatchImage.sort_order)
+        .all()
+    )
 
     return images
 
@@ -152,7 +151,7 @@ def update_image(
     image_id: UUID,
     update_data: UpdateImageRequest,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Update image metadata (set as primary or change sort order).
@@ -163,40 +162,41 @@ def update_image(
     watch = verify_watch_ownership(watch_id, current_user, db)
 
     # Find the image
-    image = db.query(WatchImage).filter(
-        WatchImage.id == image_id,
-        WatchImage.watch_id == watch_id
-    ).first()
+    image = (
+        db.query(WatchImage)
+        .filter(WatchImage.id == image_id, WatchImage.watch_id == watch_id)
+        .first()
+    )
 
     if not image:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Image not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Image not found"
         )
 
     # Handle primary image logic
     if update_data.is_primary is True:
         # Unset all other images as primary
         db.query(WatchImage).filter(
-            WatchImage.watch_id == watch_id,
-            WatchImage.id != image_id
+            WatchImage.watch_id == watch_id, WatchImage.id != image_id
         ).update({"is_primary": False})
 
         image.is_primary = True
 
     elif update_data.is_primary is False:
         # Prevent unsetting primary if this is the only image
-        total_images = db.query(WatchImage).filter(
-            WatchImage.watch_id == watch_id
-        ).count()
+        total_images = (
+            db.query(WatchImage).filter(WatchImage.watch_id == watch_id).count()
+        )
 
         if total_images > 1:
             image.is_primary = False
             # Auto-promote the next image by sort_order
-            next_image = db.query(WatchImage).filter(
-                WatchImage.watch_id == watch_id,
-                WatchImage.id != image_id
-            ).order_by(WatchImage.sort_order).first()
+            next_image = (
+                db.query(WatchImage)
+                .filter(WatchImage.watch_id == watch_id, WatchImage.id != image_id)
+                .order_by(WatchImage.sort_order)
+                .first()
+            )
 
             if next_image:
                 next_image.is_primary = True
@@ -216,7 +216,7 @@ def delete_image(
     watch_id: UUID,
     image_id: UUID,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Delete an image (both database record and physical file).
@@ -227,15 +227,15 @@ def delete_image(
     watch = verify_watch_ownership(watch_id, current_user, db)
 
     # Find the image
-    image = db.query(WatchImage).filter(
-        WatchImage.id == image_id,
-        WatchImage.watch_id == watch_id
-    ).first()
+    image = (
+        db.query(WatchImage)
+        .filter(WatchImage.id == image_id, WatchImage.watch_id == watch_id)
+        .first()
+    )
 
     if not image:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Image not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Image not found"
         )
 
     was_primary = image.is_primary
@@ -250,9 +250,12 @@ def delete_image(
 
     # If this was the primary image, promote the next one
     if was_primary:
-        next_image = db.query(WatchImage).filter(
-            WatchImage.watch_id == watch_id
-        ).order_by(WatchImage.sort_order).first()
+        next_image = (
+            db.query(WatchImage)
+            .filter(WatchImage.watch_id == watch_id)
+            .order_by(WatchImage.sort_order)
+            .first()
+        )
 
         if next_image:
             next_image.is_primary = True

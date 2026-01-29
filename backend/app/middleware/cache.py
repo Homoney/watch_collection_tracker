@@ -1,10 +1,12 @@
 """
 Caching middleware for API responses
 """
+
+from typing import Callable
+
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
-from typing import Callable
 
 
 class CacheMiddleware(BaseHTTPMiddleware):
@@ -26,9 +28,13 @@ class CacheMiddleware(BaseHTTPMiddleware):
                 response.headers["Cache-Control"] = f"public, max-age=3600"
             # Cache static uploads forever (immutable)
             elif "/uploads/" in str(request.url.path):
-                response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+                response.headers["Cache-Control"] = (
+                    "public, max-age=31536000, immutable"
+                )
             # No cache for other API endpoints (default)
             elif "/api/" in str(request.url.path):
-                response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+                response.headers["Cache-Control"] = (
+                    "no-cache, no-store, must-revalidate"
+                )
 
         return response

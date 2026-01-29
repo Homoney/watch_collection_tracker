@@ -1,30 +1,29 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.database import get_db
-from app.schemas.user import (
-    UserCreate, UserLogin, UserResponse, TokenResponse,
-    TokenRefresh, UserUpdate, UserChangePassword
-)
-from app.models.user import User, UserRole
-from app.core.security import (
-    get_password_hash, verify_password,
-    create_access_token, create_refresh_token, decode_token
-)
+
 from app.core.deps import get_current_user
+from app.core.security import (create_access_token, create_refresh_token,
+                               decode_token, get_password_hash,
+                               verify_password)
+from app.database import get_db
+from app.models.user import User, UserRole
+from app.schemas.user import (TokenRefresh, TokenResponse, UserChangePassword,
+                              UserCreate, UserLogin, UserResponse, UserUpdate)
 from app.utils.logging import log_security_event
 
 router = APIRouter()
 
 
-@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
+)
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """Register a new user"""
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
 
     # Check if this is the first user (should be admin)
@@ -37,7 +36,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         email=user_data.email,
         full_name=user_data.full_name,
         hashed_password=hashed_password,
-        role=UserRole.admin if is_first_user else UserRole.user
+        role=UserRole.admin if is_first_user else UserRole.user,
     )
 
     db.add(new_user)
@@ -46,19 +45,14 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
 
     # Log successful registration
     log_security_event(
-        "user_registered",
-        user_id=str(new_user.id),
-        email=new_user.email
+        "user_registered", user_id=str(new_user.id), email=new_user.email
     )
 
     # Generate tokens
     access_token = create_access_token(data={"sub": str(new_user.id)})
     refresh_token = create_refresh_token(data={"sub": str(new_user.id)})
 
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token
-    )
+    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
 @router.post("/login", response_model=TokenResponse)
@@ -68,13 +62,11 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == user_data.email).first()
     if not user:
         log_security_event(
-            "login_failed",
-            email=user_data.email,
-            details={"reason": "user_not_found"}
+            "login_failed", email=user_data.email, details={"reason": "user_not_found"}
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
+            detail="Incorrect email or password",
         )
 
     # Verify password
@@ -83,28 +75,21 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
             "login_failed",
             user_id=str(user.id),
             email=user.email,
-            details={"reason": "invalid_password"}
+            details={"reason": "invalid_password"},
         )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password"
+            detail="Incorrect email or password",
         )
 
     # Log successful login
-    log_security_event(
-        "login_success",
-        user_id=str(user.id),
-        email=user.email
-    )
+    log_security_event("login_success", user_id=str(user.id), email=user.email)
 
     # Generate tokens
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
 
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token
-    )
+    return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -114,31 +99,25 @@ def refresh(token_data: TokenRefresh):
 
     if payload is None:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
         )
 
     if payload.get("type") != "refresh":
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token type"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
         )
 
     user_id = payload.get("sub")
     if user_id is None:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
         )
 
     # Generate new tokens
     access_token = create_access_token(data={"sub": user_id})
     new_refresh_token = create_refresh_token(data={"sub": user_id})
 
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=new_refresh_token
-    )
+    return TokenResponse(access_token=access_token, refresh_token=new_refresh_token)
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
@@ -159,7 +138,7 @@ def get_me(current_user: User = Depends(get_current_user)):
 def update_me(
     user_data: UserUpdate,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Update current user profile"""
     if user_data.full_name is not None:
@@ -179,14 +158,15 @@ def update_me(
 def change_password(
     password_data: UserChangePassword,
     current_user: User = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Change current user password"""
     # Verify current password
-    if not verify_password(password_data.current_password, current_user.hashed_password):
+    if not verify_password(
+        password_data.current_password, current_user.hashed_password
+    ):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Incorrect current password"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password"
         )
 
     # Update password

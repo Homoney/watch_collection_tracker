@@ -1,33 +1,25 @@
 from typing import List
 from uuid import UUID
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session, joinedload
 
+from app.config import settings
 from app.core.deps import get_current_user, get_db
+from app.models.service_history import ServiceDocument, ServiceHistory
 from app.models.user import User
 from app.models.watch import Watch
-from app.models.service_history import ServiceHistory, ServiceDocument
-from app.schemas.service_history import (
-    ServiceHistoryCreate,
-    ServiceHistoryUpdate,
-    ServiceHistoryResponse,
-    ServiceDocumentResponse,
-)
-from app.utils.file_upload import (
-    validate_document_file,
-    save_service_document,
-    delete_file,
-)
-from app.config import settings
+from app.schemas.service_history import (ServiceDocumentResponse,
+                                         ServiceHistoryCreate,
+                                         ServiceHistoryResponse,
+                                         ServiceHistoryUpdate)
+from app.utils.file_upload import (delete_file, save_service_document,
+                                   validate_document_file)
 
 router = APIRouter()
 
 
-def verify_watch_ownership(
-    watch_id: UUID,
-    current_user: User,
-    db: Session
-) -> Watch:
+def verify_watch_ownership(watch_id: UUID, current_user: User, db: Session) -> Watch:
     """
     Verify that the current user owns the specified watch.
 
@@ -42,25 +34,22 @@ def verify_watch_ownership(
     Raises:
         HTTPException: 404 if watch not found or not owned by user
     """
-    watch = db.query(Watch).filter(
-        Watch.id == watch_id,
-        Watch.user_id == current_user.id
-    ).first()
+    watch = (
+        db.query(Watch)
+        .filter(Watch.id == watch_id, Watch.user_id == current_user.id)
+        .first()
+    )
 
     if not watch:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Watch not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Watch not found"
         )
 
     return watch
 
 
 def verify_service_ownership(
-    watch_id: UUID,
-    service_id: UUID,
-    current_user: User,
-    db: Session
+    watch_id: UUID, service_id: UUID, current_user: User, db: Session
 ) -> tuple[Watch, ServiceHistory]:
     """
     Verify that the current user owns the watch and the service record belongs to that watch.
@@ -81,17 +70,16 @@ def verify_service_ownership(
     watch = verify_watch_ownership(watch_id, current_user, db)
 
     # Then verify service belongs to this watch
-    service = db.query(ServiceHistory).options(
-        joinedload(ServiceHistory.documents)
-    ).filter(
-        ServiceHistory.id == service_id,
-        ServiceHistory.watch_id == watch_id
-    ).first()
+    service = (
+        db.query(ServiceHistory)
+        .options(joinedload(ServiceHistory.documents))
+        .filter(ServiceHistory.id == service_id, ServiceHistory.watch_id == watch_id)
+        .first()
+    )
 
     if not service:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Service record not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Service record not found"
         )
 
     return watch, service
@@ -102,7 +90,7 @@ def create_service_history(
     watch_id: UUID,
     service_data: ServiceHistoryCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Create a new service history record for a watch.
@@ -133,7 +121,7 @@ def create_service_history(
 def list_service_history(
     watch_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     List all service history records for a watch, ordered by date (most recent first).
@@ -142,23 +130,25 @@ def list_service_history(
     watch = verify_watch_ownership(watch_id, current_user, db)
 
     # Query service history with eager loading of documents
-    services = db.query(ServiceHistory).options(
-        joinedload(ServiceHistory.documents)
-    ).filter(
-        ServiceHistory.watch_id == watch.id
-    ).order_by(
-        ServiceHistory.service_date.desc()
-    ).all()
+    services = (
+        db.query(ServiceHistory)
+        .options(joinedload(ServiceHistory.documents))
+        .filter(ServiceHistory.watch_id == watch.id)
+        .order_by(ServiceHistory.service_date.desc())
+        .all()
+    )
 
     return services
 
 
-@router.get("/{watch_id}/service-history/{service_id}", response_model=ServiceHistoryResponse)
+@router.get(
+    "/{watch_id}/service-history/{service_id}", response_model=ServiceHistoryResponse
+)
 def get_service_history(
     watch_id: UUID,
     service_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Get a specific service history record.
@@ -167,13 +157,15 @@ def get_service_history(
     return service
 
 
-@router.put("/{watch_id}/service-history/{service_id}", response_model=ServiceHistoryResponse)
+@router.put(
+    "/{watch_id}/service-history/{service_id}", response_model=ServiceHistoryResponse
+)
 def update_service_history(
     watch_id: UUID,
     service_id: UUID,
     service_data: ServiceHistoryUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Update a service history record.
@@ -191,12 +183,14 @@ def update_service_history(
     return service
 
 
-@router.delete("/{watch_id}/service-history/{service_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{watch_id}/service-history/{service_id}", status_code=status.HTTP_204_NO_CONTENT
+)
 def delete_service_history(
     watch_id: UUID,
     service_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Delete a service history record and all associated documents.
@@ -218,17 +212,18 @@ def delete_service_history(
 
 # Document management endpoints
 
+
 @router.post(
     "/{watch_id}/service-history/{service_id}/documents",
     response_model=ServiceDocumentResponse,
-    status_code=status.HTTP_201_CREATED
+    status_code=status.HTTP_201_CREATED,
 )
 async def upload_service_document(
     watch_id: UUID,
     service_id: UUID,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Upload a document (receipt, certificate, etc.) for a service record.
@@ -242,8 +237,7 @@ async def upload_service_document(
     is_valid, error_message = validate_document_file(file)
     if not is_valid:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_message
+            status_code=status.HTTP_400_BAD_REQUEST, detail=error_message
         )
 
     # Check file size (10MB limit)
@@ -254,7 +248,7 @@ async def upload_service_document(
     if file_size > 10 * 1024 * 1024:  # 10MB
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File size exceeds 10MB limit"
+            detail="File size exceeds 10MB limit",
         )
 
     # Save file to storage
@@ -262,7 +256,7 @@ async def upload_service_document(
         file=file,
         watch_id=watch_id,
         service_id=service_id,
-        upload_dir=settings.UPLOAD_DIR
+        upload_dir=settings.UPLOAD_DIR,
     )
 
     # Create database record
@@ -283,13 +277,13 @@ async def upload_service_document(
 
 @router.get(
     "/{watch_id}/service-history/{service_id}/documents",
-    response_model=List[ServiceDocumentResponse]
+    response_model=List[ServiceDocumentResponse],
 )
 def list_service_documents(
     watch_id: UUID,
     service_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     List all documents for a service record.
@@ -300,14 +294,14 @@ def list_service_documents(
 
 @router.delete(
     "/{watch_id}/service-history/{service_id}/documents/{document_id}",
-    status_code=status.HTTP_204_NO_CONTENT
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 def delete_service_document(
     watch_id: UUID,
     service_id: UUID,
     document_id: UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     """
     Delete a service document.
@@ -315,15 +309,18 @@ def delete_service_document(
     _, service = verify_service_ownership(watch_id, service_id, current_user, db)
 
     # Find the document
-    document = db.query(ServiceDocument).filter(
-        ServiceDocument.id == document_id,
-        ServiceDocument.service_history_id == service.id
-    ).first()
+    document = (
+        db.query(ServiceDocument)
+        .filter(
+            ServiceDocument.id == document_id,
+            ServiceDocument.service_history_id == service.id,
+        )
+        .first()
+    )
 
     if not document:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Document not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Document not found"
         )
 
     # Delete file from storage

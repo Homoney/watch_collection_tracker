@@ -54,6 +54,7 @@ jobs:
           POSTGRES_DB: watch_tracker_test
           POSTGRES_USER: testuser
           POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}
+          POSTGRES_HOST: localhost
           ALLOWED_ORIGINS: "*"
         run: |
           cd backend
@@ -66,6 +67,7 @@ jobs:
           POSTGRES_DB: watch_tracker_test
           POSTGRES_USER: testuser
           POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}
+          POSTGRES_HOST: localhost
           ALLOWED_ORIGINS: "*"
         run: |
           cd backend
@@ -114,7 +116,7 @@ jobs:
           npm run build
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: frontend-dist
           path: frontend/dist/
@@ -138,7 +140,7 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'

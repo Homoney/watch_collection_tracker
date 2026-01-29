@@ -1,9 +1,11 @@
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
 from typing import Optional
-from app.database import get_db
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.orm import Session
+
 from app.core.security import decode_token
+from app.database import get_db
 from app.models.user import User, UserRole
 
 security = HTTPBearer()
@@ -11,7 +13,7 @@ security = HTTPBearer()
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> User:
     """Dependency to get the current authenticated user"""
     token = credentials.credentials
@@ -51,8 +53,10 @@ def get_current_user(
 
 
 def get_current_user_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
-    db: Session = Depends(get_db)
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(
+        HTTPBearer(auto_error=False)
+    ),
+    db: Session = Depends(get_db),
 ) -> Optional[User]:
     """Dependency to optionally get the current authenticated user"""
     if credentials is None:
@@ -64,13 +68,10 @@ def get_current_user_optional(
         return None
 
 
-def get_current_admin(
-    current_user: User = Depends(get_current_user)
-) -> User:
+def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
     """Dependency to ensure the current user is an admin"""
     if current_user.role != UserRole.admin:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin privileges required"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required"
         )
     return current_user
