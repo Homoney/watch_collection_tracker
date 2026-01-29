@@ -475,12 +475,12 @@ export default function WatchDetailPage() {
 
             {(watch.current_market_value || watch.last_value_update) && (
               <Card className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Market Value</h2>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Market Value</h2>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {watch.current_market_value && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Current Market Value</dt>
-                      <dd className="mt-1 text-sm text-gray-900">
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Current Market Value</dt>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">
                         {formatCurrency(
                           watch.current_market_value,
                           watch.current_market_currency || watch.purchase_currency
@@ -490,8 +490,8 @@ export default function WatchDetailPage() {
                   )}
                   {watch.last_value_update && (
                     <div>
-                      <dt className="text-sm font-medium text-gray-500">Last Updated</dt>
-                      <dd className="mt-1 text-sm text-gray-900">
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">
                         {formatDate(watch.last_value_update)}
                       </dd>
                     </div>
@@ -502,8 +502,8 @@ export default function WatchDetailPage() {
 
             {watch.notes && (
               <Card className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Notes</h2>
-                <p className="text-sm text-gray-600 whitespace-pre-wrap">{watch.notes}</p>
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Notes</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{watch.notes}</p>
               </Card>
             )}
           </div>
