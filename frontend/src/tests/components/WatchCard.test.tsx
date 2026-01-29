@@ -1,11 +1,19 @@
 import { describe, it, expect, vi } from 'vitest'
 import { renderWithProviders, screen } from '../test-utils'
 import WatchCard from '@/components/watches/WatchCard'
-import type { Watch } from '@/types'
+import type { WatchListItem } from '@/types'
 
-const mockWatch: Partial<Watch> = {
+const mockWatch: WatchListItem = {
   id: '123',
+  brand_id: 'brand-1',
   model: 'Submariner Date',
+  reference_number: '116610LN',
+  collection_id: 'col-1',
+  purchase_date: '2020-01-15T00:00:00',
+  purchase_price: 9000.00,
+  purchase_currency: 'USD',
+  condition: 'excellent',
+  created_at: '2024-01-01T00:00:00',
   brand: {
     id: 'brand-1',
     name: 'Rolex',
@@ -23,28 +31,6 @@ const mockWatch: Partial<Watch> = {
     created_at: '2024-01-01T00:00:00',
     updated_at: '2024-01-01T00:00:00'
   },
-  reference_number: '116610LN',
-  serial_number: 'ABC123',
-  movement_type: {
-    id: 'mov-1',
-    name: 'Automatic',
-    sort_order: 0,
-    created_at: '2024-01-01T00:00:00',
-    updated_at: '2024-01-01T00:00:00'
-  },
-  complications: [],
-  case_diameter: 40,
-  water_resistance: 300,
-  purchase_date: '2020-01-15T00:00:00',
-  purchase_price: 9000.00,
-  purchase_currency: 'USD',
-  condition: 'excellent',
-  current_market_value: 15000.00,
-  current_market_currency: 'USD',
-  last_value_update: '2024-01-01T00:00:00',
-  user_id: 'user-1',
-  created_at: '2024-01-01T00:00:00',
-  updated_at: '2024-01-01T00:00:00',
   primary_image: {
     id: 'img-1',
     watch_id: '123',
