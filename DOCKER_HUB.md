@@ -74,8 +74,8 @@ This guide explains how to deploy the Watch Collection Tracker using pre-built i
 
 ## Available Images
 
-- **Backend**: `homoney/watch-tracker-backend`
-- **Frontend**: `homoney/watch-tracker-frontend`
+- **Backend**: `dhomoney/watch-tracker-backend`
+- **Frontend**: `dhomoney/watch-tracker-frontend`
 
 ### Tags
 - `latest`: Latest stable release from main branch

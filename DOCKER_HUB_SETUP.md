@@ -6,7 +6,7 @@ This guide explains how to set up automated Docker Hub publishing for the Watch 
 
 1. **Docker Hub Account**
    - Create an account at https://hub.docker.com if you don't have one
-   - Remember your Docker Hub username (currently set to `homoney` in the workflow)
+   - Remember your Docker Hub username (currently set to `dhomoney` in the workflow)
 
 2. **GitHub Repository**
    - Repository should be on GitHub
@@ -34,12 +34,12 @@ This guide explains how to set up automated Docker Hub publishing for the Watch 
 
 ## Step 3: Update Docker Hub Username (if needed)
 
-If your Docker Hub username is NOT `homoney`, you need to update the workflow:
+If your Docker Hub username is NOT `dhomoney`, you need to update the workflow:
 
 1. Open `.github/workflows/docker-publish.yml`
 2. Change line 12:
    ```yaml
-   DOCKER_USERNAME: homoney  # Change this to YOUR Docker Hub username
+   DOCKER_USERNAME: dhomoney  # Change this to YOUR Docker Hub username
    ```
 3. Commit the change
 
@@ -84,13 +84,13 @@ And automatically create a GitHub release with the docker-compose.hub.yml file.
 After the workflow completes (takes 10-15 minutes):
 
 1. Check Docker Hub:
-   - Backend: `https://hub.docker.com/r/homoney/watch-tracker-backend`
-   - Frontend: `https://hub.docker.com/r/homoney/watch-tracker-frontend`
+   - Backend: `https://hub.docker.com/r/dhomoney/watch-tracker-backend`
+   - Frontend: `https://hub.docker.com/r/dhomoney/watch-tracker-frontend`
 
 2. Test pulling the images:
    ```bash
-   docker pull homoney/watch-tracker-backend:latest
-   docker pull homoney/watch-tracker-frontend:latest
+   docker pull dhomoney/watch-tracker-backend:latest
+   docker pull dhomoney/watch-tracker-frontend:latest
    ```
 
 3. Test running with docker-compose:
@@ -112,8 +112,8 @@ The workflow builds for:
 
 ### Images Created
 The workflow creates two images:
-1. `homoney/watch-tracker-backend` - FastAPI backend
-2. `homoney/watch-tracker-frontend` - React frontend (served by nginx)
+1. `dhomoney/watch-tracker-backend` - FastAPI backend
+2. `dhomoney/watch-tracker-frontend` - React frontend (served by nginx)
 
 ### Build Time
 - First build: ~10-15 minutes (no cache)

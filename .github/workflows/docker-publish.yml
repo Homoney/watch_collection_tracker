@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  DOCKER_USERNAME: homoney  # Change this to your Docker Hub username
+  DOCKER_USERNAME: dhomoney  # Change this to your Docker Hub username
 
 jobs:
   build-and-push:

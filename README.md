@@ -93,7 +93,7 @@ watch-collection-tracker/
 
 The easiest way to get started is using our pre-built images from Docker Hub:
 
-**[📦 View on Docker Hub](https://hub.docker.com/r/homoney/watch-tracker-backend)**
+**[📦 View on Docker Hub](https://hub.docker.com/r/dhomoney/watch-tracker-backend)**
 
 See **[DOCKER_HUB.md](./DOCKER_HUB.md)** for complete Docker Hub deployment instructions.
 
