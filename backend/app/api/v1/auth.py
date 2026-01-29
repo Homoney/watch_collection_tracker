@@ -5,7 +5,7 @@ from app.schemas.user import (
     UserCreate, UserLogin, UserResponse, TokenResponse,
     TokenRefresh, UserUpdate, UserChangePassword
 )
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.core.security import (
     get_password_hash, verify_password,
     create_access_token, create_refresh_token, decode_token
@@ -27,12 +27,17 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             detail="Email already registered"
         )
 
+    # Check if this is the first user (should be admin)
+    user_count = db.query(User).count()
+    is_first_user = user_count == 0
+
     # Create new user
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
         email=user_data.email,
         full_name=user_data.full_name,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        role=UserRole.admin if is_first_user else UserRole.user
     )
 
     db.add(new_user)

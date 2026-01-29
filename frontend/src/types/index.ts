@@ -2,6 +2,7 @@ export interface User {
   id: string
   email: string
   full_name: string | null
+  role: string
   default_currency: string
   theme: string
   created_at: string

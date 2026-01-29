@@ -37,6 +37,11 @@ export default function Navbar() {
               <Link to="/analytics" className={navLinkClass('/analytics')}>
                 Analytics
               </Link>
+              {user?.role === 'admin' && (
+                <Link to="/admin" className={navLinkClass('/admin')}>
+                  Admin
+                </Link>
+              )}
               <Link to="/settings" className={navLinkClass('/settings')}>
                 Settings
               </Link>

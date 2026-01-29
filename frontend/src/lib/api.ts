@@ -432,3 +432,29 @@ export const savedSearchesApi = {
     await api.delete(`/v1/saved-searches/${searchId}`)
   },
 }
+
+// User Management API (Admin only)
+export const usersApi = {
+  list: async (): Promise<User[]> => {
+    const response = await api.get<User[]>('/v1/users')
+    return response.data
+  },
+
+  get: async (userId: string): Promise<User> => {
+    const response = await api.get<User>(`/v1/users/${userId}`)
+    return response.data
+  },
+
+  updateRole: async (userId: string, role: string): Promise<User> => {
+    const response = await api.patch<User>(`/v1/users/${userId}`, { role })
+    return response.data
+  },
+
+  resetPassword: async (userId: string, newPassword: string): Promise<void> => {
+    await api.post(`/v1/users/${userId}/reset-password`, { new_password: newPassword })
+  },
+
+  delete: async (userId: string): Promise<void> => {
+    await api.delete(`/v1/users/${userId}`)
+  },
+}

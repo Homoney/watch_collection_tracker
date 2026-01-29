@@ -19,6 +19,11 @@ class ThemeEnum(enum.Enum):
     dark = "dark"
 
 
+class UserRole(enum.Enum):
+    user = "user"
+    admin = "admin"
+
+
 class User(Base):
     __tablename__ = "users"
 
@@ -26,6 +31,11 @@ class User(Base):
     email = Column(String, unique=True, nullable=False, index=True)
     hashed_password = Column(String, nullable=False)
     full_name = Column(String)
+    role = Column(
+        Enum(UserRole, values_callable=lambda x: [e.value for e in x], name='userrole'),
+        default=UserRole.user,
+        nullable=False
+    )
     default_currency = Column(Enum(CurrencyEnum, name='currencyenum'), default=CurrencyEnum.USD, nullable=False)
     theme = Column(Enum(ThemeEnum, name='themeenum'), default=ThemeEnum.light, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

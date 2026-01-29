@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api.v1 import auth, reference, collections, watches, images, service_history, market_values, saved_searches
+from app.api.v1 import auth, reference, collections, watches, images, service_history, market_values, saved_searches, users
 from app.middleware.cache import CacheMiddleware
 
 app = FastAPI(
@@ -60,6 +60,7 @@ Authorization: Bearer <your_access_token>
         {"name": "Market Values", "description": "Market value tracking and analytics"},
         {"name": "Analytics", "description": "Collection-wide performance analytics"},
         {"name": "Saved Searches", "description": "Save and manage watch searches"},
+        {"name": "User Management", "description": "Admin-only user management"},
     ]
 )
 
@@ -87,6 +88,7 @@ import app.api.v1.market_values as mv
 app.include_router(mv.collection_analytics_router, prefix="/api/v1", tags=["Analytics"])
 app.include_router(mv.router, prefix="/api/v1/watches", tags=["Market Values"])
 app.include_router(saved_searches.router, prefix="/api/v1/saved-searches", tags=["Saved Searches"])
+app.include_router(users.router, prefix="/api/v1/users", tags=["User Management"])
 
 
 @app.get("/")

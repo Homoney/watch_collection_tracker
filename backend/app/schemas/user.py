@@ -31,6 +31,7 @@ class UserChangePassword(BaseModel):
 
 class UserResponse(UserBase):
     id: UUID
+    role: str
     default_currency: str
     theme: str
     created_at: datetime
@@ -48,3 +49,13 @@ class TokenResponse(BaseModel):
 
 class TokenRefresh(BaseModel):
     refresh_token: str
+
+
+class UserAdminUpdate(BaseModel):
+    """Admin-only user update schema"""
+    role: Optional[str] = Field(None, pattern="^(user|admin)$")
+
+
+class UserAdminPasswordReset(BaseModel):
+    """Admin-only password reset schema"""
+    new_password: str = Field(..., min_length=8, max_length=100)

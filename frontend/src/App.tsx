@@ -13,6 +13,7 @@ const CollectionsPage = lazy(() => import('@/pages/CollectionsPage'))
 const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'))
 const ComparePage = lazy(() => import('@/pages/ComparePage'))
 const WatchSettingPage = lazy(() => import('@/pages/WatchSettingPage'))
+const AdminPage = lazy(() => import('@/pages/AdminPage'))
 
 // Loading component for Suspense fallback
 const LoadingSpinner = () => (
@@ -51,6 +52,28 @@ const PublicRoute = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (isAuthenticated) {
+    return <Navigate to="/dashboard" replace />
+  }
+
+  return <>{children}</>
+}
+
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, isAuthenticated, isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl">Loading...</div>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (user?.role !== 'admin') {
     return <Navigate to="/dashboard" replace />
   }
 
@@ -131,6 +154,14 @@ function AppRoutes() {
           <ProtectedRoute>
             <WatchSettingPage />
           </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin"
+        element={
+          <AdminRoute>
+            <AdminPage />
+          </AdminRoute>
         }
       />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
