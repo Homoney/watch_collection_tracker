@@ -21,7 +21,7 @@ jobs:
         env:
           POSTGRES_DB: watch_tracker_test
           POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}
         ports:
           - 5432:5432
         options: >-
@@ -49,11 +49,11 @@ jobs:
 
       - name: Run database migrations
         env:
-          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/watch_tracker_test
+          DATABASE_URL: postgresql://testuser:${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}@localhost:5432/watch_tracker_test
           SECRET_KEY: test-secret-key-for-ci
           POSTGRES_DB: watch_tracker_test
           POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}
           ALLOWED_ORIGINS: "*"
         run: |
           cd backend
@@ -61,11 +61,11 @@ jobs:
 
       - name: Run tests with coverage
         env:
-          DATABASE_URL: postgresql://testuser:testpass@localhost:5432/watch_tracker_test
+          DATABASE_URL: postgresql://testuser:${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}@localhost:5432/watch_tracker_test
           SECRET_KEY: test-secret-key-for-ci
           POSTGRES_DB: watch_tracker_test
           POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: testpass
+          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}
           ALLOWED_ORIGINS: "*"
         run: |
           cd backend
@@ -211,11 +211,13 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Create .env file
+        env:
+          CI_PG_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}
         run: |
           cat > .env << EOF
           POSTGRES_DB=watch_tracker_test
           POSTGRES_USER=testuser
-          POSTGRES_PASSWORD=testpass
+          POSTGRES_PASSWORD=$CI_PG_PASSWORD
           SECRET_KEY=test-secret-key-for-integration
           ALGORITHM=HS256
           ACCESS_TOKEN_EXPIRE_MINUTES=30
