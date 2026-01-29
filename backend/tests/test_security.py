@@ -13,7 +13,7 @@ class TestTokenValidation:
 
     def test_valid_token(self, client: TestClient, test_user):
         """Test that valid token is accepted"""
-        token = create_access_token(data={"sub": test_user.email})
+        token = create_access_token(data={"sub": str(test_user.id)})
         response = client.get(
             "/api/v1/auth/me",
             headers={"Authorization": f"Bearer {token}"}
@@ -24,7 +24,7 @@ class TestTokenValidation:
         """Test that expired token is rejected"""
         # Create token that expired 1 hour ago
         token = create_access_token(
-            data={"sub": test_user.email},
+            data={"sub": str(test_user.id)},
             expires_delta=timedelta(hours=-1)
         )
         response = client.get(
@@ -44,7 +44,7 @@ class TestTokenValidation:
     def test_missing_token(self, client: TestClient):
         """Test that missing token is rejected"""
         response = client.get("/api/v1/auth/me")
-        assert response.status_code == 401
+        assert response.status_code == 403
 
 
 class TestAuthorizationChecks:

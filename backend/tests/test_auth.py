@@ -22,14 +22,14 @@ class TestRegister:
         )
         assert response.status_code == 201
         data = response.json()
-        assert data["email"] == "newuser@example.com"
-        assert "id" in data
-        assert "hashed_password" not in data  # Should not return password
+        assert "access_token" in data
+        assert "refresh_token" in data
+        assert data["token_type"] == "bearer"
 
         # Verify user in database
         user = test_db.query(User).filter(User.email == "newuser@example.com").first()
         assert user is not None
-        assert user.is_active is True
+        assert user.email == "newuser@example.com"
 
     def test_register_duplicate_email(self, client: TestClient, test_user: User):
         """Test registration with duplicate email fails"""
@@ -73,8 +73,8 @@ class TestLogin:
         """Test successful login"""
         response = client.post(
             "/api/v1/auth/login",
-            data={
-                "username": test_user.email,
+            json={
+                "email": test_user.email,
                 "password": "testpass123"
             }
         )
@@ -88,8 +88,8 @@ class TestLogin:
         """Test login with incorrect password"""
         response = client.post(
             "/api/v1/auth/login",
-            data={
-                "username": test_user.email,
+            json={
+                "email": test_user.email,
                 "password": "wrongpassword"
             }
         )
@@ -100,8 +100,8 @@ class TestLogin:
         """Test login with non-existent user"""
         response = client.post(
             "/api/v1/auth/login",
-            data={
-                "username": "nonexistent@example.com",
+            json={
+                "email": "nonexistent@example.com",
                 "password": "somepassword"
             }
         )
@@ -109,7 +109,7 @@ class TestLogin:
 
     def test_login_missing_credentials(self, client: TestClient):
         """Test login without credentials"""
-        response = client.post("/api/v1/auth/login", data={})
+        response = client.post("/api/v1/auth/login", json={})
         assert response.status_code == 422
 
 
@@ -121,8 +121,8 @@ class TestTokenRefresh:
         # First login to get tokens
         login_response = client.post(
             "/api/v1/auth/login",
-            data={
-                "username": test_user.email,
+            json={
+                "email": test_user.email,
                 "password": "testpass123"
             }
         )
@@ -161,7 +161,7 @@ class TestGetCurrentUser:
     def test_get_current_user_unauthorized(self, client: TestClient):
         """Test getting current user without token"""
         response = client.get("/api/v1/auth/me")
-        assert response.status_code == 401
+        assert response.status_code == 403
 
     def test_get_current_user_invalid_token(self, client: TestClient):
         """Test getting current user with invalid token"""

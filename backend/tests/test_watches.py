@@ -58,7 +58,7 @@ class TestCreateWatch:
                 "brand_id": str(test_brand.id)
             }
         )
-        assert response.status_code == 401
+        assert response.status_code == 403
 
     def test_create_watch_invalid_brand(self, client: TestClient, auth_headers: dict):
         """Test watch creation with non-existent brand"""

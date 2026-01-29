@@ -20,11 +20,14 @@ from app.models.watch import Watch
 from app.core.security import get_password_hash, create_access_token
 
 
-# Get test database URL from environment or use default
-TEST_DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://testuser:testpass@localhost:5432/watch_tracker_test"
-)
+# Get test database URL from environment variables (same as main app)
+POSTGRES_USER = os.getenv("POSTGRES_USER", "testuser")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "testpass")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "watch_tracker_test")
+
+TEST_DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
 
 engine = create_engine(TEST_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -104,7 +107,7 @@ def auth_headers(test_user: User) -> dict:
     """
     Generate JWT token for authenticated requests.
     """
-    access_token = create_access_token(data={"sub": test_user.email})
+    access_token = create_access_token(data={"sub": str(test_user.id)})
     return {"Authorization": f"Bearer {access_token}"}
 
 
@@ -113,7 +116,7 @@ def auth_headers2(test_user2: User) -> dict:
     """
     Generate JWT token for second user.
     """
-    access_token = create_access_token(data={"sub": test_user2.email})
+    access_token = create_access_token(data={"sub": str(test_user2.id)})
     return {"Authorization": f"Bearer {access_token}"}
 
 
@@ -134,7 +137,7 @@ def test_movement_type(test_db: Session) -> MovementType:
     """
     Create a test movement type.
     """
-    movement = MovementType(name="Automatic", description="Self-winding mechanical movement")
+    movement = MovementType(name="Automatic")
     test_db.add(movement)
     test_db.commit()
     test_db.refresh(movement)
@@ -146,7 +149,7 @@ def test_complication(test_db: Session) -> Complication:
     """
     Create a test complication.
     """
-    complication = Complication(name="Date", description="Date display")
+    complication = Complication(name="Date")
     test_db.add(complication)
     test_db.commit()
     test_db.refresh(complication)
@@ -188,10 +191,8 @@ def test_watch(
         reference_number="116610LN",
         serial_number="ABC12345",
         movement_type_id=test_movement_type.id,
-        case_material="Stainless Steel",
         case_diameter=40.0,
         water_resistance=300,
-        purchase_date="2020-01-15T00:00:00",
         purchase_price=9000.00,
         purchase_currency="USD",
         condition="excellent",
