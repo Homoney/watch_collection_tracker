@@ -1,9 +1,11 @@
+import enum
 import uuid
-from sqlalchemy import Column, String, DateTime, Enum
+from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Enum, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from datetime import datetime
-import enum
+
 from app.database import Base
 
 
@@ -32,16 +34,28 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     full_name = Column(String)
     role = Column(
-        Enum(UserRole, values_callable=lambda x: [e.value for e in x], name='userrole'),
+        Enum(UserRole, values_callable=lambda x: [e.value for e in x], name="userrole"),
         default=UserRole.user,
-        nullable=False
+        nullable=False,
     )
-    default_currency = Column(Enum(CurrencyEnum, name='currencyenum'), default=CurrencyEnum.USD, nullable=False)
-    theme = Column(Enum(ThemeEnum, name='themeenum'), default=ThemeEnum.light, nullable=False)
+    default_currency = Column(
+        Enum(CurrencyEnum, name="currencyenum"),
+        default=CurrencyEnum.USD,
+        nullable=False,
+    )
+    theme = Column(
+        Enum(ThemeEnum, name="themeenum"), default=ThemeEnum.light, nullable=False
+    )
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # Relationships
-    collections = relationship("Collection", back_populates="user", cascade="all, delete-orphan")
+    collections = relationship(
+        "Collection", back_populates="user", cascade="all, delete-orphan"
+    )
     watches = relationship("Watch", back_populates="user", cascade="all, delete-orphan")
-    saved_searches = relationship("SavedSearch", back_populates="user", cascade="all, delete-orphan")
+    saved_searches = relationship(
+        "SavedSearch", back_populates="user", cascade="all, delete-orphan"
+    )

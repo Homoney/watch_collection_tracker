@@ -1,9 +1,12 @@
+import enum
 import uuid
-from sqlalchemy import Column, String, Text, Numeric, DateTime, ForeignKey, Enum
+from datetime import datetime
+
+from sqlalchemy import (Column, DateTime, Enum, ForeignKey, Numeric, String,
+                        Text)
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from datetime import datetime
-import enum
+
 from app.database import Base
 
 
@@ -17,7 +20,12 @@ class MarketValue(Base):
     __tablename__ = "market_values"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    watch_id = Column(UUID(as_uuid=True), ForeignKey("watches.id", ondelete="CASCADE"), nullable=False, index=True)
+    watch_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("watches.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
 
     # Value information
     value = Column(Numeric(12, 2), nullable=False)
@@ -27,7 +35,7 @@ class MarketValue(Base):
     source = Column(
         Enum(ValueSourceEnum, values_callable=lambda x: [e.value for e in x]),
         default=ValueSourceEnum.MANUAL,
-        nullable=False
+        nullable=False,
     )
     notes = Column(Text)
 

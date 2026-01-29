@@ -1,9 +1,12 @@
-import uuid
-from sqlalchemy import Column, String, Text, Numeric, DateTime, ForeignKey, Enum, Integer
-from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import relationship
-from datetime import datetime
 import enum
+import uuid
+from datetime import datetime
+
+from sqlalchemy import (Column, DateTime, Enum, ForeignKey, Integer, Numeric,
+                        String, Text)
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.orm import relationship
+
 from app.database import Base
 
 
@@ -19,10 +22,21 @@ class Watch(Base):
     __tablename__ = "watches"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    collection_id = Column(UUID(as_uuid=True), ForeignKey("collections.id", ondelete="SET NULL"))
-    brand_id = Column(UUID(as_uuid=True), ForeignKey("brands.id", ondelete="RESTRICT"), nullable=False)
-    movement_type_id = Column(UUID(as_uuid=True), ForeignKey("movement_types.id", ondelete="RESTRICT"))
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    collection_id = Column(
+        UUID(as_uuid=True), ForeignKey("collections.id", ondelete="SET NULL")
+    )
+    brand_id = Column(
+        UUID(as_uuid=True), ForeignKey("brands.id", ondelete="RESTRICT"), nullable=False
+    )
+    movement_type_id = Column(
+        UUID(as_uuid=True), ForeignKey("movement_types.id", ondelete="RESTRICT")
+    )
 
     # Basic information
     model = Column(String, nullable=False)
@@ -60,14 +74,24 @@ class Watch(Base):
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
+    updated_at = Column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
 
     # Relationships
     user = relationship("User", back_populates="watches")
     collection = relationship("Collection", back_populates="watches")
     brand = relationship("Brand", back_populates="watches")
     movement_type = relationship("MovementType", back_populates="watches")
-    images = relationship("WatchImage", back_populates="watch", cascade="all, delete-orphan")
-    service_history = relationship("ServiceHistory", back_populates="watch", cascade="all, delete-orphan")
-    market_values = relationship("MarketValue", back_populates="watch", cascade="all, delete-orphan")
-    accuracy_readings = relationship("MovementAccuracyReading", back_populates="watch", cascade="all, delete-orphan")
+    images = relationship(
+        "WatchImage", back_populates="watch", cascade="all, delete-orphan"
+    )
+    service_history = relationship(
+        "ServiceHistory", back_populates="watch", cascade="all, delete-orphan"
+    )
+    market_values = relationship(
+        "MarketValue", back_populates="watch", cascade="all, delete-orphan"
+    )
+    accuracy_readings = relationship(
+        "MovementAccuracyReading", back_populates="watch", cascade="all, delete-orphan"
+    )

@@ -2,11 +2,13 @@ from datetime import datetime
 from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
+
 from pydantic import BaseModel, Field, computed_field
 
 
 class ServiceHistoryBase(BaseModel):
     """Base schema for service history"""
+
     service_date: datetime
     provider: str = Field(..., min_length=1, max_length=200)
     service_type: Optional[str] = Field(None, max_length=100)
@@ -18,11 +20,13 @@ class ServiceHistoryBase(BaseModel):
 
 class ServiceHistoryCreate(ServiceHistoryBase):
     """Schema for creating service history"""
+
     pass
 
 
 class ServiceHistoryUpdate(BaseModel):
     """Schema for updating service history"""
+
     service_date: Optional[datetime] = None
     provider: Optional[str] = Field(None, min_length=1, max_length=200)
     service_type: Optional[str] = Field(None, max_length=100)
@@ -34,6 +38,7 @@ class ServiceHistoryUpdate(BaseModel):
 
 class ServiceDocumentResponse(BaseModel):
     """Schema for service document response"""
+
     id: UUID
     service_history_id: UUID
     file_path: str
@@ -54,6 +59,7 @@ class ServiceDocumentResponse(BaseModel):
 
 class ServiceHistoryResponse(ServiceHistoryBase):
     """Schema for service history response"""
+
     id: UUID
     watch_id: UUID
     created_at: datetime

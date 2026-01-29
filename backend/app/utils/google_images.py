@@ -1,12 +1,13 @@
 import os
-import uuid
 import re
-from typing import List, Optional
+import uuid
+from io import BytesIO
 from pathlib import Path
+from typing import List, Optional
+
 import httpx
 from bs4 import BeautifulSoup
 from PIL import Image
-from io import BytesIO
 
 
 def fetch_watch_images(
@@ -16,7 +17,7 @@ def fetch_watch_images(
     limit: int = 3,
     storage_path: str = "/app/storage",
     reference_number: Optional[str] = None,
-    offset: int = 0
+    offset: int = 0,
 ) -> List[dict]:
     """
     Fetch watch images from Google Images using web scraping.
@@ -56,7 +57,9 @@ def fetch_watch_images(
             raise Exception("No images found in search results")
 
         # Skip offset images and take the next 'limit' images
-        urls_to_fetch = image_urls[offset:offset + limit + 10]  # Get extras in case some fail
+        urls_to_fetch = image_urls[
+            offset : offset + limit + 10
+        ]  # Get extras in case some fail
 
         if not urls_to_fetch:
             raise Exception("No more images available at this offset")
@@ -72,10 +75,7 @@ def fetch_watch_images(
             try:
                 # Download image (use offset + idx for unique file naming)
                 metadata = _download_and_process_image(
-                    url,
-                    watch_id,
-                    offset + idx,
-                    upload_dir
+                    url, watch_id, offset + idx, upload_dir
                 )
                 if metadata:
                     image_metadata.append(metadata)
@@ -109,10 +109,10 @@ def _scrape_google_images(query: str, limit: int) -> List[str]:
 
     # Headers to mimic a browser
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Referer': 'https://www.google.com/',
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Referer": "https://www.google.com/",
     }
 
     try:
@@ -122,28 +122,30 @@ def _scrape_google_images(query: str, limit: int) -> List[str]:
             response.raise_for_status()
 
         # Parse HTML
-        soup = BeautifulSoup(response.text, 'lxml')
+        soup = BeautifulSoup(response.text, "lxml")
 
         # Extract image URLs from various possible locations
         image_urls = []
 
         # Method 1: Look for img tags with specific attributes
-        for img in soup.find_all('img'):
-            src = img.get('src') or img.get('data-src')
-            if src and src.startswith('http') and 'gstatic' not in src:
+        for img in soup.find_all("img"):
+            src = img.get("src") or img.get("data-src")
+            if src and src.startswith("http") and "gstatic" not in src:
                 image_urls.append(src)
                 if len(image_urls) >= limit * 2:  # Get extras in case some fail
                     break
 
         # Method 2: Extract URLs from script tags (backup method)
         if len(image_urls) < limit:
-            scripts = soup.find_all('script')
+            scripts = soup.find_all("script")
             for script in scripts:
                 if script.string:
                     # Look for URLs in the format ["https://..."]
-                    urls = re.findall(r'https?://[^"\']+\.(?:jpg|jpeg|png|webp)', script.string)
+                    urls = re.findall(
+                        r'https?://[^"\']+\.(?:jpg|jpeg|png|webp)', script.string
+                    )
                     for url in urls:
-                        if 'encrypted' not in url and url not in image_urls:
+                        if "encrypted" not in url and url not in image_urls:
                             image_urls.append(url)
                             if len(image_urls) >= limit * 2:
                                 break
@@ -153,14 +155,14 @@ def _scrape_google_images(query: str, limit: int) -> List[str]:
         seen = set()
         for url in image_urls:
             # Skip base64, very small images, and duplicates
-            if url not in seen and not url.startswith('data:'):
+            if url not in seen and not url.startswith("data:"):
                 filtered_urls.append(url)
                 seen.add(url)
                 if len(filtered_urls) >= limit * 2:
                     break
 
         print(f"Found {len(filtered_urls)} image URLs for query: {query}")
-        return filtered_urls[:limit * 2]  # Return extras in case some fail to download
+        return filtered_urls[: limit * 2]  # Return extras in case some fail to download
 
     except Exception as e:
         print(f"Error scraping Google Images: {e}")
@@ -168,10 +170,7 @@ def _scrape_google_images(query: str, limit: int) -> List[str]:
 
 
 def _download_and_process_image(
-    url: str,
-    watch_id: str,
-    idx: int,
-    upload_dir: Path
+    url: str, watch_id: str, idx: int, upload_dir: Path
 ) -> Optional[dict]:
     """
     Download and process a single image.
@@ -192,8 +191,8 @@ def _download_and_process_image(
             response.raise_for_status()
 
             # Check content type
-            content_type = response.headers.get('content-type', '')
-            if 'image' not in content_type:
+            content_type = response.headers.get("content-type", "")
+            if "image" not in content_type:
                 print(f"URL does not point to an image: {content_type}")
                 return None
 
@@ -211,15 +210,17 @@ def _download_and_process_image(
                 dest_path = upload_dir / file_name
 
                 # Convert RGBA to RGB if necessary
-                if img.mode in ('RGBA', 'LA', 'P'):
-                    background = Image.new('RGB', img.size, (255, 255, 255))
-                    if img.mode == 'P':
-                        img = img.convert('RGBA')
-                    background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                if img.mode in ("RGBA", "LA", "P"):
+                    background = Image.new("RGB", img.size, (255, 255, 255))
+                    if img.mode == "P":
+                        img = img.convert("RGBA")
+                    background.paste(
+                        img, mask=img.split()[-1] if img.mode == "RGBA" else None
+                    )
                     img = background
 
                 # Save to final location
-                img.save(dest_path, 'JPEG', quality=85, optimize=True)
+                img.save(dest_path, "JPEG", quality=85, optimize=True)
 
                 # Get image dimensions and file size
                 width, height = img.size
@@ -227,15 +228,15 @@ def _download_and_process_image(
 
             # Create metadata
             return {
-                'file_path': f"{watch_id}/{file_name}",
-                'file_name': file_name,
-                'file_size': file_size,
-                'mime_type': 'image/jpeg',
-                'width': width,
-                'height': height,
-                'source': 'google_images',
-                'is_primary': idx == 0,  # First image is primary
-                'sort_order': idx
+                "file_path": f"{watch_id}/{file_name}",
+                "file_name": file_name,
+                "file_size": file_size,
+                "mime_type": "image/jpeg",
+                "width": width,
+                "height": height,
+                "source": "google_images",
+                "is_primary": idx == 0,  # First image is primary
+                "sort_order": idx,
             }
 
     except Exception as e:
@@ -244,9 +245,7 @@ def _download_and_process_image(
 
 
 async def fetch_watch_images_from_urls(
-    urls: List[str],
-    watch_id: str,
-    storage_path: str = "/app/storage"
+    urls: List[str], watch_id: str, storage_path: str = "/app/storage"
 ) -> List[dict]:
     """
     Download watch images from provided URLs.
@@ -280,32 +279,36 @@ async def fetch_watch_images_from_urls(
                     dest_path = upload_dir / file_name
 
                     # Convert RGBA to RGB if necessary
-                    if img.mode in ('RGBA', 'LA', 'P'):
-                        background = Image.new('RGB', img.size, (255, 255, 255))
-                        if img.mode == 'P':
-                            img = img.convert('RGBA')
-                        background.paste(img, mask=img.split()[-1] if img.mode == 'RGBA' else None)
+                    if img.mode in ("RGBA", "LA", "P"):
+                        background = Image.new("RGB", img.size, (255, 255, 255))
+                        if img.mode == "P":
+                            img = img.convert("RGBA")
+                        background.paste(
+                            img, mask=img.split()[-1] if img.mode == "RGBA" else None
+                        )
                         img = background
 
                     # Save image
-                    img.save(dest_path, 'JPEG', quality=85)
+                    img.save(dest_path, "JPEG", quality=85)
 
                     # Get metadata
                     width, height = img.size
                     file_size = dest_path.stat().st_size
 
                 # Create metadata
-                image_metadata.append({
-                    'file_path': f"{watch_id}/{file_name}",
-                    'file_name': file_name,
-                    'file_size': file_size,
-                    'mime_type': 'image/jpeg',
-                    'width': width,
-                    'height': height,
-                    'source': 'url_import',
-                    'is_primary': idx == 0,
-                    'sort_order': idx
-                })
+                image_metadata.append(
+                    {
+                        "file_path": f"{watch_id}/{file_name}",
+                        "file_name": file_name,
+                        "file_size": file_size,
+                        "mime_type": "image/jpeg",
+                        "width": width,
+                        "height": height,
+                        "source": "url_import",
+                        "is_primary": idx == 0,
+                        "sort_order": idx,
+                    }
+                )
 
             except Exception as e:
                 print(f"Failed to download image from {url}: {e}")

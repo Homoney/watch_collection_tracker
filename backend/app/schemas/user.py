@@ -1,7 +1,8 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
 from datetime import datetime
+from typing import Optional
 from uuid import UUID
+
+from pydantic import BaseModel, EmailStr, Field
 
 
 class UserBase(BaseModel):
@@ -53,9 +54,11 @@ class TokenRefresh(BaseModel):
 
 class UserAdminUpdate(BaseModel):
     """Admin-only user update schema"""
+
     role: Optional[str] = Field(None, pattern="^(user|admin)$")
 
 
 class UserAdminPasswordReset(BaseModel):
     """Admin-only password reset schema"""
+
     new_password: str = Field(..., min_length=8, max_length=100)

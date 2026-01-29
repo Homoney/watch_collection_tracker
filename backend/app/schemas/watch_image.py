@@ -1,11 +1,13 @@
-from pydantic import BaseModel, Field, computed_field
-from uuid import UUID
 from datetime import datetime
 from typing import Optional
+from uuid import UUID
+
+from pydantic import BaseModel, Field, computed_field
 
 
 class WatchImageResponse(BaseModel):
     """Response schema for watch images"""
+
     id: UUID
     watch_id: UUID
     file_path: str
@@ -31,5 +33,6 @@ class WatchImageResponse(BaseModel):
 
 class UpdateImageRequest(BaseModel):
     """Request schema for updating image metadata"""
+
     is_primary: Optional[bool] = Field(None, description="Set this image as primary")
     sort_order: Optional[int] = Field(None, description="Display order of the image")

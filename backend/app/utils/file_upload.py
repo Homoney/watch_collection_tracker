@@ -3,10 +3,11 @@ import re
 import uuid
 from pathlib import Path
 from typing import Optional, Tuple
+
 from fastapi import UploadFile
 from PIL import Image
-from app.config import settings
 
+from app.config import settings
 
 # Allowed MIME types for image uploads
 ALLOWED_MIME_TYPES = [
@@ -50,7 +51,10 @@ def validate_image_file(file: UploadFile) -> Tuple[bool, str]:
         ext = Path(file.filename).suffix.lower()
         if ext not in ALLOWED_EXTENSIONS:
             allowed_ext_str = ", ".join(ALLOWED_EXTENSIONS)
-            return False, f"Invalid file extension. Allowed extensions: {allowed_ext_str}"
+            return (
+                False,
+                f"Invalid file extension. Allowed extensions: {allowed_ext_str}",
+            )
 
     return True, ""
 
@@ -70,13 +74,13 @@ def sanitize_filename(filename: str) -> str:
     ext = Path(filename).suffix.lower()
 
     # Remove any non-alphanumeric characters except hyphens and underscores
-    name = re.sub(r'[^\w\s-]', '', name)
+    name = re.sub(r"[^\w\s-]", "", name)
 
     # Replace spaces with underscores
-    name = re.sub(r'\s+', '_', name)
+    name = re.sub(r"\s+", "_", name)
 
     # Remove leading/trailing underscores
-    name = name.strip('_')
+    name = name.strip("_")
 
     # Limit length to 100 characters
     if len(name) > 100:
@@ -108,9 +112,7 @@ def get_image_dimensions(file_path: str) -> Tuple[Optional[int], Optional[int]]:
 
 
 def save_uploaded_file(
-    file: UploadFile,
-    watch_id: uuid.UUID,
-    upload_dir: str = settings.UPLOAD_DIR
+    file: UploadFile, watch_id: uuid.UUID, upload_dir: str = settings.UPLOAD_DIR
 ) -> dict:
     """
     Save an uploaded file to disk and return metadata.
@@ -192,7 +194,10 @@ def validate_document_file(file: UploadFile) -> Tuple[bool, str]:
         ext = Path(file.filename).suffix.lower()
         if ext not in ALLOWED_DOCUMENT_EXTENSIONS:
             allowed_ext_str = ", ".join(ALLOWED_DOCUMENT_EXTENSIONS)
-            return False, f"Invalid file extension. Allowed extensions: {allowed_ext_str}"
+            return (
+                False,
+                f"Invalid file extension. Allowed extensions: {allowed_ext_str}",
+            )
 
     return True, ""
 
@@ -201,7 +206,7 @@ def save_service_document(
     file: UploadFile,
     watch_id: uuid.UUID,
     service_id: uuid.UUID,
-    upload_dir: str = settings.UPLOAD_DIR
+    upload_dir: str = settings.UPLOAD_DIR,
 ) -> dict:
     """
     Save a service document to disk and return metadata.
@@ -276,7 +281,9 @@ def delete_file(file_path: str, upload_dir: str = settings.UPLOAD_DIR) -> bool:
         upload_dir_resolved = Path(upload_dir).resolve()
 
         if not str(resolved_path).startswith(str(upload_dir_resolved)):
-            print(f"Security warning: Attempted to delete file outside upload directory: {file_path}")
+            print(
+                f"Security warning: Attempted to delete file outside upload directory: {file_path}"
+            )
             return False
 
         # Delete the file if it exists

@@ -1,6 +1,7 @@
 """
 Security event logging utilities
 """
+
 import logging
 from datetime import datetime
 from typing import Optional
@@ -14,7 +15,7 @@ def log_security_event(
     event_type: str,
     user_id: Optional[str] = None,
     email: Optional[str] = None,
-    details: Optional[dict] = None
+    details: Optional[dict] = None,
 ):
     """
     Log security-relevant events.
@@ -30,7 +31,7 @@ def log_security_event(
         "timestamp": datetime.utcnow().isoformat(),
         "user_id": user_id,
         "email": email,
-        "details": details or {}
+        "details": details or {},
     }
 
     security_logger.info(f"SECURITY_EVENT: {log_data}")

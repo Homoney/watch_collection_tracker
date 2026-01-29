@@ -1,5 +1,6 @@
-import qrcode
 from io import BytesIO
+
+import qrcode
 from PIL import Image
 
 
@@ -37,7 +38,9 @@ def generate_qr_code(data: str, size: int = 10) -> BytesIO:
     return buffer
 
 
-def generate_watch_qr_code(watch_id: str, base_url: str = "http://localhost:8080") -> BytesIO:
+def generate_watch_qr_code(
+    watch_id: str, base_url: str = "http://localhost:8080"
+) -> BytesIO:
     """
     Generate a QR code for a specific watch that links to its detail page.
 

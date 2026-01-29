@@ -1,9 +1,12 @@
 """
 Redis caching utilities
 """
+
 import json
+from typing import Any, Optional
+
 import redis
-from typing import Optional, Any
+
 from app.config import settings
 
 # Redis client configuration
@@ -11,12 +14,12 @@ redis_client = None
 
 try:
     redis_client = redis.Redis(
-        host='redis',
+        host="redis",
         port=6379,
         db=0,
         decode_responses=True,
         socket_connect_timeout=2,
-        socket_timeout=2
+        socket_timeout=2,
     )
     # Test connection
     redis_client.ping()

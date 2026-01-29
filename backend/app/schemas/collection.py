@@ -1,8 +1,9 @@
-from pydantic import BaseModel, Field, field_validator
-from uuid import UUID
+import re
 from datetime import datetime
 from typing import Optional
-import re
+from uuid import UUID
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class CollectionBase(BaseModel):

@@ -1,10 +1,12 @@
 """
 Utilities for atomic clock synchronization and drift calculations.
 """
-import httpx
-from datetime import datetime, timezone, timedelta
-from typing import Optional, Tuple
+
 import logging
+from datetime import datetime, timedelta, timezone
+from typing import Optional, Tuple
+
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -37,17 +39,25 @@ async def get_atomic_time(tz: str = "UTC") -> Tuple[datetime, bool]:
             # WorldTimeAPI returns ISO 8601 datetime with timezone
             atomic_time = datetime.fromisoformat(data["datetime"])
 
-            logger.info(f"Successfully fetched atomic time from WorldTimeAPI: {atomic_time}")
+            logger.info(
+                f"Successfully fetched atomic time from WorldTimeAPI: {atomic_time}"
+            )
             return atomic_time, True
 
     except httpx.TimeoutException:
-        logger.warning(f"WorldTimeAPI timeout after {API_TIMEOUT}s, falling back to server time")
+        logger.warning(
+            f"WorldTimeAPI timeout after {API_TIMEOUT}s, falling back to server time"
+        )
     except httpx.HTTPError as e:
         logger.warning(f"WorldTimeAPI HTTP error: {e}, falling back to server time")
     except (KeyError, ValueError) as e:
-        logger.error(f"Failed to parse WorldTimeAPI response: {e}, falling back to server time")
+        logger.error(
+            f"Failed to parse WorldTimeAPI response: {e}, falling back to server time"
+        )
     except Exception as e:
-        logger.error(f"Unexpected error fetching atomic time: {e}, falling back to server time")
+        logger.error(
+            f"Unexpected error fetching atomic time: {e}, falling back to server time"
+        )
 
     # Fallback to server time with UTC timezone
     server_time = datetime.now(timezone.utc)
@@ -59,7 +69,7 @@ def calculate_drift_spd(
     initial_reference_time: datetime,
     initial_watch_seconds: int,
     current_reference_time: datetime,
-    current_watch_seconds: int
+    current_watch_seconds: int,
 ) -> float:
     """
     Calculate watch drift in seconds per day.
@@ -128,7 +138,7 @@ def validate_reading_pair(
     initial_time: datetime,
     subsequent_time: datetime,
     min_hours: float = 6.0,
-    max_days: int = 90
+    max_days: int = 90,
 ) -> Tuple[bool, Optional[str]]:
     """
     Validate that two readings can be paired for drift calculation.
@@ -149,11 +159,17 @@ def validate_reading_pair(
 
     # Check minimum time
     if hours_elapsed < min_hours:
-        return False, f"Minimum {min_hours} hours required between readings (got {hours_elapsed:.1f}h)"
+        return (
+            False,
+            f"Minimum {min_hours} hours required between readings (got {hours_elapsed:.1f}h)",
+        )
 
     # Check maximum time
     if days_elapsed > max_days:
-        return False, f"Maximum {max_days} days allowed between readings (got {days_elapsed} days)"
+        return (
+            False,
+            f"Maximum {max_days} days allowed between readings (got {days_elapsed} days)",
+        )
 
     # Check that subsequent is actually after initial
     if time_diff.total_seconds() <= 0:
