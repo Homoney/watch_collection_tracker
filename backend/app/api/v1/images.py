@@ -11,8 +11,7 @@ from app.models.user import User
 from app.models.watch import Watch
 from app.models.watch_image import ImageSourceEnum, WatchImage
 from app.schemas.watch_image import UpdateImageRequest, WatchImageResponse
-from app.utils.file_upload import (delete_file, save_uploaded_file,
-                                   validate_image_file)
+from app.utils.file_upload import delete_file, save_uploaded_file, validate_image_file
 
 router = APIRouter()
 

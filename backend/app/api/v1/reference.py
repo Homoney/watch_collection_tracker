@@ -5,8 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.reference import Brand, Complication, MovementType
-from app.schemas.reference import (BrandResponse, ComplicationResponse,
-                                   MovementTypeResponse)
+from app.schemas.reference import (
+    BrandResponse,
+    ComplicationResponse,
+    MovementTypeResponse,
+)
 
 router = APIRouter()
 

@@ -8,8 +8,7 @@ from app.core.deps import get_current_admin
 from app.core.security import get_password_hash
 from app.database import get_db
 from app.models.user import User, UserRole
-from app.schemas.user import (UserAdminPasswordReset, UserAdminUpdate,
-                              UserResponse)
+from app.schemas.user import UserAdminPasswordReset, UserAdminUpdate, UserResponse
 from app.utils.logging import log_security_event
 
 router = APIRouter()

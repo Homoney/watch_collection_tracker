@@ -13,9 +13,13 @@ from app.models.market_value import MarketValue
 from app.models.reference import Brand
 from app.models.user import User
 from app.models.watch import Watch
-from app.schemas.market_value import (CollectionAnalytics, MarketValueCreate,
-                                      MarketValueResponse, MarketValueUpdate,
-                                      WatchAnalytics)
+from app.schemas.market_value import (
+    CollectionAnalytics,
+    MarketValueCreate,
+    MarketValueResponse,
+    MarketValueUpdate,
+    WatchAnalytics,
+)
 
 router = APIRouter()
 collection_analytics_router = APIRouter()

@@ -9,12 +9,17 @@ from app.core.deps import get_current_user, get_db
 from app.models.service_history import ServiceDocument, ServiceHistory
 from app.models.user import User
 from app.models.watch import Watch
-from app.schemas.service_history import (ServiceDocumentResponse,
-                                         ServiceHistoryCreate,
-                                         ServiceHistoryResponse,
-                                         ServiceHistoryUpdate)
-from app.utils.file_upload import (delete_file, save_service_document,
-                                   validate_document_file)
+from app.schemas.service_history import (
+    ServiceDocumentResponse,
+    ServiceHistoryCreate,
+    ServiceHistoryResponse,
+    ServiceHistoryUpdate,
+)
+from app.utils.file_upload import (
+    delete_file,
+    save_service_document,
+    validate_document_file,
+)
 
 router = APIRouter()
 

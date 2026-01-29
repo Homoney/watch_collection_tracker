@@ -13,8 +13,13 @@ from app.models.reference import Brand, MovementType
 from app.models.user import User
 from app.models.watch import ConditionEnum, Watch
 from app.models.watch_image import ImageSourceEnum, WatchImage
-from app.schemas.watch import (PaginatedWatchResponse, WatchCreate,
-                               WatchListResponse, WatchResponse, WatchUpdate)
+from app.schemas.watch import (
+    PaginatedWatchResponse,
+    WatchCreate,
+    WatchListResponse,
+    WatchResponse,
+    WatchUpdate,
+)
 from app.utils.google_images import fetch_watch_images
 from app.utils.pdf_export import generate_collection_pdf, generate_watch_pdf
 from app.utils.qr_code import generate_watch_qr_code

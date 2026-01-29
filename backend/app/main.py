@@ -1,9 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import (auth, collections, images, market_values,
-                        movement_accuracy, reference, saved_searches,
-                        service_history, users, watches)
+from app.api.v1 import (
+    auth,
+    collections,
+    images,
+    market_values,
+    movement_accuracy,
+    reference,
+    saved_searches,
+    service_history,
+    users,
+    watches,
+)
 from app.config import settings
 from app.middleware.cache import CacheMiddleware
 

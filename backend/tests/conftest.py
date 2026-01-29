@@ -76,8 +76,7 @@ def test_user(test_db: Session) -> User:
     """
     user = User(
         email="test@example.com",
-        hashed_password=get_password_hash("testpass123"),
-        is_active=True
+        hashed_password=get_password_hash("testpass123")
     )
     test_db.add(user)
     test_db.commit()
@@ -92,8 +91,7 @@ def test_user2(test_db: Session) -> User:
     """
     user = User(
         email="test2@example.com",
-        hashed_password=get_password_hash("testpass123"),
-        is_active=True
+        hashed_password=get_password_hash("testpass123")
     )
     test_db.add(user)
     test_db.commit()

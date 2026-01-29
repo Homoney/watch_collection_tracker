@@ -10,8 +10,11 @@ from app.database import get_db
 from app.models.collection import Collection
 from app.models.user import User
 from app.models.watch import Watch
-from app.schemas.collection import (CollectionCreate, CollectionResponse,
-                                    CollectionUpdate)
+from app.schemas.collection import (
+    CollectionCreate,
+    CollectionResponse,
+    CollectionUpdate,
+)
 
 router = APIRouter()
 

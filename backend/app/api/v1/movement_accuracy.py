@@ -11,14 +11,19 @@ from app.core.deps import get_current_user, get_db
 from app.models.movement_accuracy import MovementAccuracyReading
 from app.models.user import User
 from app.models.watch import Watch
-from app.schemas.movement_accuracy import (AccuracyAnalytics,
-                                           AtomicTimeResponse,
-                                           MovementAccuracyReadingCreate,
-                                           MovementAccuracyReadingResponse,
-                                           MovementAccuracyReadingUpdate,
-                                           MovementAccuracyReadingWithDrift)
-from app.utils.atomic_time import (calculate_drift_spd, get_atomic_time,
-                                   validate_reading_pair)
+from app.schemas.movement_accuracy import (
+    AccuracyAnalytics,
+    AtomicTimeResponse,
+    MovementAccuracyReadingCreate,
+    MovementAccuracyReadingResponse,
+    MovementAccuracyReadingUpdate,
+    MovementAccuracyReadingWithDrift,
+)
+from app.utils.atomic_time import (
+    calculate_drift_spd,
+    get_atomic_time,
+    validate_reading_pair,
+)
 
 logger = logging.getLogger(__name__)
 

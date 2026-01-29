@@ -7,8 +7,11 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_user, get_db
 from app.models.saved_search import SavedSearch
 from app.models.user import User
-from app.schemas.saved_search import (SavedSearchCreate, SavedSearchResponse,
-                                      SavedSearchUpdate)
+from app.schemas.saved_search import (
+    SavedSearchCreate,
+    SavedSearchResponse,
+    SavedSearchUpdate,
+)
 
 router = APIRouter()
 
