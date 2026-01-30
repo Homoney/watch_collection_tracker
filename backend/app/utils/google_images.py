@@ -57,7 +57,7 @@ def fetch_watch_images(
 
         # Skip offset images and take the next 'limit' images
         # Get extras in case some fail
-        urls_to_fetch = image_urls[offset:offset + limit + 10]
+        urls_to_fetch = image_urls[offset : offset + limit + 10]
 
         if not urls_to_fetch:
             raise Exception("No more images available at this offset")
@@ -167,7 +167,7 @@ def _scrape_google_images(query: str, limit: int) -> List[str]:
 
         print(f"Found {len(filtered_urls)} image URLs for query: {query}")
         # Return extras in case some fail to download
-        return filtered_urls[:limit * 2]
+        return filtered_urls[: limit * 2]
 
     except Exception as e:
         print(f"Error scraping Google Images: {e}")
