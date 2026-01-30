@@ -44,7 +44,7 @@ class TestCreateCollection:
             "/api/v1/collections/",
             json={"name": "Test Collection"}
         )
-        assert response.status_code == 403
+        assert response.status_code == 401
 
 
 class TestListCollections:

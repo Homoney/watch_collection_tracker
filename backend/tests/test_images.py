@@ -176,7 +176,7 @@ class TestUploadImage:
             files={"file": ("test.jpg", img_bytes, "image/jpeg")}
         )
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
     def test_upload_image_wrong_owner(
         self,
@@ -266,7 +266,7 @@ class TestListImages:
     ):
         """Test listing images without authentication"""
         response = client.get(f"/api/v1/watches/{test_watch.id}/images")
-        assert response.status_code == 403
+        assert response.status_code == 401
 
     def test_list_images_empty(
         self,

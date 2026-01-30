@@ -62,7 +62,7 @@ class TestListUsers:
         """Test listing users without authentication"""
         response = client.get("/api/v1/users/")
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
 
 class TestGetUser:
