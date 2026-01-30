@@ -56,8 +56,14 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}
           POSTGRES_HOST: localhost
           ALLOWED_ORIGINS: "*"
+          UPLOAD_DIR: /tmp/test-uploads
+          MAX_UPLOAD_SIZE: 20971520
+          ALGORITHM: HS256
+          ACCESS_TOKEN_EXPIRE_MINUTES: 30
+          REFRESH_TOKEN_EXPIRE_DAYS: 7
         run: |
           cd backend
+          mkdir -p /tmp/test-uploads
           alembic upgrade head
 
       - name: Run tests with coverage
@@ -69,8 +75,14 @@ jobs:
           POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}
           POSTGRES_HOST: localhost
           ALLOWED_ORIGINS: "*"
+          UPLOAD_DIR: /tmp/test-uploads
+          MAX_UPLOAD_SIZE: 20971520
+          ALGORITHM: HS256
+          ACCESS_TOKEN_EXPIRE_MINUTES: 30
+          REFRESH_TOKEN_EXPIRE_DAYS: 7
         run: |
           cd backend
+          mkdir -p /tmp/test-uploads
           pytest -v --cov=app --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage to Codecov
