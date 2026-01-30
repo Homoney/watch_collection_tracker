@@ -23,6 +23,9 @@ def format_currency(amount: Optional[float], currency: str) -> str:
     """Format currency for display"""
     if amount is None:
         return "N/A"
+    # Handle both float and string (Decimal serialized as string)
+    if isinstance(amount, str):
+        amount = float(amount)
     return f"{currency} {amount:,.2f}"
 
 
@@ -385,8 +388,19 @@ def generate_collection_pdf(
     elements.append(Spacer(1, 0.3 * inch))
 
     # Calculate total value
-    total_purchase = sum(w.get("purchase_price", 0) or 0 for w in watches)
-    total_current = sum(w.get("current_market_value", 0) or 0 for w in watches)
+    def to_float(val):
+        """Convert value to float, handling strings and None"""
+        if val is None:
+            return 0
+        if isinstance(val, str):
+            try:
+                return float(val)
+            except ValueError:
+                return 0
+        return float(val)
+
+    total_purchase = sum(to_float(w.get("purchase_price", 0)) for w in watches)
+    total_current = sum(to_float(w.get("current_market_value", 0)) for w in watches)
 
     if total_purchase > 0:
         summary_data = [

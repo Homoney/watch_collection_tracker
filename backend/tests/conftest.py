@@ -212,8 +212,8 @@ def mock_upload_dir(tmp_path, monkeypatch):
     upload_dir = tmp_path / "uploads"
     upload_dir.mkdir()
 
-    # Mock the UPLOAD_DIR in the file_upload module
-    from app.utils import file_upload
-    monkeypatch.setattr(file_upload, "UPLOAD_DIR", str(upload_dir))
+    # Mock the UPLOAD_DIR in settings
+    from app import config
+    monkeypatch.setattr(config.settings, "UPLOAD_DIR", str(upload_dir))
 
     return upload_dir
