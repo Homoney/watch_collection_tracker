@@ -243,7 +243,7 @@ class TestCreateAccuracyReading:
             }
         )
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
 
 class TestListAccuracyReadings:
