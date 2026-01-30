@@ -97,6 +97,7 @@ export default function CollectionsPage() {
         size="md"
       >
         <CollectionForm
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onSubmit={handleCreate as any}
           onCancel={() => setIsCreateModalOpen(false)}
           isLoading={createMutation.isPending}

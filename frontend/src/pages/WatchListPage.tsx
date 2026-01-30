@@ -36,6 +36,7 @@ export default function WatchListPage() {
     collection_id: searchParams.get('collection_id') || undefined,
     brand_id: searchParams.get('brand_id') || undefined,
     movement_type_id: searchParams.get('movement_type_id') || undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     condition: (searchParams.get('condition') as any) || undefined,
     search: searchParams.get('search') || undefined,
     sort_by: searchParams.get('sort_by') || 'created_at',
@@ -238,6 +239,7 @@ export default function WatchListPage() {
         size="xl"
       >
         <WatchForm
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onSubmit={handleCreateWatch as any}
           onCancel={() => setIsAddModalOpen(false)}
           isLoading={createMutation.isPending}

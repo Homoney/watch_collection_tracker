@@ -239,6 +239,7 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
         onChange={(e) =>
           onFiltersChange({
             ...filters,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             condition: (e.target.value as any) || undefined,
           })
         }
