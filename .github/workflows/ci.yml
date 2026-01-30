@@ -257,19 +257,62 @@ jobs:
           mkdir -p storage/backups
           chmod -R 777 storage
 
+      - name: Validate docker-compose configuration
+        run: |
+          docker-compose config
+          echo "Docker Compose version:"
+          docker-compose version
+
+      - name: Pull and build images
+        run: |
+          echo "Pulling base images..."
+          docker pull python:3.11-slim
+          docker pull node:20-alpine
+          docker pull postgres:16-alpine
+          docker pull redis:7-alpine
+          docker pull nginx:alpine
+
+          echo "Building application images..."
+          docker-compose build --parallel
+
       - name: Start services
         run: |
+          echo "Starting docker-compose services..."
           docker-compose up -d
-          echo "Waiting for services to start..."
-          sleep 30
+
+          echo "Waiting for containers to start..."
+          sleep 10
+
+          echo "Container status:"
+          docker-compose ps
+
+          echo "Waiting for services to be healthy..."
+          timeout 120 bash -c 'until docker-compose ps | grep -q "healthy"; do echo "Waiting for healthy status..."; sleep 5; done' || {
+            echo "Services did not become healthy in time"
+            docker-compose ps
+            docker-compose logs
+            exit 1
+          }
+
+          echo "All services started. Waiting additional time for full initialization..."
+          sleep 20
 
       - name: Check service health
         run: |
-          echo "Checking backend health..."
+          echo "Container status before health check:"
+          docker-compose ps
+
+          echo "Checking backend health via nginx..."
           curl --retry 20 --retry-delay 5 --retry-connrefused http://localhost:8080/health || {
-            echo "Health check failed. Docker logs:"
-            docker-compose logs backend
-            docker-compose logs nginx
+            echo "Health check failed. Showing logs:"
+            echo "=== Backend logs ==="
+            docker-compose logs backend | tail -50
+            echo "=== Nginx logs ==="
+            docker-compose logs nginx | tail -50
+            echo "=== Postgres logs ==="
+            docker-compose logs postgres | tail -30
+            echo "=== Container status ==="
+            docker-compose ps
             exit 1
           }
 
