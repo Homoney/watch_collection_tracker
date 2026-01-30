@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.config import settings
-from app.middleware.cache import CacheMiddleware
 from app.api.v1 import (
     auth,
     collections,
@@ -15,6 +13,8 @@ from app.api.v1 import (
     users,
     watches,
 )
+from app.config import settings
+from app.middleware.cache import CacheMiddleware
 
 app = FastAPI(
     title="Watch Collection Tracker API",
