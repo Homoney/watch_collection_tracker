@@ -715,4 +715,4 @@ class TestAccuracyAnalytics:
             f"/api/v1/watches/{test_watch.id}/accuracy-analytics"
         )
 
-        assert response.status_code == 403
+        assert response.status_code == 401

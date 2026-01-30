@@ -89,7 +89,7 @@ class TestListSavedSearches:
         """Test listing without authentication"""
         response = client.get("/api/v1/saved-searches/")
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
 
 class TestCreateSavedSearch:
@@ -208,7 +208,7 @@ class TestCreateSavedSearch:
             json={"name": "Test", "filters": {}}
         )
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
 
 class TestGetSavedSearch:
