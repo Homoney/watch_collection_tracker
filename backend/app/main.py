@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.config import settings
+from app.middleware.cache import CacheMiddleware
 from app.api.v1 import (
     auth,
     collections,
@@ -13,8 +15,6 @@ from app.api.v1 import (
     users,
     watches,
 )
-from app.config import settings
-from app.middleware.cache import CacheMiddleware
 
 app = FastAPI(
     title="Watch Collection Tracker API",
@@ -112,10 +112,12 @@ app.include_router(
     service_history.router, prefix="/api/v1/watches", tags=["Service History"]
 )
 # Market values - register collection analytics separately to avoid path conflicts
-import app.api.v1.market_values as mv
-
-app.include_router(mv.collection_analytics_router, prefix="/api/v1", tags=["Analytics"])
-app.include_router(mv.router, prefix="/api/v1/watches", tags=["Market Values"])
+app.include_router(
+    market_values.collection_analytics_router, prefix="/api/v1", tags=["Analytics"]
+)
+app.include_router(
+    market_values.router, prefix="/api/v1/watches", tags=["Market Values"]
+)
 app.include_router(
     saved_searches.router, prefix="/api/v1/saved-searches", tags=["Saved Searches"]
 )

@@ -3,7 +3,7 @@ Utilities for atomic clock synchronization and drift calculations.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Optional, Tuple
 
 import httpx

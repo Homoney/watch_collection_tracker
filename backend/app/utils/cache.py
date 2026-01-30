@@ -7,8 +7,6 @@ from typing import Any, Optional
 
 import redis
 
-from app.config import settings
-
 # Redis client configuration
 redis_client = None
 

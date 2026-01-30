@@ -1,10 +1,10 @@
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import and_, desc, func, or_
+from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db
@@ -85,7 +85,7 @@ async def create_accuracy_reading(
     - Subsequent readings must be at least 6 hours after the paired initial
     """
     # Verify watch ownership
-    watch = _verify_watch_ownership(watch_id, current_user.id, db)
+    _verify_watch_ownership(watch_id, current_user.id, db)
 
     # Get atomic time for reference
     reference_time, is_atomic = await get_atomic_time(reading.timezone)
@@ -110,7 +110,7 @@ async def create_accuracy_reading(
             db.query(MovementAccuracyReading)
             .filter(
                 MovementAccuracyReading.watch_id == watch_id,
-                MovementAccuracyReading.is_initial_reading == True,
+                MovementAccuracyReading.is_initial_reading,
                 MovementAccuracyReading.reference_time < reference_time,
             )
             .order_by(desc(MovementAccuracyReading.reference_time))
@@ -197,7 +197,7 @@ def list_accuracy_readings(
                 db.query(MovementAccuracyReading)
                 .filter(
                     MovementAccuracyReading.watch_id == watch_id,
-                    MovementAccuracyReading.is_initial_reading == True,
+                    MovementAccuracyReading.is_initial_reading,
                     MovementAccuracyReading.reference_time < reading.reference_time,
                 )
                 .order_by(desc(MovementAccuracyReading.reference_time))
@@ -268,7 +268,7 @@ def get_accuracy_reading(
             db.query(MovementAccuracyReading)
             .filter(
                 MovementAccuracyReading.watch_id == watch_id,
-                MovementAccuracyReading.is_initial_reading == True,
+                MovementAccuracyReading.is_initial_reading,
                 MovementAccuracyReading.reference_time < reading.reference_time,
             )
             .order_by(desc(MovementAccuracyReading.reference_time))

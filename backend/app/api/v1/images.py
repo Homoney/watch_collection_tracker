@@ -65,7 +65,7 @@ async def upload_image(
     - Returns image metadata with URL
     """
     # Verify watch ownership
-    watch = verify_watch_ownership(watch_id, current_user, db)
+    verify_watch_ownership(watch_id, current_user, db)
 
     # Validate the uploaded file
     is_valid, error_msg = validate_image_file(file)
@@ -131,7 +131,7 @@ def list_images(
     List all images for a watch, ordered by sort_order.
     """
     # Verify watch ownership
-    watch = verify_watch_ownership(watch_id, current_user, db)
+    verify_watch_ownership(watch_id, current_user, db)
 
     # Query images
     images = (
@@ -158,7 +158,7 @@ def update_image(
     - If setting is_primary=True, unsets all other images for this watch
     """
     # Verify watch ownership
-    watch = verify_watch_ownership(watch_id, current_user, db)
+    verify_watch_ownership(watch_id, current_user, db)
 
     # Find the image
     image = (
@@ -223,7 +223,7 @@ def delete_image(
     - If deleting the primary image, auto-promotes the next image by sort_order
     """
     # Verify watch ownership
-    watch = verify_watch_ownership(watch_id, current_user, db)
+    verify_watch_ownership(watch_id, current_user, db)
 
     # Find the image
     image = (

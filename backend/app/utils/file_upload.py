@@ -1,11 +1,10 @@
-import os
 import re
 import uuid
 from pathlib import Path
 from typing import Optional, Tuple
 
 from fastapi import UploadFile
-from PIL import Image
+from PIL import Image as PILImage
 
 from app.config import settings
 
@@ -104,7 +103,7 @@ def get_image_dimensions(file_path: str) -> Tuple[Optional[int], Optional[int]]:
         Tuple of (width, height) or (None, None) if extraction fails
     """
     try:
-        with Image.open(file_path) as img:
+        with PILImage.open(file_path) as img:
             return img.width, img.height
     except Exception as e:
         print(f"Failed to extract image dimensions: {e}")

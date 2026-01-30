@@ -25,7 +25,7 @@ class CacheMiddleware(BaseHTTPMiddleware):
         if request.method == "GET":
             # Cache reference data for 1 hour
             if "/reference/" in str(request.url.path):
-                response.headers["Cache-Control"] = f"public, max-age=3600"
+                response.headers["Cache-Control"] = "public, max-age=3600"
             # Cache static uploads forever (immutable)
             elif "/uploads/" in str(request.url.path):
                 response.headers["Cache-Control"] = (

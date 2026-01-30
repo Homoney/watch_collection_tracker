@@ -1,4 +1,3 @@
-import os
 import re
 import uuid
 from io import BytesIO
@@ -57,9 +56,8 @@ def fetch_watch_images(
             raise Exception("No images found in search results")
 
         # Skip offset images and take the next 'limit' images
-        urls_to_fetch = image_urls[
-            offset : offset + limit + 10
-        ]  # Get extras in case some fail
+        # Get extras in case some fail
+        urls_to_fetch = image_urls[offset:offset + limit + 10]
 
         if not urls_to_fetch:
             raise Exception("No more images available at this offset")
@@ -109,8 +107,14 @@ def _scrape_google_images(query: str, limit: int) -> List[str]:
 
     # Headers to mimic a browser
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "User-Agent": (
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        ),
+        "Accept": (
+            "text/html,application/xhtml+xml,application/xml;q=0.9,"
+            "image/webp,*/*;q=0.8"
+        ),
         "Accept-Language": "en-US,en;q=0.5",
         "Referer": "https://www.google.com/",
     }
@@ -162,7 +166,8 @@ def _scrape_google_images(query: str, limit: int) -> List[str]:
                     break
 
         print(f"Found {len(filtered_urls)} image URLs for query: {query}")
-        return filtered_urls[: limit * 2]  # Return extras in case some fail to download
+        # Return extras in case some fail to download
+        return filtered_urls[:limit * 2]
 
     except Exception as e:
         print(f"Error scraping Google Images: {e}")

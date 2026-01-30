@@ -63,7 +63,7 @@ def create_collection(
     # If this is set as default, unset all other defaults for this user
     if collection_data.is_default:
         db.query(Collection).filter(
-            Collection.user_id == current_user.id, Collection.is_default == True
+            Collection.user_id == current_user.id, Collection.is_default
         ).update({"is_default": False})
 
     new_collection = Collection(user_id=current_user.id, **collection_data.model_dump())
@@ -151,7 +151,7 @@ def update_collection(
         db.query(Collection).filter(
             Collection.user_id == current_user.id,
             Collection.id != collection_id,
-            Collection.is_default == True,
+            Collection.is_default,
         ).update({"is_default": False})
 
     # Update only provided fields

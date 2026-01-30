@@ -1,7 +1,6 @@
 from io import BytesIO
 
 import qrcode
-from PIL import Image
 
 
 def generate_qr_code(data: str, size: int = 10) -> BytesIO:

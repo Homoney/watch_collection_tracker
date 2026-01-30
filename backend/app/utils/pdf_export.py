@@ -4,8 +4,8 @@ from io import BytesIO
 from typing import List, Optional
 
 from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-from reportlab.lib.pagesizes import A4, letter
+from reportlab.lib.enums import TA_CENTER
+from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import (
@@ -33,7 +33,7 @@ def format_date(date_str: Optional[str]) -> str:
     try:
         date_obj = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
         return date_obj.strftime("%B %d, %Y")
-    except:
+    except (ValueError, TypeError):
         return date_str
 
 
@@ -98,7 +98,7 @@ def generate_watch_pdf(watch_data: dict, storage_path: str = "/app/storage") -> 
                 img.hAlign = "CENTER"
                 elements.append(img)
                 elements.append(Spacer(1, 0.3 * inch))
-            except:
+            except Exception:
                 pass
 
     # Basic Information Section
@@ -450,7 +450,7 @@ def generate_collection_pdf(
                     img.hAlign = "CENTER"
                     elements.append(img)
                     elements.append(Spacer(1, 0.2 * inch))
-                except:
+                except Exception:
                     pass
 
         # Watch details table
