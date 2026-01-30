@@ -17,13 +17,12 @@ const mockWatch: WatchListItem = {
   brand: {
     id: 'brand-1',
     name: 'Rolex',
-    sort_order: 0,
-    created_at: '2024-01-01T00:00:00',
-    updated_at: '2024-01-01T00:00:00'
+    sort_order: 0
   },
   collection: {
     id: 'col-1',
     name: 'Dive Watches',
+    description: null,
     color: '#0000FF',
     user_id: 'user-1',
     is_default: false,

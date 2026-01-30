@@ -5,7 +5,7 @@ import type { Collection, CollectionCreate, CollectionUpdate } from '@/types'
 
 interface CollectionFormProps {
   defaultValues?: Collection
-  onSubmit: (data: CollectionCreate | CollectionUpdate) => void
+  onSubmit: (data: CollectionCreate | CollectionUpdate) => void | Promise<void>
   onCancel: () => void
   isLoading?: boolean
 }

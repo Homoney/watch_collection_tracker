@@ -9,7 +9,7 @@ import type { WatchCreate, WatchUpdate, Watch } from '@/types'
 
 interface WatchFormProps {
   defaultValues?: Watch
-  onSubmit: (data: WatchCreate | WatchUpdate) => void
+  onSubmit: (data: WatchCreate | WatchUpdate) => void | Promise<void>
   onCancel: () => void
   isLoading?: boolean
 }

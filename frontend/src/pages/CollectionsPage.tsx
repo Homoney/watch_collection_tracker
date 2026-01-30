@@ -97,7 +97,7 @@ export default function CollectionsPage() {
         size="md"
       >
         <CollectionForm
-          onSubmit={handleCreate}
+          onSubmit={handleCreate as any}
           onCancel={() => setIsCreateModalOpen(false)}
           isLoading={createMutation.isPending}
         />

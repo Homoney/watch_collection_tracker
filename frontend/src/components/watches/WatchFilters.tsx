@@ -94,7 +94,7 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
     }
   }
 
-  const handleLoadSearch = (savedSearch: { filters: WatchFilters }) => {
+  const handleLoadSearch = (savedSearch: { filters: WatchFiltersType }) => {
     onFiltersChange(savedSearch.filters)
     setSearch(savedSearch.filters.search || '')
   }
@@ -239,7 +239,7 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
         onChange={(e) =>
           onFiltersChange({
             ...filters,
-            condition: e.target.value || undefined,
+            condition: (e.target.value as any) || undefined,
           })
         }
         options={conditionOptions}
