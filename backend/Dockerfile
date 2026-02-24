@@ -19,6 +19,12 @@ COPY . .
 # Create storage directories
 RUN mkdir -p /app/storage/uploads /app/storage/backups
 
+# Create non-root user and transfer ownership
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser \
+    && chown -R appuser:appgroup /app
+
+USER appuser
+
 # Expose port
 EXPOSE 8000
 

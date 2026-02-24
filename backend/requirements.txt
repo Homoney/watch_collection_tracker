@@ -10,6 +10,8 @@ psycopg2-binary==2.9.9
 
 # Authentication and security
 python-jose[cryptography]>=3.3.0
+# Pin cryptography explicitly to avoid CVE in 46.0.4
+cryptography>=44.0.1,!=46.0.4
 bcrypt==4.1.2
 python-dotenv==1.0.0
 
