@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import re
 import uuid
 from io import BytesIO
@@ -11,6 +12,8 @@ from bs4 import BeautifulSoup
 from PIL import Image
 
 from app.utils.safe_fetch import fetch_bytes
+
+logger = logging.getLogger(__name__)
 
 
 def fetch_watch_images(
@@ -83,7 +86,9 @@ def fetch_watch_images(
                     image_metadata.append(metadata)
 
             except Exception as e:
-                print(f"Failed to download image {offset + idx + 1} from {url}: {e}")
+                logger.debug(
+                    f"Failed to download image {offset + idx + 1} from {url}: {e}"
+                )
                 continue
 
         if not image_metadata:
@@ -169,12 +174,12 @@ def _scrape_google_images(query: str, limit: int) -> List[str]:
                 if len(filtered_urls) >= limit * 2:
                     break
 
-        print(f"Found {len(filtered_urls)} image URLs for query: {query}")
+        logger.debug(f"Found {len(filtered_urls)} image URLs for query: {query}")
         # Return extras in case some fail to download
         return filtered_urls[: limit * 2]
 
     except Exception as e:
-        print(f"Error scraping Google Images: {e}")
+        logger.debug(f"Error scraping Google Images: {e}")
         return []
 
 
@@ -199,7 +204,7 @@ def _download_and_process_image(
 
         # Check content type
         if "image" not in content_type:
-            print(f"URL does not point to an image: {content_type}")
+            logger.debug(f"URL does not point to an image: {content_type}")
             return None
 
         # Load image
@@ -208,7 +213,7 @@ def _download_and_process_image(
         with Image.open(img_data) as img:
             # Skip very small images (likely icons or logos)
             if img.width < 200 or img.height < 200:
-                print(f"Image too small: {img.width}x{img.height}")
+                logger.debug(f"Image too small: {img.width}x{img.height}")
                 return None
 
             # Generate unique filename
@@ -246,7 +251,7 @@ def _download_and_process_image(
         }
 
     except Exception as e:
-        print(f"Error downloading image from {url}: {e}")
+        logger.debug(f"Error downloading image from {url}: {e}")
         return None
 
 
@@ -315,7 +320,7 @@ async def fetch_watch_images_from_urls(
             )
 
         except Exception as e:
-            print(f"Failed to download image from {url}: {e}")
+            logger.debug(f"Failed to download image from {url}: {e}")
             continue
 
     return image_metadata

@@ -35,13 +35,19 @@ atomic_time_router = APIRouter()  # Public router for atomic time
 async def get_current_atomic_time(
     tz: str = Query(
         "UTC", description="Timezone for atomic time (e.g., UTC, America/New_York)"
-    )
+    ),
+    current_user: User = Depends(get_current_user),
 ):
     """
-    Get current atomic time from WorldTimeAPI with fallback to server time.
-    Used by frontend to display real-time clock.
+    Get the current reference time (WorldTimeAPI, cached offset) with fallback
+    to server time. Used by the frontend clock.
     """
-    current_time, is_atomic = await get_atomic_time(tz)
+    try:
+        current_time, is_atomic = await get_atomic_time(tz)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown timezone"
+        )
 
     return AtomicTimeResponse(
         current_time=current_time,
@@ -88,7 +94,12 @@ async def create_accuracy_reading(
     _verify_watch_ownership(watch_id, current_user.id, db)
 
     # Get atomic time for reference
-    reference_time, is_atomic = await get_atomic_time(reading.timezone)
+    try:
+        reference_time, is_atomic = await get_atomic_time(reading.timezone)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown timezone"
+        )
 
     # Check if this is the first reading
     existing_count = (

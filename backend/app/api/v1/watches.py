@@ -1,11 +1,14 @@
+import logging
 from typing import Optional
+from urllib.parse import urlsplit
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import asc, desc, func, or_
 from sqlalchemy.orm import Session, joinedload
 
+from app.config import settings
 from app.core.deps import get_current_user
 from app.database import get_db
 from app.models.collection import Collection
@@ -23,6 +26,8 @@ from app.schemas.watch import (
 from app.utils.google_images import fetch_watch_images
 from app.utils.pdf_export import generate_collection_pdf, generate_watch_pdf
 from app.utils.qr_code import generate_watch_qr_code
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -98,6 +103,8 @@ def list_watches(
 
     # Enhanced search with PostgreSQL full-text search for better performance
     if search:
+        # Treat % and _ in the user's text literally in ILIKE
+        like_term = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
         # Use full-text search for model field (indexed)
         # Fall back to ILIKE for other fields (less common searches)
         query = query.join(Brand).filter(
@@ -108,9 +115,9 @@ def list_watches(
                 func.to_tsvector("english", Brand.name).op("@@")(
                     func.plainto_tsquery("english", search)
                 ),
-                Watch.reference_number.ilike(f"%{search}%"),
-                Watch.serial_number.ilike(f"%{search}%"),
-                Watch.notes.ilike(f"%{search}%"),
+                Watch.reference_number.ilike(f"%{like_term}%", escape="\\"),
+                Watch.serial_number.ilike(f"%{like_term}%", escape="\\"),
+                Watch.notes.ilike(f"%{like_term}%", escape="\\"),
             )
         )
 
@@ -310,9 +317,28 @@ def delete_watch(
     return None
 
 
+def _is_allowed_base_url(base_url: str, request: Request) -> bool:
+    try:
+        parts = urlsplit(base_url)
+        parts.port  # raises ValueError on a bad port
+    except ValueError:
+        return False
+    if parts.scheme not in ("http", "https") or not parts.hostname:
+        return False
+    if parts.username or parts.password or parts.query or parts.fragment:
+        return False
+    if parts.path not in ("", "/"):
+        return False
+    origin = f"{parts.scheme}://{parts.netloc}".lower()
+    allowed = {o.rstrip("/").lower() for o in settings.allowed_origins_list}
+    request_host = (request.headers.get("host") or "").split(":")[0].lower()
+    return origin in allowed or parts.hostname.lower() == request_host
+
+
 @router.get("/{watch_id}/qr-code")
 def get_watch_qr_code(
     watch_id: UUID,
+    request: Request,
     base_url: str = Query(
         default="http://localhost:8080",
         description="Base URL for the watch detail page",
@@ -323,7 +349,15 @@ def get_watch_qr_code(
     """
     Generate a QR code for a watch that links to its detail page.
     Returns a PNG image that can be downloaded, printed, or displayed.
+
+    base_url must be this site (the host the request came to) or one of
+    ALLOWED_ORIGINS, with no path, query or credentials.
     """
+    if not _is_allowed_base_url(base_url, request):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="base_url must be this site's address",
+        )
     # Verify watch exists and belongs to current user
     watch = (
         db.query(Watch)
@@ -557,8 +591,9 @@ def fetch_google_images(
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
+        logger.exception("Image fetch failed for watch %s", watch_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to fetch images: {str(e)}",
+            detail="Failed to fetch images",
         )

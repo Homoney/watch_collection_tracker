@@ -15,12 +15,12 @@ class TestAtomicTime:
     """Test atomic time endpoint"""
 
     @patch('app.utils.atomic_time.get_atomic_time')
-    async def test_get_atomic_time_success(self, mock_get_time, client: TestClient):
+    async def test_get_atomic_time_success(self, mock_get_time, client: TestClient, auth_headers: dict):
         """Test getting atomic time"""
         test_time = datetime.utcnow()
         mock_get_time.return_value = AsyncMock(return_value=(test_time, True))
 
-        response = client.get("/api/v1/atomic-time")
+        response = client.get("/api/v1/atomic-time", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -29,13 +29,37 @@ class TestAtomicTime:
         assert "timezone" in data
         assert "unix_timestamp" in data
 
-    def test_get_atomic_time_with_timezone(self, client: TestClient):
+    def test_get_atomic_time_with_timezone(self, client: TestClient, auth_headers: dict):
         """Test atomic time with specific timezone"""
-        response = client.get("/api/v1/atomic-time?tz=America/New_York")
+        response = client.get("/api/v1/atomic-time?tz=America/New_York", headers=auth_headers)
 
         assert response.status_code == 200
         data = response.json()
         assert data["timezone"] == "America/New_York"
+
+    def test_atomic_time_requires_auth(self, client: TestClient):
+        assert client.get("/api/v1/atomic-time").status_code == 401
+
+    def test_unknown_timezone_rejected(self, client: TestClient, auth_headers: dict):
+        r = client.get("/api/v1/atomic-time?tz=../../etc", headers=auth_headers)
+        assert r.status_code == 400
+
+    def test_reference_clock_is_cached(self, client: TestClient, auth_headers: dict, monkeypatch):
+        from datetime import timedelta
+        from app.utils import atomic_time
+
+        calls = []
+
+        async def fake_fetch():
+            calls.append(1)
+            return timedelta(seconds=2), True
+
+        monkeypatch.setattr(atomic_time, "_offset_cache", None)
+        monkeypatch.setattr(atomic_time, "_fetch_offset", fake_fetch)
+        for _ in range(3):
+            r = client.get("/api/v1/atomic-time", headers=auth_headers)
+            assert r.status_code == 200 and r.json()["is_atomic_source"] is True
+        assert len(calls) == 1
 
 
 class TestCreateAccuracyReading:

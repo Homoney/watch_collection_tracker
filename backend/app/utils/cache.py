@@ -7,21 +7,24 @@ from typing import Any, Optional
 
 import redis
 
+from app.config import settings
+
 # Redis client configuration
 redis_client = None
 
 try:
     redis_client = redis.Redis(
-        host="redis",
-        port=6379,
+        host=settings.REDIS_HOST,
+        port=settings.REDIS_PORT,
         db=0,
+        password=settings.REDIS_PASSWORD or None,
         decode_responses=True,
         socket_connect_timeout=2,
         socket_timeout=2,
     )
     # Test connection
     redis_client.ping()
-except (redis.ConnectionError, redis.TimeoutError):
+except (redis.ConnectionError, redis.TimeoutError):  # includes auth errors
     # Redis not available, caching will be disabled
     redis_client = None
 
