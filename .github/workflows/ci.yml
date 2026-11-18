@@ -19,21 +19,6 @@ jobs:
     name: Backend Tests
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16-alpine
-        env:
-          POSTGRES_DB: watch_tracker_test
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -51,39 +36,13 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run database migrations
-        env:
-          DATABASE_URL: postgresql://testuser:${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}@localhost:5432/watch_tracker_test
-          SECRET_KEY: test-secret-key-for-ci-0123456789abcdef
-          POSTGRES_DB: watch_tracker_test
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}
-          POSTGRES_HOST: localhost
-          ALLOWED_ORIGINS: "*"
-          UPLOAD_DIR: /tmp/test-uploads
-          MAX_UPLOAD_SIZE: 20971520
-          ALGORITHM: HS256
-          ACCESS_TOKEN_EXPIRE_MINUTES: 30
-          REFRESH_TOKEN_EXPIRE_DAYS: 7
-        run: |
-          cd backend
-          mkdir -p /tmp/test-uploads
-          alembic upgrade head
-
       - name: Run tests with coverage
+        # Tests use a temporary SQLite database (see tests/conftest.py)
         env:
-          DATABASE_URL: postgresql://testuser:${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}@localhost:5432/watch_tracker_test
           SECRET_KEY: test-secret-key-for-ci-0123456789abcdef
-          POSTGRES_DB: watch_tracker_test
-          POSTGRES_USER: testuser
-          POSTGRES_PASSWORD: ${{ secrets.CI_POSTGRES_PASSWORD || 'testpass' }}
-          POSTGRES_HOST: localhost
           ALLOWED_ORIGINS: "*"
           UPLOAD_DIR: /tmp/test-uploads
           MAX_UPLOAD_SIZE: 20971520
-          ALGORITHM: HS256
-          ACCESS_TOKEN_EXPIRE_MINUTES: 30
-          REFRESH_TOKEN_EXPIRE_DAYS: 7
         run: |
           cd backend
           mkdir -p /tmp/test-uploads

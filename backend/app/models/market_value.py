@@ -3,10 +3,10 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Column, DateTime, Enum, ForeignKey, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.db_types import GUID
 
 
 class ValueSourceEnum(str, enum.Enum):
@@ -18,9 +18,9 @@ class ValueSourceEnum(str, enum.Enum):
 class MarketValue(Base):
     __tablename__ = "market_values"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     watch_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("watches.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

@@ -2,18 +2,18 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, Numeric, String, Text
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.db_types import GUID
 
 
 class ServiceHistory(Base):
     __tablename__ = "service_history"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     watch_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("watches.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -50,9 +50,9 @@ class ServiceHistory(Base):
 class ServiceDocument(Base):
     __tablename__ = "service_documents"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     service_history_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("service_history.id", ondelete="CASCADE"),
         nullable=False,
         index=True,

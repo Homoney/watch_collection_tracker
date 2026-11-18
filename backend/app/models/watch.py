@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import (
+    JSON,
     Column,
     DateTime,
     Enum,
@@ -12,10 +13,10 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.db_types import GUID
 
 
 class ConditionEnum(str, enum.Enum):
@@ -29,21 +30,19 @@ class ConditionEnum(str, enum.Enum):
 class Watch(Base):
     __tablename__ = "watches"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     user_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
     )
-    collection_id = Column(
-        UUID(as_uuid=True), ForeignKey("collections.id", ondelete="SET NULL")
-    )
+    collection_id = Column(GUID, ForeignKey("collections.id", ondelete="SET NULL"))
     brand_id = Column(
-        UUID(as_uuid=True), ForeignKey("brands.id", ondelete="RESTRICT"), nullable=False
+        GUID, ForeignKey("brands.id", ondelete="RESTRICT"), nullable=False
     )
     movement_type_id = Column(
-        UUID(as_uuid=True), ForeignKey("movement_types.id", ondelete="RESTRICT")
+        GUID, ForeignKey("movement_types.id", ondelete="RESTRICT")
     )
 
     # Basic information
@@ -65,7 +64,7 @@ class Watch(Base):
     power_reserve = Column(Integer)  # hours
 
     # Complications (stored as JSON array of complication names)
-    complications = Column(JSONB, default=[])
+    complications = Column(JSON, default=[])
 
     # Condition
     condition = Column(

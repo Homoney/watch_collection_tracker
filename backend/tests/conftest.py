@@ -1,18 +1,18 @@
 """
 Test configuration and fixtures for pytest
 """
-"""
-Test configuration and fixtures for pytest
-"""
 import os
+import tempfile
+
+# Point the app at a scratch database before it is imported
+os.environ.setdefault("DATA_DIR", tempfile.mkdtemp(prefix="watch-data-"))
 import pytest
 from typing import Generator
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 from app.main import app
-from app.database import Base, get_db
+from app.database import Base, get_db, make_engine
 from app.models.user import User
 from app.models.reference import Brand, MovementType, Complication
 from app.models.collection import Collection
@@ -20,16 +20,10 @@ from app.models.watch import Watch
 from app.core.security import get_password_hash, create_access_token
 
 
-# Get test database URL from environment variables (same as main app)
-POSTGRES_USER = os.getenv("POSTGRES_USER", "testuser")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "testpass")
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "watch_tracker_test")
-
-TEST_DATABASE_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
-
-engine = create_engine(TEST_DATABASE_URL)
+# Tests run on a throwaway SQLite file with the same engine settings as the app
+TEST_DB_DIR = tempfile.mkdtemp(prefix="watch-tests-")
+TEST_DATABASE_URL = f"sqlite:///{os.path.join(TEST_DB_DIR, 'test.db')}"
+engine = make_engine(TEST_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
