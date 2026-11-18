@@ -2,6 +2,17 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [2.0.3] - 2026-11-18
+
+Fixes and maintenance only. No upgrade steps.
+
+### Fixed
+- First sign-up on a fresh install is now clear: the login page leads to "Create the admin account" when `INITIAL_ADMIN_EMAIL` is set, and a wrong email gets a hint instead of a bare error. Without `INITIAL_ADMIN_EMAIL` the page no longer promises an admin account.
+- Docs (README, Docker Hub page, deployment and user guides) now list the first-admin step in every install path.
+
+### Added
+- Public `GET /api/v1/auth/setup-status` endpoint (`setup_required`, `admin_signup`; never returns the admin address).
+
 ## [2.0.2] - 2026-11-18
 
 Fixes and maintenance only. No upgrade steps.
