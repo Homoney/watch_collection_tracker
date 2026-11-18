@@ -14,7 +14,7 @@ describe('first-admin setup', () => {
   })
 
   it('login page points to admin sign-up when no accounts exist', async () => {
-    vi.spyOn(authApi, 'setupStatus').mockResolvedValue({ setup_required: true })
+    vi.spyOn(authApi, 'setupStatus').mockResolvedValue({ setup_required: true, admin_signup: true })
     renderWithProviders(<LoginPage />)
 
     const link = await screen.findByRole('link', { name: 'Create the admin account' })
@@ -24,7 +24,7 @@ describe('first-admin setup', () => {
   })
 
   it('login page shows the normal sign-in form once accounts exist', async () => {
-    const spy = vi.spyOn(authApi, 'setupStatus').mockResolvedValue({ setup_required: false })
+    const spy = vi.spyOn(authApi, 'setupStatus').mockResolvedValue({ setup_required: false, admin_signup: false })
     renderWithProviders(<LoginPage />)
 
     expect(await screen.findByRole('button', { name: 'Sign in' })).toBeInTheDocument()
@@ -40,8 +40,16 @@ describe('first-admin setup', () => {
     expect(await screen.findByRole('button', { name: 'Sign in' })).toBeInTheDocument()
   })
 
+  it('shows the normal pages when the first sign-up will not be admin', async () => {
+    // ALLOW_REGISTRATION=true without INITIAL_ADMIN_EMAIL: first user is a plain user
+    vi.spyOn(authApi, 'setupStatus').mockResolvedValue({ setup_required: true, admin_signup: false })
+    renderWithProviders(<LoginPage />)
+    expect(await screen.findByRole('button', { name: 'Sign in' })).toBeInTheDocument()
+    expect(screen.queryByText(/admin/i)).not.toBeInTheDocument()
+  })
+
   it('register page explains the first account becomes the admin', async () => {
-    vi.spyOn(authApi, 'setupStatus').mockResolvedValue({ setup_required: true })
+    vi.spyOn(authApi, 'setupStatus').mockResolvedValue({ setup_required: true, admin_signup: true })
     renderWithProviders(<RegisterPage />)
 
     expect(
@@ -52,7 +60,7 @@ describe('first-admin setup', () => {
   })
 
   it('register page is unchanged once accounts exist', async () => {
-    vi.spyOn(authApi, 'setupStatus').mockResolvedValue({ setup_required: false })
+    vi.spyOn(authApi, 'setupStatus').mockResolvedValue({ setup_required: false, admin_signup: false })
     renderWithProviders(<RegisterPage />)
 
     expect(await screen.findByRole('heading', { name: 'Create your account' })).toBeInTheDocument()

@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '@/contexts/AuthContext'
-import { useSetupRequired } from '@/hooks/useSetupStatus'
+import { useAdminSignup } from '@/hooks/useSetupStatus'
 import type { LoginRequest } from '@/types'
 
 export default function LoginPage() {
   const { login } = useAuth()
-  const setupRequired = useSetupRequired()
+  const adminSignup = useAdminSignup()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -39,11 +39,11 @@ export default function LoginPage() {
             Watch Collection Tracker
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            {setupRequired ? 'Create the admin account' : 'Sign in to your account'}
+            {adminSignup ? 'Create the admin account' : 'Sign in to your account'}
           </p>
         </div>
 
-        {setupRequired && (
+        {adminSignup && (
           <div className="rounded-md bg-blue-50 dark:bg-blue-900/40 p-4 space-y-3" role="status">
             <p className="text-sm text-blue-900 dark:text-blue-100">
               No accounts exist yet, so there is no password to sign in with. Sign up with the
@@ -59,7 +59,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        {!setupRequired && (
+        {!adminSignup && (
           <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
             {error && (
               <div className="rounded-md bg-red-50 dark:bg-red-900/50 p-4">

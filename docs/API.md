@@ -103,12 +103,13 @@ The body is optional: without it the refresh token is read from the cookie.
 GET /api/v1/auth/setup-status
 ```
 
-Public. `setup_required` is `true` only while the database has no accounts; the web app then shows "Create the admin account" on the sign-in page.
+Public. `setup_required` is `true` only while the database has no accounts. `admin_signup` is `true` when, in addition, signing up creates the admin (`INITIAL_ADMIN_EMAIL` is set); the web app then shows "Create the admin account" on the sign-in page. Neither reveals the address.
 
 **Response** (200 OK):
 ```json
 {
-  "setup_required": false
+  "setup_required": false,
+  "admin_signup": false
 }
 ```
 

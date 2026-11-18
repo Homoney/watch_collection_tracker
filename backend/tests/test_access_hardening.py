@@ -286,13 +286,29 @@ class TestSetupStatus:
         monkeypatch.setattr(settings, "INITIAL_ADMIN_EMAIL", "owner@example.com")
         r = client.get(SETUP)
         assert r.status_code == 200
-        assert r.json() == {"setup_required": True}
+        assert r.json() == {"setup_required": True, "admin_signup": True}
         assert "owner@example.com" not in r.text
 
-    def test_false_when_users_exist(self, client, test_db, test_user):
+    def test_false_when_users_exist(self, client, test_db, test_user, monkeypatch):
+        monkeypatch.setattr(settings, "INITIAL_ADMIN_EMAIL", "owner@example.com")
         r = client.get(SETUP)
         assert r.status_code == 200
-        assert r.json() == {"setup_required": False}
+        assert r.json() == {"setup_required": False, "admin_signup": False}
+
+    def test_no_admin_signup_without_initial_admin_email(
+        self, client, test_db, monkeypatch
+    ):
+        # Open registration, no INITIAL_ADMIN_EMAIL: the first user is a plain
+        # user, so the pages must not promise an admin account.
+        monkeypatch.setattr(settings, "ALLOW_REGISTRATION", True)
+        monkeypatch.setattr(settings, "INITIAL_ADMIN_EMAIL", "")
+        assert client.get(SETUP).json() == {
+            "setup_required": True,
+            "admin_signup": False,
+        }
+        r = client.post(REG, json={"email": "a@example.com", "password": "watch-pass-123"})
+        assert r.status_code == 201
+        assert test_db.query(User).one().role == UserRole.user
 
     def test_turns_false_after_first_sign_up(self, client, test_db, monkeypatch):
         monkeypatch.setattr(settings, "ALLOW_REGISTRATION", False)
@@ -300,4 +316,7 @@ class TestSetupStatus:
         assert client.get(SETUP).json()["setup_required"] is True
         r = client.post(REG, json={"email": "owner@example.com", "password": "watch-pass-123"})
         assert r.status_code == 201
-        assert client.get(SETUP).json() == {"setup_required": False}
+        assert client.get(SETUP).json() == {
+            "setup_required": False,
+            "admin_signup": False,
+        }

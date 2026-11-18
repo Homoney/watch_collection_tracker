@@ -89,12 +89,17 @@ def _record_success(db: Session, user: User) -> None:
 
 @router.get("/setup-status")
 def setup_status(db: Session = Depends(get_db)):
-    """Public: whether the first (admin) account still has to be created.
+    """Public: whether the first account still has to be created.
 
-    True only while the database has no users. Says nothing else, so it does
-    not reveal INITIAL_ADMIN_EMAIL or any account.
+    setup_required is true only while the database has no users.
+    admin_signup is true when, in addition, signing up can create the admin
+    (INITIAL_ADMIN_EMAIL is set). Neither reveals the address or any account.
     """
-    return {"setup_required": db.query(User.id).first() is None}
+    empty = db.query(User.id).first() is None
+    return {
+        "setup_required": empty,
+        "admin_signup": empty and bool(settings.INITIAL_ADMIN_EMAIL.strip()),
+    }
 
 
 @router.post(
