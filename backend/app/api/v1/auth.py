@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
-from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -14,7 +13,7 @@ from app.core.security import (
     token_version_matches,
     verify_password,
 )
-from app.database import get_db
+from app.database import get_db, take_write_lock
 from app.models.user import User, UserRole
 from app.schemas.user import (
     TokenRefresh,
@@ -108,8 +107,7 @@ def register(
     """
     # Serialise registrations so the "empty database" check and the insert
     # cannot race (two simultaneous first sign-ups).
-    if db.get_bind().dialect.name == "postgresql":
-        db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": REGISTER_LOCK_KEY})
+    take_write_lock(db, REGISTER_LOCK_KEY)
 
     is_bootstrap_admin = (
         bool(settings.INITIAL_ADMIN_EMAIL)

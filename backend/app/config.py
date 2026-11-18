@@ -1,3 +1,4 @@
+import os
 from typing import List, Optional
 
 from pydantic import field_validator
@@ -5,12 +6,16 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    # Database
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
+    # Database: a SQLite file. DATABASE_URL overrides the path.
+    DATA_DIR: str = "/data"
+    DATABASE_URL: str = ""
+    # Legacy PostgreSQL settings, used only while DATABASE_URL is unset and
+    # POSTGRES_USER is set (the old compose files). Removed with them.
+    POSTGRES_USER: str = ""
+    POSTGRES_PASSWORD: str = ""
     POSTGRES_HOST: str = "postgres"
     POSTGRES_PORT: int = 5432
-    POSTGRES_DB: str
+    POSTGRES_DB: str = ""
 
     # Security
     SECRET_KEY: str
@@ -68,10 +73,14 @@ class Settings(BaseSettings):
 
     @property
     def database_url(self) -> str:
-        return (
-            f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-        )
+        if self.DATABASE_URL:
+            return self.DATABASE_URL
+        if self.POSTGRES_USER:
+            return (
+                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            )
+        return f"sqlite:///{os.path.join(self.DATA_DIR, 'watch.db')}"
 
     @property
     def allowed_origins_list(self) -> List[str]:

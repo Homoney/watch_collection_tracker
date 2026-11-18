@@ -101,23 +101,18 @@ def list_watches(
     if purchase_date_to:
         query = query.filter(Watch.purchase_date <= purchase_date_to)
 
-    # Enhanced search with PostgreSQL full-text search for better performance
+    # Case-insensitive substring search on the main text fields
     if search:
-        # Treat % and _ in the user's text literally in ILIKE
+        # Treat % and _ in the user's text literally
         like_term = search.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-        # Use full-text search for model field (indexed)
-        # Fall back to ILIKE for other fields (less common searches)
+        pattern = f"%{like_term}%"
         query = query.join(Brand).filter(
             or_(
-                func.to_tsvector("english", Watch.model).op("@@")(
-                    func.plainto_tsquery("english", search)
-                ),
-                func.to_tsvector("english", Brand.name).op("@@")(
-                    func.plainto_tsquery("english", search)
-                ),
-                Watch.reference_number.ilike(f"%{like_term}%", escape="\\"),
-                Watch.serial_number.ilike(f"%{like_term}%", escape="\\"),
-                Watch.notes.ilike(f"%{like_term}%", escape="\\"),
+                Watch.model.ilike(pattern, escape="\\"),
+                Brand.name.ilike(pattern, escape="\\"),
+                Watch.reference_number.ilike(pattern, escape="\\"),
+                Watch.serial_number.ilike(pattern, escape="\\"),
+                Watch.notes.ilike(pattern, escape="\\"),
             )
         )
 

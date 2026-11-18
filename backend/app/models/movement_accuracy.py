@@ -11,10 +11,10 @@ from sqlalchemy import (
     String,
     Text,
 )
-from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.db_types import GUID, UTCDateTime
 
 
 class MovementAccuracyReading(Base):
@@ -28,9 +28,9 @@ class MovementAccuracyReading(Base):
 
     __tablename__ = "movement_accuracy_readings"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(GUID, primary_key=True, default=uuid.uuid4)
     watch_id = Column(
-        UUID(as_uuid=True),
+        GUID,
         ForeignKey("watches.id", ondelete="CASCADE"),
         nullable=False,
         index=True,
@@ -38,7 +38,7 @@ class MovementAccuracyReading(Base):
 
     # Reading data
     reference_time = Column(
-        DateTime(timezone=True),
+        UTCDateTime(),
         nullable=False,
         index=True,
         comment="Atomic clock reference time when reading was taken",
