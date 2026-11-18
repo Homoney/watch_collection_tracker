@@ -3,13 +3,18 @@
 /assets/* are content-hashed files and are cached for a year. Any other GET
 that is not an API, upload or docs path gets a real file from dist/ if one
 exists, otherwise index.html so the browser router can handle it.
+
+This runs as the router's fallback, after every route and the usual
+trailing-slash redirect have been tried, so `/api/v1/saved-searches` still
+redirects to `/api/v1/saved-searches/` as it does without the web app.
 """
 
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from starlette.staticfiles import StaticFiles
+from starlette.types import Receive, Scope, Send
 
 RESERVED_PREFIXES = ("api", "uploads", "docs", "redoc", "openapi.json", "health")
 
@@ -47,15 +52,23 @@ def mount_web_app(app: FastAPI, dist_dir: str) -> bool:
         if f.is_file() and not f.is_symlink()
     }
 
-    @app.api_route(
-        "/{full_path:path}", methods=["GET", "HEAD"], include_in_schema=False
-    )
-    async def web_app(full_path: str):
-        if _is_reserved(full_path):
-            raise HTTPException(status_code=404, detail="Not Found")
+    not_found = app.router.default
+
+    async def web_app(scope: Scope, receive: Receive, send: Send) -> None:
+        full_path = scope["path"].lstrip("/")
+        if (
+            scope["type"] != "http"
+            or scope["method"] not in ("GET", "HEAD")
+            or _is_reserved(full_path)
+        ):
+            await not_found(scope, receive, send)
+            return
         found = files.get(full_path)
         if found is not None and found != index:
-            return FileResponse(found)
-        return FileResponse(index, headers={"Cache-Control": "no-cache"})
+            response = FileResponse(found)
+        else:
+            response = FileResponse(index, headers={"Cache-Control": "no-cache"})
+        await response(scope, receive, send)
 
+    app.router.default = web_app
     return True
