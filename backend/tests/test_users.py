@@ -436,17 +436,15 @@ class TestAdminAccessControl:
 
             assert response.status_code == 403, f"{method} {url} should return 403 for non-admin"
 
-    def test_first_user_becomes_admin(
+    def test_first_user_is_not_admin_by_default(
         self,
         client: TestClient,
         test_db: Session
     ):
-        """Test that first registered user automatically becomes admin"""
-        # Clear all users
+        """The first account is no longer made admin just for being first"""
         test_db.query(User).delete()
         test_db.commit()
 
-        # Register first user
         response = client.post(
             "/api/v1/auth/register",
             json={
@@ -456,8 +454,6 @@ class TestAdminAccessControl:
         )
 
         assert response.status_code == 201
-
-        # Check if user is admin
         user = test_db.query(User).filter(User.email == "first@example.com").first()
         assert user is not None
-        assert user.role == UserRole.admin
+        assert user.role == UserRole.user

@@ -33,6 +33,15 @@ engine = create_engine(TEST_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+@pytest.fixture(autouse=True)
+def open_registration(monkeypatch):
+    """Most tests register users freely; closed-registration tests override this."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "ALLOW_REGISTRATION", True)
+    monkeypatch.setattr(settings, "INITIAL_ADMIN_EMAIL", "")
+
+
 @pytest.fixture(scope="function")
 def test_db() -> Generator[Session, None, None]:
     """

@@ -80,7 +80,7 @@ Reference data, Collections CRUD, Watches CRUD, filtering/sorting/pagination
 ### ✅ Phase 8: User Management & UI Fixes
 **User Management**:
 - Role-based access control (admin/user roles)
-- First registered user automatically becomes admin
+- The first admin is set up with `INITIAL_ADMIN_EMAIL` (register with that email on an empty database) or `docker compose exec backend python -m app.cli create-user EMAIL --admin`; public registration is off unless `ALLOW_REGISTRATION=true`
 - Admin panel for user management
 - Promote/demote users between roles
 - Reset user passwords (admin only)

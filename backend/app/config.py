@@ -24,6 +24,14 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "/app/storage/uploads"
     BACKUP_DIR: str = "/app/storage/backups"
     MAX_UPLOAD_SIZE: int = 20971520  # 20MB
+    # Lifetime of signed /uploads/ URLs (a URL stays valid 1-2x this long)
+    UPLOAD_URL_TTL_SECONDS: int = 3600
+
+    # Registration: closed by default. The first admin is created either by
+    # registering with INITIAL_ADMIN_EMAIL on an empty database, or with
+    # `python -m app.cli create-user EMAIL --admin`.
+    ALLOW_REGISTRATION: bool = False
+    INITIAL_ADMIN_EMAIL: str = ""
 
     @property
     def database_url(self) -> str:

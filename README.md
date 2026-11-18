@@ -508,7 +508,7 @@ docker-compose up -d
 ### ✅ Phase 8: User Management & UI Fixes (COMPLETED)
 **User Management**:
 - Role-based access control (admin/user roles)
-- First registered user automatically becomes admin
+- The first admin is set up with `INITIAL_ADMIN_EMAIL` (register with that email on an empty database) or `docker compose exec backend python -m app.cli create-user EMAIL --admin`; public registration is off unless `ALLOW_REGISTRATION=true`
 - Admin panel at `/admin` for user management
 - Promote/demote users between admin and regular user roles
 - Reset user passwords (admin only)
