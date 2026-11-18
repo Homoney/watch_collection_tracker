@@ -2,6 +2,30 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [2.0.0] - 2026-11-18
+
+Single-image release: the whole app now ships as one container. **Breaking.** Read "Upgrade notes" before deploying.
+
+### Upgrade notes (breaking changes)
+- **New image: `dhomoney/watch-tracker`** (linux/amd64 and linux/arm64). It serves the web app and the API from one container on one port. The old `watch-tracker-backend` and `watch-tracker-frontend` images no longer update.
+- **SQLite only.** PostgreSQL support and Redis are gone. **Data from a 1.x PostgreSQL install is not migrated.**
+- **Port 8080:** the container listens on 8000 inside; publish it with `-p 8080:8000`.
+- **Data lives in one volume mounted at `/data`** (`watch.db`, `uploads/`, `backups/`, and a generated `secret_key` if `SECRET_KEY` is not set). A bind-mounted host folder must be owned by UID 1000.
+- **API docs moved from `/api/docs` to `/docs`.** The API info response moved from `GET /` to `GET /api` (`/` is now the web app).
+- **Removed:** `nginx/`, `docker-compose.prod.yml`, `docker-compose.test.yml`, the `POSTGRES_*`, `REDIS_*` and `ALLOWED_ORIGINS` settings (old `.env` files are ignored, not rejected). The QR-code `base_url` must be this site.
+- Install: `docker run -p 8080:8000 -v watch-data:/data -e INITIAL_ADMIN_EMAIL=you@example.com dhomoney/watch-tracker`.
+
+### Added
+- App-served signed, expiring upload links and in-app rate limits (same limits as the old nginx config; over the limit returns 429 with `Retry-After`).
+- Container start-up: creates `/data` folders, generates and keeps a secret key, copies the database before a pending migration, then runs migrations.
+- Daily online database backups (`BACKUP_INTERVAL_HOURS`, default 24; `python -m app.cli backup` on demand).
+- Docker health check; `TRUSTED_PROXIES` for running behind a reverse proxy.
+
+### Changed
+- Search matches substrings (case-insensitive) instead of whole stemmed words.
+- Single Alembic baseline migration.
+- Security headers, gzip and the web app are served by the backend.
+
 ## [1.2.0] - 2026-11-18
 
 Hardening release (sessions, uploads, configuration, deployment). Read "Upgrade notes" before deploying.
