@@ -3,7 +3,6 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.config import settings
-
 from app.core.deps import get_current_user
 from app.core.security import (
     create_access_token,
