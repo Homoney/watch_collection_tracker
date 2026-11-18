@@ -70,7 +70,7 @@ export default function MovementAccuracyPage() {
             <p className="text-lg text-gray-600 dark:text-gray-400">
               {watch.brand?.name} {watch.model}
               {watch.reference_number && (
-                <span className="text-gray-500 dark:text-gray-500"> • Ref. {watch.reference_number}</span>
+                <span className="text-gray-500 dark:text-gray-400"> • Ref. {watch.reference_number}</span>
               )}
             </p>
           </div>

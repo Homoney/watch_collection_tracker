@@ -344,7 +344,7 @@ export default function WatchDetailPage() {
               {watch.collection && (
                 <div>
                   <span
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium"
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium dark:!text-gray-100"
                     style={{
                       backgroundColor: `${watch.collection.color}20`,
                       color: watch.collection.color,

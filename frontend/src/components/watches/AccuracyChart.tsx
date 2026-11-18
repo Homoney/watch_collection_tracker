@@ -67,7 +67,7 @@ export function AccuracyChart({ watchId }: AccuracyChartProps) {
             {drift > 0 ? 'Running fast' : drift < 0 ? 'Running slow' : 'Perfect'}
           </p>
           {data.notes && (
-            <p className="text-xs text-gray-500 dark:text-gray-500 mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
               {data.notes}
             </p>
           )}

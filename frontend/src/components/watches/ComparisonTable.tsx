@@ -28,7 +28,7 @@ function ComparisonRow({ label, values, renderer }: ComparisonRowProps) {
           ) : value !== null && value !== undefined && value !== '' ? (
             value
           ) : (
-            <span className="text-gray-400 dark:text-gray-500 italic">N/A</span>
+            <span className="text-gray-400 dark:text-gray-400 italic">N/A</span>
           )}
         </td>
       ))}
@@ -146,7 +146,7 @@ export default function ComparisonTable({ watches, onRemoveWatch }: ComparisonTa
             renderer={(collection) =>
               collection ? (
                 <span
-                  className="inline-flex items-center px-2 py-1 rounded text-xs font-medium"
+                  className="inline-flex items-center px-2 py-1 rounded text-xs font-medium dark:!text-gray-100"
                   style={{
                     backgroundColor: `${collection.color}20`,
                     color: collection.color,

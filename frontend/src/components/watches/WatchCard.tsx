@@ -123,7 +123,7 @@ const WatchCard = memo(function WatchCard({
           {watch.collection && (
             <div className="mb-2">
               <span
-                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium"
+                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium dark:!text-gray-100"
                 style={{
                   backgroundColor: `${watch.collection.color}20`,
                   color: watch.collection.color,

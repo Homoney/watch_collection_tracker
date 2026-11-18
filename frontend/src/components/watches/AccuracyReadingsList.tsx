@@ -153,7 +153,7 @@ export function AccuracyReadingsList({ watchId, onAddReading }: AccuracyReadings
                     <p className="font-medium text-gray-900 dark:text-white">
                       {format(readingDate, 'MMM d, yyyy')}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {format(readingDate, 'h:mm:ss a')}
                     </p>
                   </div>
@@ -179,7 +179,7 @@ export function AccuracyReadingsList({ watchId, onAddReading }: AccuracyReadings
                         <p className={`font-semibold ${getDriftColor(reading.drift_seconds_per_day)}`}>
                           {formatDrift(reading.drift_seconds_per_day)}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-500">
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
                           {reading.drift_seconds_per_day > 0 ? 'Running fast' : 'Running slow'}
                         </p>
                       </div>

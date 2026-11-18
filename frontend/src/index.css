@@ -42,7 +42,8 @@ body {
     input[type="tel"],
     select,
     textarea {
-      @apply bg-gray-800 text-white border-gray-600 placeholder-gray-400;
+      /* gray-900 so fields stand out on gray-800 dialogs and cards */
+      @apply bg-gray-900 text-white border-gray-600 placeholder-gray-400;
     }
 
     input[type="text"]:focus,
@@ -59,31 +60,130 @@ body {
     textarea:focus {
       @apply border-blue-500 ring-blue-500;
     }
-
-    /* Card-like containers */
-    .bg-white {
-      @apply dark:bg-gray-800;
-    }
-
-    /* Text elements */
-    .text-gray-900 {
-      @apply dark:text-white;
-    }
-
-    .text-gray-800 {
-      @apply dark:text-gray-100;
-    }
-
-    .text-gray-700 {
-      @apply dark:text-gray-200;
-    }
-
-    .text-gray-600 {
-      @apply dark:text-gray-300;
-    }
-
-    .text-gray-500 {
-      @apply dark:text-gray-400;
-    }
   }
+}
+
+/*
+ * Dark mode for components that only have light classes.
+ *
+ * The old mapping sat in @layer base and lost to the utilities (same
+ * specificity, emitted later), so it never applied. Here the
+ * :not([class*="dark:..."]) guard both raises specificity above the utility
+ * it remaps and leaves elements with their own dark: classes alone, so
+ * explicit dark styles still decide. Light mode is untouched.
+ * Text colours are chosen for at least WCAG AA contrast on gray-800/900.
+ */
+@media (prefers-color-scheme: dark) {
+  /* Base text and page colour; chart labels and plain text inherit this */
+  :root {
+    color: theme('colors.gray.100');
+    background-color: theme('colors.gray.900');
+  }
+
+  .bg-white:not([class*="dark:bg-"]) { background-color: theme('colors.gray.800'); }
+  .bg-gray-50:not([class*="dark:bg-"]) { background-color: theme('colors.gray.900'); }
+  .bg-gray-100:not([class*="dark:bg-"]) { background-color: theme('colors.gray.700'); }
+  .bg-gray-200:not([class*="dark:bg-"]) { background-color: theme('colors.gray.700'); }
+  .disabled\:bg-gray-100:disabled:not([class*="dark:disabled:bg-"]) { background-color: theme('colors.gray.700'); }
+  .hover\:bg-white:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.700'); }
+  .hover\:bg-gray-50:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.700'); }
+  .hover\:bg-gray-100:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.700'); }
+  .hover\:bg-gray-200:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.600'); }
+  .hover\:bg-gray-300:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.600'); }
+  .bg-red-50:not([class*="dark:bg-"]) { background-color: theme('colors.red.900 / 30%'); }
+  .bg-red-100:not([class*="dark:bg-"]) { background-color: theme('colors.red.900 / 50%'); }
+  .border-red-200:not([class*="dark:border-"]) { border-color: theme('colors.red.800'); }
+  .text-red-500:not([class*="dark:text-"]) { color: theme('colors.red.400'); }
+  .text-red-600:not([class*="dark:text-"]) { color: theme('colors.red.400'); }
+  .text-red-700:not([class*="dark:text-"]) { color: theme('colors.red.300'); }
+  .text-red-800:not([class*="dark:text-"]) { color: theme('colors.red.300'); }
+  .text-red-900:not([class*="dark:text-"]) { color: theme('colors.red.300'); }
+  .hover\:text-red-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.red.300'); }
+  .hover\:text-red-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.red.300'); }
+  .hover\:text-red-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.red.300'); }
+  .hover\:text-red-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.red.300'); }
+  .bg-blue-50:not([class*="dark:bg-"]) { background-color: theme('colors.blue.900 / 30%'); }
+  .bg-blue-100:not([class*="dark:bg-"]) { background-color: theme('colors.blue.900 / 50%'); }
+  .border-blue-200:not([class*="dark:border-"]) { border-color: theme('colors.blue.800'); }
+  .text-blue-500:not([class*="dark:text-"]) { color: theme('colors.blue.400'); }
+  .text-blue-600:not([class*="dark:text-"]) { color: theme('colors.blue.400'); }
+  .text-blue-700:not([class*="dark:text-"]) { color: theme('colors.blue.300'); }
+  .text-blue-800:not([class*="dark:text-"]) { color: theme('colors.blue.300'); }
+  .text-blue-900:not([class*="dark:text-"]) { color: theme('colors.blue.300'); }
+  .hover\:text-blue-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.blue.300'); }
+  .hover\:text-blue-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.blue.300'); }
+  .hover\:text-blue-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.blue.300'); }
+  .hover\:text-blue-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.blue.300'); }
+  .bg-green-50:not([class*="dark:bg-"]) { background-color: theme('colors.green.900 / 30%'); }
+  .bg-green-100:not([class*="dark:bg-"]) { background-color: theme('colors.green.900 / 50%'); }
+  .border-green-200:not([class*="dark:border-"]) { border-color: theme('colors.green.800'); }
+  .text-green-500:not([class*="dark:text-"]) { color: theme('colors.green.400'); }
+  .text-green-600:not([class*="dark:text-"]) { color: theme('colors.green.400'); }
+  .text-green-700:not([class*="dark:text-"]) { color: theme('colors.green.300'); }
+  .text-green-800:not([class*="dark:text-"]) { color: theme('colors.green.300'); }
+  .text-green-900:not([class*="dark:text-"]) { color: theme('colors.green.300'); }
+  .hover\:text-green-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.green.300'); }
+  .hover\:text-green-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.green.300'); }
+  .hover\:text-green-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.green.300'); }
+  .hover\:text-green-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.green.300'); }
+  .bg-yellow-50:not([class*="dark:bg-"]) { background-color: theme('colors.yellow.900 / 30%'); }
+  .bg-yellow-100:not([class*="dark:bg-"]) { background-color: theme('colors.yellow.900 / 50%'); }
+  .border-yellow-200:not([class*="dark:border-"]) { border-color: theme('colors.yellow.800'); }
+  .text-yellow-500:not([class*="dark:text-"]) { color: theme('colors.yellow.400'); }
+  .text-yellow-600:not([class*="dark:text-"]) { color: theme('colors.yellow.400'); }
+  .text-yellow-700:not([class*="dark:text-"]) { color: theme('colors.yellow.300'); }
+  .text-yellow-800:not([class*="dark:text-"]) { color: theme('colors.yellow.300'); }
+  .text-yellow-900:not([class*="dark:text-"]) { color: theme('colors.yellow.300'); }
+  .hover\:text-yellow-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.yellow.300'); }
+  .hover\:text-yellow-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.yellow.300'); }
+  .hover\:text-yellow-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.yellow.300'); }
+  .hover\:text-yellow-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.yellow.300'); }
+  .bg-purple-50:not([class*="dark:bg-"]) { background-color: theme('colors.purple.900 / 30%'); }
+  .bg-purple-100:not([class*="dark:bg-"]) { background-color: theme('colors.purple.900 / 50%'); }
+  .border-purple-200:not([class*="dark:border-"]) { border-color: theme('colors.purple.800'); }
+  .text-purple-500:not([class*="dark:text-"]) { color: theme('colors.purple.400'); }
+  .text-purple-600:not([class*="dark:text-"]) { color: theme('colors.purple.400'); }
+  .text-purple-700:not([class*="dark:text-"]) { color: theme('colors.purple.300'); }
+  .text-purple-800:not([class*="dark:text-"]) { color: theme('colors.purple.300'); }
+  .text-purple-900:not([class*="dark:text-"]) { color: theme('colors.purple.300'); }
+  .hover\:text-purple-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.purple.300'); }
+  .hover\:text-purple-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.purple.300'); }
+  .hover\:text-purple-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.purple.300'); }
+  .hover\:text-purple-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.purple.300'); }
+  .bg-orange-50:not([class*="dark:bg-"]) { background-color: theme('colors.orange.900 / 30%'); }
+  .bg-orange-100:not([class*="dark:bg-"]) { background-color: theme('colors.orange.900 / 50%'); }
+  .border-orange-200:not([class*="dark:border-"]) { border-color: theme('colors.orange.800'); }
+  .text-orange-500:not([class*="dark:text-"]) { color: theme('colors.orange.400'); }
+  .text-orange-600:not([class*="dark:text-"]) { color: theme('colors.orange.400'); }
+  .text-orange-700:not([class*="dark:text-"]) { color: theme('colors.orange.300'); }
+  .text-orange-800:not([class*="dark:text-"]) { color: theme('colors.orange.300'); }
+  .text-orange-900:not([class*="dark:text-"]) { color: theme('colors.orange.300'); }
+  .hover\:text-orange-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.orange.300'); }
+  .hover\:text-orange-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.orange.300'); }
+  .hover\:text-orange-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.orange.300'); }
+  .hover\:text-orange-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.orange.300'); }
+  .hover\:bg-blue-100:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.blue.900 / 50%'); }
+  .hover\:bg-blue-200:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.blue.800 / 60%'); }
+  .text-gray-900:not([class*="dark:text-"]) { color: theme('colors.gray.50'); }
+  .text-gray-800:not([class*="dark:text-"]) { color: theme('colors.gray.100'); }
+  .text-gray-700:not([class*="dark:text-"]) { color: theme('colors.gray.200'); }
+  .text-gray-600:not([class*="dark:text-"]) { color: theme('colors.gray.300'); }
+  .text-gray-500:not([class*="dark:text-"]) { color: theme('colors.gray.400'); }
+  .hover\:text-gray-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.white'); }
+  .hover\:text-gray-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.white'); }
+  .hover\:text-gray-500:hover:not([class*="dark:hover:text-"]) { color: theme('colors.gray.300'); }
+  .border-gray-100:not([class*="dark:border-"]) { border-color: theme('colors.gray.700'); }
+  .border-gray-200:not([class*="dark:border-"]) { border-color: theme('colors.gray.700'); }
+  .border-gray-300:not([class*="dark:border-"]) { border-color: theme('colors.gray.600'); }
+  .divide-gray-200:not([class*="dark:divide-"]) > :not([hidden]) ~ :not([hidden]) { border-color: theme('colors.gray.700'); }
+
+  /* Charts (Recharts): axis labels, light grid lines and the default tooltip */
+  .recharts-cartesian-axis-tick-value { fill: theme('colors.gray.400'); }
+  .recharts-cartesian-grid line[stroke="#e5e7eb"] { stroke: theme('colors.gray.700'); }
+  .recharts-default-tooltip {
+    background-color: theme('colors.gray.800') !important; /* inline style */
+    border-color: theme('colors.gray.600') !important;
+  }
+  .recharts-default-tooltip .recharts-tooltip-item { color: theme('colors.gray.100') !important; }
+  .recharts-tooltip-cursor { fill: theme('colors.gray.700'); }
 }
