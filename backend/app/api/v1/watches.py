@@ -41,7 +41,8 @@ def list_watches(
     purchase_date_from: Optional[str] = None,
     purchase_date_to: Optional[str] = None,
     sort_by: str = Query(
-        default="created_at", pattern="^(created_at|purchase_date|purchase_price|model)$"
+        default="created_at",
+        pattern="^(created_at|purchase_date|purchase_price|model)$",
     ),
     sort_order: str = Query(default="desc", pattern="^(asc|desc)$"),
     limit: int = Query(default=20, ge=1, le=100),
