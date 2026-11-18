@@ -87,6 +87,21 @@ def _record_success(db: Session, user: User) -> None:
         db.commit()
 
 
+@router.get("/setup-status")
+def setup_status(db: Session = Depends(get_db)):
+    """Public: whether the first account still has to be created.
+
+    setup_required is true only while the database has no users.
+    admin_signup is true when, in addition, signing up can create the admin
+    (INITIAL_ADMIN_EMAIL is set). Neither reveals the address or any account.
+    """
+    empty = db.query(User.id).first() is None
+    return {
+        "setup_required": empty,
+        "admin_signup": empty and bool(settings.INITIAL_ADMIN_EMAIL.strip()),
+    }
+
+
 @router.post(
     "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
 )
@@ -106,10 +121,11 @@ def register(
     # cannot race (two simultaneous first sign-ups).
     take_write_lock(db)
 
+    database_empty = db.query(User.id).first() is None
     is_bootstrap_admin = (
         bool(settings.INITIAL_ADMIN_EMAIL)
         and user_data.email.lower() == settings.INITIAL_ADMIN_EMAIL.strip().lower()
-        and db.query(User).count() == 0
+        and database_empty
     )
 
     if not is_bootstrap_admin and not settings.ALLOW_REGISTRATION:
@@ -118,10 +134,18 @@ def register(
             email=user_data.email,
             details={"reason": "registration_closed"},
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Registration is closed. Ask the administrator for an account.",
-        )
+        if database_empty:
+            # First-run help; never echoes the configured address.
+            detail = (
+                "To create the admin account, sign up with the email address "
+                "set in INITIAL_ADMIN_EMAIL."
+                if settings.INITIAL_ADMIN_EMAIL
+                else "No admin account exists yet. Set INITIAL_ADMIN_EMAIL and "
+                "restart the app, then sign up with that email address."
+            )
+        else:
+            detail = "Registration is closed. Ask the administrator for an account."
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()

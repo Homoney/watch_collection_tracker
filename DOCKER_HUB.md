@@ -13,9 +13,15 @@ docker run -d --name watch-tracker --restart unless-stopped \
   dhomoney/watch-tracker:latest
 ```
 
-Open http://localhost:8080 and register with the `INITIAL_ADMIN_EMAIL` address; that account becomes the admin. Public sign-up is off unless `ALLOW_REGISTRATION=true`.
+Then create your admin account:
 
-Prefer Compose? Use the `docker-compose.yml` from the repository or a release, then `docker compose up -d`.
+1. Open http://localhost:8080. On a fresh install the sign-in page says **Create the admin account**; click it.
+2. Enter the `INITIAL_ADMIN_EMAIL` address and choose a password. No password is set in advance: the one you choose here is the admin password.
+3. Click **Create admin account**. You are signed in as the admin.
+
+Public sign-up is off unless `ALLOW_REGISTRATION=true`.
+
+Prefer Compose? Use the `docker-compose.yml` and `.env.example` (saved as `.env`) from the repository or a release, set `INITIAL_ADMIN_EMAIL` in `.env`, run `docker compose up -d`, then do the same three steps. After changing `.env`, run `docker compose up -d --force-recreate`.
 
 ## Data
 

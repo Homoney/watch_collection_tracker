@@ -36,7 +36,8 @@ docker run -d --name watch-tracker --restart unless-stopped \
 ### Docker Compose
 
 Use [`docker-compose.yml`](../docker-compose.yml) from the repository, and
-optionally [`.env.example`](../.env.example) copied to `.env`:
+[`.env.example`](../.env.example) copied to `.env` next to it. Set
+`INITIAL_ADMIN_EMAIL=you@example.com` in `.env`, then:
 
 ```sh
 docker compose up -d
@@ -45,11 +46,24 @@ docker compose up -d
 `HTTP_PORT` in `.env` changes the host port (default `8080`). `VERSION` pins an
 image tag instead of `latest`.
 
-### Create the admin
+Compose reads `.env` only when it creates the container. After you change
+`.env` (for example you set `INITIAL_ADMIN_EMAIL` after the first start), run
+`docker compose up -d --force-recreate`. With `docker run`, remove the
+container and run it again with the new `-e` values; data in the volume stays.
 
-Open http://localhost:8080 and register with the address you set in
-`INITIAL_ADMIN_EMAIL`. On an empty database that account becomes the admin.
-Public sign-up stays off unless you set `ALLOW_REGISTRATION=true`. The Admin
+### Create your admin account
+
+Do this right after the first start, with either install:
+
+1. Open http://localhost:8080. While no account exists, the sign-in page says
+   **Create the admin account**. Click it.
+2. Enter the address you set in `INITIAL_ADMIN_EMAIL` and choose a password.
+   No password is set in advance: the one you choose here is the admin
+   password.
+3. Click **Create admin account**. You are signed in as the admin.
+
+Any other address is refused until the admin exists. Public sign-up stays off
+unless you set `ALLOW_REGISTRATION=true`. The Admin
 page manages existing accounts (roles, password resets, deletion) but does not
 create them.
 

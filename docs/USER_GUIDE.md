@@ -24,9 +24,19 @@ Welcome to the Watch Collection Tracker! This guide will help you get started wi
 
 The examples use http://localhost:8080, the default address of a local install. Use your own site's address if it runs elsewhere.
 
+### Create your admin account (first start)
+
+On a new install nobody has an account yet, and no password is set in advance. Whoever installed the app does this once:
+
+1. Navigate to http://localhost:8080. The sign-in page says **Create the admin account**; click it
+2. Enter the email address set in `INITIAL_ADMIN_EMAIL` and choose a password (at least 8 characters)
+3. Click "Create admin account". You are signed in, and this account is the admin
+
+If the page still shows the normal sign-in form, an account already exists. If sign-up refuses the address, check `INITIAL_ADMIN_EMAIL` and recreate the container (`docker compose up -d --force-recreate`) after changing it.
+
 ### Registration
 
-Sign-up is closed by default. The server's administrator then creates accounts from the command line (`python -m app.cli create-user`, see the [deployment guide](DEPLOYMENT.md#create-the-admin)). The first admin registers with the email set in `INITIAL_ADMIN_EMAIL`. If the site allows sign-up (`ALLOW_REGISTRATION=true`):
+Sign-up is closed by default. The server's administrator then creates accounts from the command line (`python -m app.cli create-user`, see the [deployment guide](DEPLOYMENT.md#create-your-admin-account)). The first admin registers with the email set in `INITIAL_ADMIN_EMAIL`. If the site allows sign-up (`ALLOW_REGISTRATION=true`):
 
 1. Navigate to http://localhost:8080
 2. Click "Don't have an account? Sign up" on the sign-in page

@@ -118,6 +118,13 @@ api.interceptors.response.use(
   }
 )
 
+// Setup status: setup_required while no account exists; admin_signup when
+// that first sign-up also becomes the admin
+interface SetupStatus {
+  setup_required: boolean
+  admin_signup: boolean
+}
+
 // Auth API
 export const authApi = {
   login: async (data: LoginRequest): Promise<TokenResponse> => {
@@ -127,6 +134,11 @@ export const authApi = {
 
   register: async (data: RegisterRequest): Promise<TokenResponse> => {
     const response = await api.post<TokenResponse>('/v1/auth/register', data)
+    return response.data
+  },
+
+  setupStatus: async (): Promise<SetupStatus> => {
+    const response = await api.get<SetupStatus>('/v1/auth/setup-status')
     return response.data
   },
 

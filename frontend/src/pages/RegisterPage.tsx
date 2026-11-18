@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '@/contexts/AuthContext'
+import { useAdminSignup } from '@/hooks/useSetupStatus'
 import type { RegisterRequest } from '@/types'
 
 export default function RegisterPage() {
   const { register: registerUser } = useAuth()
+  const adminSignup = useAdminSignup()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -39,10 +41,18 @@ export default function RegisterPage() {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            Create your account
+            {adminSignup ? 'Create the admin account' : 'Create your account'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-            Start tracking your watch collection
+            {adminSignup ? (
+              <>
+                This first account becomes the administrator. Use the email address set in{' '}
+                <code className="font-mono">INITIAL_ADMIN_EMAIL</code> and choose your password
+                now; no password is set in advance.
+              </>
+            ) : (
+              'Start tracking your watch collection'
+            )}
           </p>
         </div>
 
@@ -135,7 +145,7 @@ export default function RegisterPage() {
               disabled={isLoading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isLoading ? 'Creating account...' : 'Sign up'}
+              {isLoading ? 'Creating account...' : adminSignup ? 'Create admin account' : 'Sign up'}
             </button>
           </div>
 
