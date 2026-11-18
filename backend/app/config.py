@@ -48,6 +48,11 @@ class Settings(BaseSettings):
     # Refresh token cookie. None = Secure when the request came over HTTPS.
     COOKIE_SECURE: Optional[bool] = None
 
+    # Per-address request limits (in memory; one app process)
+    RATE_LIMIT_ENABLED: bool = True
+    # Proxies whose X-Forwarded-For/-Proto are trusted (passed to uvicorn)
+    TRUSTED_PROXIES: str = "127.0.0.1"
+
     # Login throttling per account
     LOGIN_MAX_FAILURES: int = 5
     LOGIN_LOCKOUT_MINUTES: int = 15

@@ -36,6 +36,14 @@ def open_registration(monkeypatch):
     monkeypatch.setattr(settings, "INITIAL_ADMIN_EMAIL", "")
 
 
+@pytest.fixture(autouse=True)
+def no_rate_limits(monkeypatch):
+    """Tests make many quick requests; test_rate_limit.py turns limits back on."""
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "RATE_LIMIT_ENABLED", False)
+
+
 @pytest.fixture(scope="function")
 def test_db() -> Generator[Session, None, None]:
     """

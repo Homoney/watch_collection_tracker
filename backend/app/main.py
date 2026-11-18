@@ -12,11 +12,13 @@ from app.api.v1 import (
     reference,
     saved_searches,
     service_history,
+    uploads,
     users,
     watches,
 )
 from app.config import settings
 from app.middleware.cache import CacheMiddleware
+from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.web import mount_web_app
 
@@ -103,6 +105,7 @@ app.add_middleware(
 )
 
 # Security headers and compression (outermost, so they cover every response)
+app.add_middleware(RateLimitMiddleware)
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 
@@ -149,6 +152,10 @@ async def api_root():
 async def health_check():
     return {"status": "healthy"}
 
+
+# Uploaded files (signed URLs); the nginx check route above stays for anyone
+# who puts their own nginx in front
+app.include_router(uploads.router)
 
 # The web app's catch-all route must be registered last
 mount_web_app(app, settings.WEB_DIR)
