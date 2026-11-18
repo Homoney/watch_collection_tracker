@@ -30,4 +30,5 @@ RUN useradd --uid 1000 --user-group --no-create-home app \
 USER app
 
 EXPOSE 8000
-CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+# X-Forwarded-For/-Proto are trusted only from TRUSTED_PROXIES
+CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips \"${TRUSTED_PROXIES:-127.0.0.1}\""]
