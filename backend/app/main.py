@@ -1,3 +1,7 @@
+import asyncio
+import contextlib
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -16,13 +20,28 @@ from app.api.v1 import (
     users,
     watches,
 )
+from app.backup import backup_loop, database_path
 from app.config import settings
 from app.middleware.cache import CacheMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.web import mount_web_app
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    task = None
+    if settings.BACKUP_INTERVAL_HOURS > 0 and database_path() is not None:
+        task = asyncio.create_task(backup_loop())
+    yield
+    if task:
+        task.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await task
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="Watch Collection Tracker API",
     description="""
 # Watch Collection Tracker API
