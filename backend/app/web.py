@@ -38,14 +38,22 @@ def mount_web_app(app: FastAPI, dist_dir: str) -> bool:
             "/assets", _ImmutableStaticFiles(directory=dist / "assets"), name="assets"
         )
 
+    # The build is fixed for the life of the process, so list its files once.
+    # A request path is only ever used as a key into this map, never joined
+    # onto the file system.
+    files = {
+        f.relative_to(dist).as_posix(): f
+        for f in dist.rglob("*")
+        if f.is_file() and not f.is_symlink()
+    }
+
     @app.get("/{full_path:path}", include_in_schema=False)
     async def web_app(full_path: str):
         if _is_reserved(full_path):
             raise HTTPException(status_code=404, detail="Not Found")
-        if full_path:
-            candidate = (dist / full_path).resolve()
-            if candidate.is_file() and candidate.is_relative_to(dist):
-                return FileResponse(candidate)
+        found = files.get(full_path)
+        if found is not None and found != index:
+            return FileResponse(found)
         return FileResponse(index, headers={"Cache-Control": "no-cache"})
 
     return True
