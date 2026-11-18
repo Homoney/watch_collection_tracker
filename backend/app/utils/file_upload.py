@@ -1,3 +1,4 @@
+import logging
 import re
 import uuid
 from pathlib import Path
@@ -7,6 +8,8 @@ from fastapi import UploadFile
 from PIL import Image as PILImage
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 # Allowed MIME types for image uploads
 ALLOWED_MIME_TYPES = [
@@ -176,7 +179,7 @@ def get_image_dimensions(file_path: str) -> Tuple[Optional[int], Optional[int]]:
         with PILImage.open(file_path) as img:
             return img.width, img.height
     except Exception as e:
-        print(f"Failed to extract image dimensions: {e}")
+        logger.warning(f"Failed to extract image dimensions: {e}")
         return None, None
 
 
@@ -346,8 +349,8 @@ def delete_file(file_path: str, upload_dir: str = settings.UPLOAD_DIR) -> bool:
         resolved_path = full_path.resolve()
         upload_dir_resolved = Path(upload_dir).resolve()
 
-        if not str(resolved_path).startswith(str(upload_dir_resolved)):
-            print(
+        if not resolved_path.is_relative_to(upload_dir_resolved):
+            logger.warning(
                 f"Security warning: Attempted to delete file outside upload directory: {file_path}"
             )
             return False
@@ -359,5 +362,5 @@ def delete_file(file_path: str, upload_dir: str = settings.UPLOAD_DIR) -> bool:
 
         return False
     except Exception as e:
-        print(f"Failed to delete file {file_path}: {e}")
+        logger.warning(f"Failed to delete file {file_path}: {e}")
         return False
