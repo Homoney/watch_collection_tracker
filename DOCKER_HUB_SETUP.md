@@ -37,38 +37,35 @@ This guide explains how to set up automated Docker Hub publishing for the Watch 
 If your Docker Hub username is NOT `dhomoney`, you need to update the workflow:
 
 1. Open `.github/workflows/docker-publish.yml`
-2. Change line 12:
+2. Change the `DOCKER_USERNAME` line under `env:`:
    ```yaml
-   DOCKER_USERNAME: dhomoney  # Change this to YOUR Docker Hub username
+   DOCKER_USERNAME: dhomoney  # Change this to your Docker Hub username
    ```
 3. Commit the change
 
 ## Step 4: Test the Workflow
 
 The workflow will automatically trigger when you:
-- Push to the `main` branch
-- Create a version tag (e.g., `v1.0.0`)
+- Merge a pull request into `main` (the branch rules for `main` require a pull request with passing checks)
+- Push a version tag (e.g., `v2.0.1`)
 - Manually trigger via GitHub Actions UI
 
-### Option A: Push to Main (Test Build)
+**Every merge to `main` publishes images**, so merge only what is ready to ship.
+
+### Option A: Merge to Main
+
+Merging a pull request creates images tagged `latest` and `main`.
+
+### Option B: Push a Release Tag
 ```bash
-git add .
-git commit -m "Add Docker Hub publishing"
-git push origin main
+git tag -a v2.0.1 -m "Release 2.0.1"
+git push origin v2.0.1
 ```
 
-This will create images tagged as `latest` and `main`.
-
-### Option B: Create a Release Tag (Production)
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-```
-
-This will create images tagged as:
-- `v1.0.0`
-- `v1.0`
-- `v1`
+This will create images tagged as (no `v` prefix on Docker Hub):
+- `2.0.1`
+- `2.0`
+- `2`
 - `latest`
 
 And automatically create a GitHub release with `docker-compose.yml` and `.env.example` attached.
@@ -81,7 +78,7 @@ And automatically create a GitHub release with `docker-compose.yml` and `.env.ex
 
 ## Step 5: Verify the Images
 
-After the workflow completes (takes 10-15 minutes):
+After the workflow completes (about 10 minutes):
 
 1. Check Docker Hub: `https://hub.docker.com/r/dhomoney/watch-tracker`
 
@@ -109,20 +106,19 @@ One image, `dhomoney/watch-tracker`, built from the root `Dockerfile`: the web a
 The old `dhomoney/watch-tracker-backend` and `dhomoney/watch-tracker-frontend` images are no longer built. Mark them deprecated on Docker Hub (repository description) and point to `dhomoney/watch-tracker`.
 
 ### Build Time
-- First build: ~10-15 minutes (no cache)
-- Subsequent builds: ~5-8 minutes (with cache)
+About 10 minutes for both platforms (recent runs, with the build cache). The arm64 half is built under emulation, so a build without cache takes longer.
 
 ## Tagging Strategy
 
-The workflow uses semantic versioning:
+Versions follow semantic versioning, `x.y.z`: patch for fixes, security and dependency updates; minor for new features or changes in behaviour; major for breaking changes (see the README, "Versioning and releases").
 
 | Tag Pattern | Example | When Used |
 |-------------|---------|-----------|
-| `latest` | `latest` | Every main branch push and version tag |
-| `main` | `main` | Every main branch push |
-| `v1.0.0` | `v1.0.0` | Exact version from git tag |
-| `v1.0` | `v1.0` | Minor version from git tag |
-| `v1` | `v1` | Major version from git tag |
+| `latest` | `latest` | Every merge to main and every version tag |
+| `main` | `main` | Every merge to main |
+| `X.Y.Z` | `2.0.1` | Exact version from git tag `v2.0.1` |
+| `X.Y` | `2.0` | Minor version from git tag |
+| `X` | `2` | Major version from git tag |
 
 ## Common Issues
 
@@ -145,21 +141,14 @@ The workflow uses semantic versioning:
 
 Once everything is set up and tested:
 
-```bash
-# 1. Update version in any relevant files
-# 2. Commit all changes
-git add .
-git commit -m "Release v1.0.0"
-
-# 3. Create and push the tag
-git tag -a v1.0.0 -m "Release version 1.0.0"
-git push origin main
-git push origin v1.0.0
-
-# 4. Wait for GitHub Actions to complete
-# 5. Check the Release page on GitHub
-# 6. Images will be available on Docker Hub
-```
+1. On a release branch, set the new version in `frontend/package.json` (and `package-lock.json`) and `backend/app/main.py`, and add a `CHANGELOG.md` entry.
+2. Open a pull request, wait for the required checks, and merge it.
+3. Tag the merge commit and push the tag:
+   ```bash
+   git tag -a v2.0.1 -m "Release 2.0.1"
+   git push origin v2.0.1
+   ```
+4. Wait for the workflow: it pushes the images and creates the GitHub release with `docker-compose.yml` and `.env.example` attached.
 
 ## Docker Hub Repository Settings
 
@@ -173,15 +162,12 @@ git push origin v1.0.0
 
 After publishing to Docker Hub:
 
-1. ✅ Test the images work correctly
-2. ✅ Update README badges (optional)
-3. ✅ Announce on social media/forums
-4. ✅ Create documentation for users
-5. ✅ Set up vulnerability scanning (Docker Hub has this built-in)
+1. Test the published image (`docker run` as in Step 5; `/health` should answer)
+2. Keep the Docker Hub description in step with `DOCKER_HUB.md`
+3. The built image is also scanned by the repository's Security Scanning workflow (Trivy), with results in the GitHub Security tab
 
 ## Support
 
 If you run into issues:
 - Check GitHub Actions logs
-- Check Docker Hub build logs
 - Open an issue on GitHub

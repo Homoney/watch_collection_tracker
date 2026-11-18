@@ -1,5 +1,7 @@
 # Phase 7: Production Ready - COMPLETE ✅
 
+> **Historical record (1.x, January 2026).** This describes the old multi-container stack (separate backend and frontend images, PostgreSQL, Redis, nginx), which version 2.0 replaced with one image and SQLite. Commands, settings and files named here no longer apply. For current instructions see the [README](README.md) and [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 **Completion Date**: 2026-01-28
 **Status**: 🎉 **PRODUCTION READY**
 

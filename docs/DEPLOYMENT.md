@@ -49,10 +49,13 @@ image tag instead of `latest`.
 
 Open http://localhost:8080 and register with the address you set in
 `INITIAL_ADMIN_EMAIL`. On an empty database that account becomes the admin.
-Public sign-up stays off unless you set `ALLOW_REGISTRATION=true`; the admin
-adds everyone else from the Admin page.
+Public sign-up stays off unless you set `ALLOW_REGISTRATION=true`. The Admin
+page manages existing accounts (roles, password resets, deletion) but does not
+create them.
 
-Without `INITIAL_ADMIN_EMAIL`, create the admin from the command line:
+Create accounts from the command line, with `--admin` for an admin (this is
+also the way to make the first admin without `INITIAL_ADMIN_EMAIL`). The
+password is prompted for, or read from `WATCH_USER_PASSWORD`:
 
 ```sh
 docker exec -it watch-tracker python -m app.cli create-user you@example.com --admin
@@ -132,8 +135,8 @@ network range, for example `172.16.0.0/12`. When it runs on the host, publish
 the container only on the loopback address (`-p 127.0.0.1:8080:8000`) and keep
 the default `TRUSTED_PROXIES=127.0.0.1`.
 
-Run **one** container per data volume. Rate limits and login lockouts are kept
-in the app's memory, and SQLite expects a single writer.
+Run **one** container per data volume. Rate limits are kept in the app's
+memory, and SQLite expects a single writer.
 
 ## 7. Backups and restore
 

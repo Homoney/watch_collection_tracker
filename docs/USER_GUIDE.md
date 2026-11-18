@@ -13,35 +13,43 @@ Welcome to the Watch Collection Tracker! This guide will help you get started wi
 5. [Service History](#service-history)
 6. [Market Values & Analytics](#market-values--analytics)
 7. [Watch Comparison](#watch-comparison)
-8. [Watch Setting Tool](#watch-setting-tool)
-9. [Tips & Best Practices](#tips--best-practices)
+8. [Movement Accuracy](#movement-accuracy)
+9. [Watch Setting Tool](#watch-setting-tool)
+10. [Tips & Best Practices](#tips--best-practices)
+11. [Administration](#administration)
 
 ---
 
 ## Getting Started
 
+The examples use http://localhost:8080, the default address of a local install. Use your own site's address if it runs elsewhere.
+
 ### Registration
 
+Sign-up is closed by default. The server's administrator then creates accounts from the command line (`python -m app.cli create-user`, see the [deployment guide](DEPLOYMENT.md#create-the-admin)). The first admin registers with the email set in `INITIAL_ADMIN_EMAIL`. If the site allows sign-up (`ALLOW_REGISTRATION=true`):
+
 1. Navigate to http://localhost:8080
-2. Click "Register" in the navigation bar
+2. Click "Don't have an account? Sign up" on the sign-in page
 3. Enter your email address and password
-4. Click "Create Account"
+4. Click "Sign up"
 5. You'll be automatically logged in
+
+Passwords need at least 8 characters, and very common passwords are refused.
 
 ### Login
 
 1. Navigate to http://localhost:8080
-2. Click "Login" in the navigation bar
-3. Enter your email and password
-4. Click "Sign In"
+2. Enter your email and password
+3. Click "Sign in"
+
+After 5 wrong passwords in a row the account is locked for 15 minutes (the admin can change both numbers).
 
 ### Dashboard
 
 After logging in, you'll see the dashboard with:
-- **Total Watches**: Count of watches in your collection
-- **Total Value**: Combined current market value
-- **Quick Stats**: ROI, recent additions, service due
+- **Total Watches**, **Total Value** and **Collections**: counts and combined current market value
 - **Recent Watches**: Your most recently added watches
+- **Collections** and **Quick Actions**: shortcuts to your collections and common tasks
 
 ---
 
@@ -93,12 +101,14 @@ After logging in, you'll see the dashboard with:
   - Brand name
   - Reference number
   - Serial number
+  - Notes
 
 **Filters**:
 - **Brand**: Filter by specific manufacturer
 - **Collection**: Show watches from a specific collection
 - **Condition**: Filter by condition rating
-- **Price Range**: Set minimum and maximum values
+- **Movement Type**: Filter by movement
+- **Price Range**: Set minimum and maximum purchase price or market value
 - **Date Range**: Filter by purchase date
 
 **Sorting**:
@@ -382,12 +392,27 @@ Anyone with the link (and access) can view the comparison.
 
 ---
 
+## Movement Accuracy
+
+Measure how many seconds per day a watch gains or loses.
+
+1. Open a watch and click "Movement Accuracy"
+2. Record an **initial reading**: when the watch's second hand reaches 0, 15, 30 or 45, select that mark and save. The app stores the reference time with it.
+3. At least 6 hours later (and within 90 days), record a **subsequent reading** the same way
+4. The app shows the drift in seconds per day (positive = fast, negative = slow), a chart over time and averages for 7, 30 and 90 days
+
+Record a new initial reading after you set, regulate or service the watch.
+
+The reference time comes from an internet time service; if it cannot be reached, the server's clock is used and the reading is marked as such.
+
+---
+
 ## Watch Setting Tool
 
 Use the time reference to set your watches accurately.
 
 1. Click "Settings" in navigation bar
-2. See current time display (updates every second)
+2. See current time display (updates every second, from your device's clock)
 3. **Use for setting**:
    - Pull crown to position
    - Wait for second hand to reach 12
@@ -397,7 +422,7 @@ Use the time reference to set your watches accurately.
 **Tips**:
 - Use for mechanical watches requiring precise setting
 - Especially useful for chronometers
-- Reference is synchronized to system time
+- Accuracy depends on your device's clock; keep it synchronized
 
 ---
 
@@ -458,11 +483,9 @@ Use the time reference to set your watches accurately.
 
 | Shortcut | Action |
 |----------|--------|
-| `/` | Focus search bar |
-| `ESC` | Close modals/lightbox |
+| `Esc` | Close dialogs and the image lightbox |
 | `←` / `→` | Navigate images in lightbox |
-| `n` | New watch (from watches page) |
-| `c` | New collection (from collections page) |
+| `Enter` | Save the search (in the save search box) |
 
 ---
 
@@ -486,14 +509,16 @@ The application is responsive and works on mobile devices:
 ## Data Export
 
 **Current Export Options**:
-- All data accessible via API
-- Screenshots for sharing
-- Print-friendly watch details
+- **Export PDF** on a watch's page: one watch with its details
+- **Export All PDF** on the Watches page: all watches, or the selected collection
+- **Generate QR Code** on a watch's page: a PNG that links to the watch's page on this site
+- All data is accessible through the API
 
 **Future Features**:
 - CSV export
-- PDF reports
 - Insurance documentation
+
+Your whole collection, including photos and documents, is backed up with the server's `/data` folder; see the [deployment guide](DEPLOYMENT.md#7-backups-and-restore).
 
 ---
 
@@ -501,9 +526,9 @@ The application is responsive and works on mobile devices:
 
 **Your Data**:
 - All data is private to your account
-- Watch images stored securely
+- Photos and documents open only through links that expire
 - Passwords hashed with bcrypt
-- JWT tokens for authentication
+- Signing out ends your sessions on every device
 
 **Best Practices**:
 - Use strong, unique password
@@ -541,7 +566,6 @@ The application is responsive and works on mobile devices:
 
 **Support Options**:
 - GitHub Issues: https://github.com/Homoney/watch_collection_tracker/issues
-- Email: support@example.com (if configured)
 - Check API documentation: http://localhost:8080/docs
 
 **Reporting Bugs**:
@@ -561,11 +585,23 @@ The application is responsive and works on mobile devices:
 - Chrono24 API integration
 - Mobile app
 - Public sharing
-- QR codes for watches
 
 Stay tuned for updates!
 
 ---
 
-**Last Updated**: 2026-01-28
-**Version**: 1.0.0
+## Administration
+
+Admins see an **Admin** link in the navigation bar. On the Admin page they can:
+- Promote users to admin or demote them
+- Reset a user's password
+- Delete an account
+
+New accounts are not created on this page: either the site allows sign-up (`ALLOW_REGISTRATION=true`) or the server's administrator runs `docker exec -it watch-tracker python -m app.cli create-user EMAIL` (add `--admin` for an admin).
+
+Admins cannot demote or delete their own account. Someone locked out of the only admin account can be promoted again from the server: `docker exec -it watch-tracker python -m app.cli create-user EMAIL --admin`.
+
+---
+
+**Last Updated**: 2026-11-18
+**Applies to**: 2.x

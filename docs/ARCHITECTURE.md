@@ -114,7 +114,7 @@ Exact versions are pinned in `backend/requirements.txt` (runtime),
 |-----------|-----------|
 | Framework | React 18, TypeScript |
 | Build tool | Vite |
-| Routing | React Router 6 |
+| Routing | React Router 7 |
 | Server state | TanStack Query |
 | Forms | React Hook Form |
 | HTTP client | Axios |
@@ -576,10 +576,17 @@ log_security_event(
   security updates, installs the runtime Python requirements (not the test
   tools) and copies the backend and the built `dist/`.
 - **CI** (`.github/workflows/ci.yml`): backend tests (pytest on SQLite),
-  frontend tests and lint, security scans, and a smoke test that builds the
-  image, starts it and waits for `/health`.
+  frontend tests and build, lint and format checks, a dependency audit, a
+  security scan, and a smoke test that builds the image, starts it and waits
+  for `/health`. These jobs are required checks for merging to `main`.
+- **Security scanning** (`.github/workflows/security-scanning.yml`): Trivy
+  (files, dependencies and the built image) and Gitleaks on pull requests,
+  pushes to `main` and weekly; CodeQL runs through GitHub's default setup.
+  Results go to the repository's Security tab and are triaged weekly.
 - **Publishing** (`.github/workflows/docker-publish.yml`): on pushes to `main`
-  and on `v*.*.*` tags, builds amd64 and arm64 and pushes `dhomoney/watch-tracker`.
+  and on `v*.*.*` tags, builds amd64 and arm64 and pushes `dhomoney/watch-tracker`
+  (`latest` and `main` from `main`; `X.Y.Z`, `X.Y`, `X` from a tag). Tags follow
+  the `x.y.z` versioning rule in the [README](../README.md#versioning-and-releases).
 - **Running it**: see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ---

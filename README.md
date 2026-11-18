@@ -9,7 +9,7 @@ A modern web application for watch collectors to track their collections with mu
 - **Watch Management**: Track brand, model, reference numbers, purchase info, specifications
 - **Image Management**: Multiple images per watch with drag-and-drop upload, full-screen lightbox
 - **Collections**: Organize watches into multiple collections (Current, Wishlist, Sold, etc.)
-- **Search & Filter**: Advanced filtering by brand, price, movement type, complications
+- **Search & Filter**: Filter by brand, collection, movement type, condition, price and value; save searches
 - **Service History**: Track maintenance records, costs, schedule future services, attach documents
 - **Market Value Tracking**: Historical value tracking, ROI calculations, appreciation/depreciation analytics
 - **Performance Analytics**: Watch-level and collection-level analytics with trend indicators
@@ -18,7 +18,7 @@ A modern web application for watch collectors to track their collections with mu
 - **Movement Accuracy Tracking**: Track watch accuracy with atomic clock synchronization, drift calculations in seconds per day, analytics and visualizations
 - **Multi-Currency Support**: USD, EUR, GBP, CHF, JPY, AUD, CAD
 - **Document Management**: Upload service receipts, warranties, certificates (PDF, JPG, PNG)
-- **Export & Backup**: Full database dumps and JSON exports
+- **Export & Backup**: PDF export of one watch or the whole collection, QR codes, automatic daily database backups
 - **Dark Mode**: Full dark mode support with proper contrast ratios
 - **Responsive Design**: Works on desktop and mobile
 
@@ -41,7 +41,7 @@ docker run -d --name watch-tracker --restart unless-stopped \
   dhomoney/watch-tracker:latest
 ```
 
-Open http://localhost:8080 and register with the email you set in `INITIAL_ADMIN_EMAIL`. That first account becomes the admin. Public sign-up is off. The admin adds other people, or you can set `ALLOW_REGISTRATION=true`.
+Open http://localhost:8080 and register with the email you set in `INITIAL_ADMIN_EMAIL`. That first account becomes the admin. Public sign-up is off: create other accounts with the command below, or set `ALLOW_REGISTRATION=true`.
 
 You can also create an account from the command line:
 
@@ -87,7 +87,11 @@ All settings are optional environment variables.
 | `MAX_DOCUMENT_SIZE` | `10485760` | Largest service document in bytes (10 MB) |
 | `LOGIN_MAX_FAILURES` / `LOGIN_LOCKOUT_MINUTES` | `5` / `15` | Lock an account after repeated wrong passwords |
 | `COOKIE_SECURE` | auto | Force the `Secure` flag on the login cookie |
+| `RATE_LIMIT_ENABLED` | `true` | Per-address request limits (keep on unless your proxy does this) |
+| `DATA_DIR` | `/data` | Folder for the database, uploads, backups and the generated key |
 | `TZ` | `UTC` | Time zone for log times |
+
+With Compose, `.env` also sets `HTTP_PORT` (host port, default `8080`) and `VERSION` (image tag, default `latest`).
 
 ### Backups and restore
 
@@ -146,7 +150,7 @@ New migration: `cd backend && alembic revision --autogenerate -m "describe chang
 
 ## API Documentation
 
-Once the application is running, visit http://localhost:8080/docs for interactive API documentation powered by Swagger UI (ReDoc at `/redoc`).
+Once the application is running, visit http://localhost:8080/docs for interactive API documentation powered by Swagger UI (ReDoc at `/redoc`). [docs/API.md](docs/API.md) has examples, rate limits and the full endpoint list; the list below is the most used part.
 
 ### Key Endpoints
 
@@ -174,7 +178,7 @@ Once the application is running, visit http://localhost:8080/docs for interactiv
 #### Watches
 - `GET /api/v1/watches/` - List watches with filters (paginated)
 - `POST /api/v1/watches/` - Add new watch
-- `GET /api/v1/watches/{id}` - Get watch details with images and service history
+- `GET /api/v1/watches/{id}` - Get watch details with images
 - `PUT /api/v1/watches/{id}` - Update watch
 - `DELETE /api/v1/watches/{id}` - Delete watch (cascades to images and service records)
 
@@ -219,6 +223,8 @@ Once the application is running, visit http://localhost:8080/docs for interactiv
 - **service_history** - Maintenance records
 - **service_documents** - Service receipts and documents
 - **market_values** - Historical market value tracking
+- **movement_accuracy_readings** - Movement accuracy readings
+- **saved_searches** - Saved watch list filters
 
 ### Reference Tables (Pre-seeded)
 - **brands** - Watch brands (Rolex, Omega, Seiko, etc.)
@@ -243,7 +249,19 @@ Once the application is running, visit http://localhost:8080/docs for interactiv
 - **Migration state**: `docker exec watch-tracker alembic current`
 - **Locked out of the admin account**: `docker exec -it watch-tracker python -m app.cli create-user you@example.com --admin` promotes an existing account
 
-## Development Roadmap
+## Versioning and releases
+
+Versions follow [Semantic Versioning](https://semver.org/) as `x.y.z`: patch (`z`) for fixes, security and dependency updates; minor (`y`) for new features or changes in behaviour; major (`x`) for breaking changes. The version is set in `frontend/package.json` and `backend/app/main.py`, and each release has a git tag `vX.Y.Z`, a [CHANGELOG](CHANGELOG.md) entry and a GitHub release.
+
+Every merge to `main` publishes `dhomoney/watch-tracker:latest` (and `:main`); a `vX.Y.Z` tag publishes `X.Y.Z`, `X.Y` and `X`. To stay on a release, pin a version tag (`VERSION` in `.env` for Compose). See [DOCKER_HUB_SETUP.md](DOCKER_HUB_SETUP.md) for the publishing workflow.
+
+## Security scanning
+
+Every pull request and push to `main`, and a weekly scheduled run, scan the code, dependencies and the built image (Trivy, Gitleaks, plus CodeQL and Dependabot alerts). Results go to the repository's Security tab and are triaged weekly. Found a security problem? Please do not post the details in a public issue; open an issue asking for a private contact instead.
+
+## Development History
+
+The phases below record how the app was built. Phases 1 to 10 ran on the 1.x stack (separate backend and frontend images, PostgreSQL, Redis and nginx); version 2.0 replaced that stack with the single image and SQLite described above. Numbers (tests, timings) are from that time.
 
 ### ✅ Phase 1: Foundation (COMPLETED)
 - Docker Compose infrastructure
@@ -353,7 +371,7 @@ Once the application is running, visit http://localhost:8080/docs for interactiv
 ### ✅ Phase 8: User Management & UI Fixes (COMPLETED)
 **User Management**:
 - Role-based access control (admin/user roles)
-- The first admin is set up with `INITIAL_ADMIN_EMAIL` (register with that email on an empty database) or `docker compose exec backend python -m app.cli create-user EMAIL --admin`; public registration is off unless `ALLOW_REGISTRATION=true`
+- The first admin is set up with `INITIAL_ADMIN_EMAIL` (register with that email on an empty database) or `docker exec -it watch-tracker python -m app.cli create-user EMAIL --admin`; public registration is off unless `ALLOW_REGISTRATION=true`
 - Admin panel at `/admin` for user management
 - Promote/demote users between admin and regular user roles
 - Reset user passwords (admin only)

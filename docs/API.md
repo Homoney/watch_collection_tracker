@@ -1,6 +1,6 @@
 # Watch Collection Tracker API Documentation
 
-**Version**: 1.0.0
+**Applies to**: 2.x (checked against 2.0.1)
 **Base URL**: `http://localhost:8080/api/v1`
 **Interactive Docs**: `http://localhost:8080/docs`
 
@@ -18,12 +18,17 @@
 8. [Analytics](#analytics)
 9. [Error Handling](#error-handling)
 10. [Rate Limiting](#rate-limiting)
+11. [Other Endpoints](#other-endpoints)
 
 ---
 
 ## Authentication
 
-All endpoints except `/auth/register` and `/auth/login` require authentication using JWT tokens.
+All endpoints except `/auth/register`, `/auth/login`, `/auth/refresh` and the reference data require a JWT access token in the `Authorization: Bearer <access_token>` header.
+
+Registration is closed unless `ALLOW_REGISTRATION=true`. On an empty database the address in `INITIAL_ADMIN_EMAIL` may always register and becomes the admin; any other refused registration returns `403`.
+
+Login, registration and refresh also set the refresh token in an HttpOnly cookie. The web app relies on the cookie; other clients can send the refresh token in the body instead.
 
 ### Register User
 
@@ -51,10 +56,15 @@ Content-Type: application/json
 
 ```http
 POST /api/v1/auth/login
-Content-Type: application/x-www-form-urlencoded
+Content-Type: application/json
 
-username=user@example.com&password=securepassword123
+{
+  "email": "user@example.com",
+  "password": "securepassword123"
+}
 ```
+
+After `LOGIN_MAX_FAILURES` wrong passwords (default 5) the account is locked for `LOGIN_LOCKOUT_MINUTES` (default 15).
 
 **Response** (200 OK):
 ```json
@@ -70,17 +80,19 @@ username=user@example.com&password=securepassword123
 ```http
 POST /api/v1/auth/refresh
 Content-Type: application/json
-Authorization: Bearer <access_token>
 
 {
   "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
-**Response** (200 OK):
+The body is optional: without it the refresh token is read from the cookie.
+
+**Response** (200 OK): a new access token, and a new refresh token (in the cookie, and in the body only when the request sent one in the body):
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "token_type": "bearer"
 }
 ```
@@ -98,7 +110,9 @@ Authorization: Bearer <access_token>
   "id": "uuid",
   "email": "user@example.com",
   "full_name": "John Doe",
-  "is_active": true,
+  "role": "user",
+  "default_currency": "USD",
+  "theme": "light",
   "created_at": "2024-01-15T10:30:00",
   "updated_at": "2024-01-15T10:30:00"
 }
@@ -123,9 +137,7 @@ Cache-Control: public, max-age=3600
   {
     "id": "uuid",
     "name": "Rolex",
-    "sort_order": 0,
-    "created_at": "2024-01-15T10:30:00",
-    "updated_at": "2024-01-15T10:30:00"
+    "sort_order": 0
   }
 ]
 ```
@@ -233,7 +245,7 @@ Content-Type: application/json
   "reference_number": "116610LN",
   "serial_number": "ABC12345",
   "movement_type_id": "uuid",
-  "case_material": "Stainless Steel",
+  "retailer": "Authorized dealer",
   "case_diameter": 40.0,
   "water_resistance": 300,
   "purchase_date": "2020-01-15T00:00:00",
@@ -264,7 +276,7 @@ Content-Type: application/json
 
 ```http
 GET /api/v1/watches/
-  ?skip=0
+  ?offset=0
   &limit=20
   &search=submariner
   &brand_id=uuid
@@ -280,12 +292,14 @@ Authorization: Bearer <access_token>
 ```
 
 **Query Parameters**:
-- `skip` (int): Pagination offset (default: 0)
-- `limit` (int): Items per page (default: 20)
-- `search` (string): Search in model, brand, reference number, serial number
+- `offset` (int): Pagination offset (default: 0)
+- `limit` (int): Items per page (default: 20, maximum 100)
+- `search` (string): Case-insensitive search in model, brand, reference number, serial number and notes
 - `brand_id` (uuid): Filter by brand
 - `collection_id` (uuid): Filter by collection
+- `movement_type_id` (uuid): Filter by movement type
 - `condition` (string): Filter by condition (mint, excellent, good, fair, poor)
+- `min_price`, `max_price` (number): Filter by purchase price range
 - `min_value`, `max_value` (number): Filter by current market value range
 - `purchase_date_from`, `purchase_date_to` (date): Filter by purchase date range
 - `sort_by` (string): Sort field (created_at, purchase_date, purchase_price, model)
@@ -296,8 +310,8 @@ Authorization: Bearer <access_token>
 {
   "items": [ ... ],
   "total": 45,
-  "skip": 0,
-  "limit": 20
+  "limit": 20,
+  "offset": 0
 }
 ```
 
@@ -365,9 +379,11 @@ file=@/path/to/image.jpg
   "sort_order": 0,
   "source": "user_upload",
   "created_at": "2024-01-15T10:30:00",
-  "url": "/uploads/watch_id/image.jpg"
+  "url": "/uploads/watch_id/image.jpg?expires=1735689600&sig=..."
 }
 ```
+
+`url` is a signed link that expires (see `UPLOAD_URL_TTL_SECONDS`). Fetch the record again for a fresh link; do not store the URL.
 
 ### List Images
 
@@ -421,7 +437,7 @@ Content-Type: application/json
 }
 ```
 
-**Response** (201 Created):
+**Response** (200 OK):
 ```json
 {
   "id": "uuid",
@@ -463,7 +479,7 @@ file=@/path/to/receipt.pdf
   "file_size": 524288,
   "mime_type": "application/pdf",
   "created_at": "2024-01-15T10:30:00",
-  "url": "/uploads/service-docs/watch_id/service_id/receipt.pdf"
+  "url": "/uploads/service-docs/watch_id/service_id/receipt.pdf?expires=1735689600&sig=..."
 }
 ```
 
@@ -656,6 +672,41 @@ Separately, an account is locked for 15 minutes after 5 wrong passwords.
 
 ---
 
+## Other Endpoints
+
+The sections above show request and response bodies for the most used calls. These endpoints exist as well; `/docs` has their full schemas.
+
+| Method and path | What it does |
+|---|---|
+| `POST /api/v1/auth/logout` | End every session of the current user and clear the cookie (204) |
+| `PUT /api/v1/auth/me` | Update `full_name`, `default_currency`, `theme` |
+| `POST /api/v1/auth/change-password` | Body `current_password`, `new_password` (204); ends other sessions |
+| `GET`, `PUT`, `DELETE /api/v1/watches/{watch_id}/service-history/{service_id}` | One service record; `GET /api/v1/watches/{watch_id}/service-history` lists them |
+| `GET /api/v1/watches/{watch_id}/service-history/{service_id}/documents` | List a record's documents |
+| `DELETE /api/v1/watches/{watch_id}/service-history/{service_id}/documents/{doc_id}` | Delete a document |
+| `GET /api/v1/watches/{watch_id}/market-values` | List a watch's valuations |
+| `GET`, `PUT`, `DELETE /api/v1/watches/{watch_id}/market-values/{value_id}` | One valuation |
+| `GET /api/v1/watches/{watch_id}/qr-code?base_url=...` | PNG QR code linking to the watch page; `base_url` must be this site |
+| `GET /api/v1/watches/{watch_id}/export/pdf` | One watch as a PDF |
+| `GET /api/v1/watches/export/pdf?collection_id=...` | All watches (or one collection) as a PDF |
+| `POST /api/v1/watches/{watch_id}/fetch-images` | Look up and import images for the watch (upload rate limit applies) |
+| `GET /api/v1/atomic-time` | Reference time for accuracy readings |
+| `POST`, `GET /api/v1/watches/{watch_id}/accuracy-readings` | Record a movement accuracy reading; list readings with drift |
+| `GET`, `PUT`, `DELETE /api/v1/watches/{watch_id}/accuracy-readings/{reading_id}` | One reading |
+| `GET /api/v1/watches/{watch_id}/accuracy-analytics` | Drift statistics for a watch |
+| `GET`, `POST /api/v1/saved-searches/` | List or create saved watch searches |
+| `GET`, `PUT`, `DELETE /api/v1/saved-searches/{search_id}` | One saved search |
+| `GET /api/v1/users/`, `GET /api/v1/users/{user_id}` | Admin only: list or show users |
+| `PATCH /api/v1/users/{user_id}` | Admin only: change a user's role |
+| `POST /api/v1/users/{user_id}/reset-password` | Admin only: set a new password |
+| `DELETE /api/v1/users/{user_id}` | Admin only: delete a user |
+| `GET /api` | API name and version |
+| `GET /health` | Health check, `{"status": "healthy"}` |
+
+A collection path sent without its trailing slash (for example `/api/v1/watches`) is redirected (307) to the slashed form.
+
+---
+
 ## Interactive API Documentation
 
 For interactive API exploration, visit:
@@ -681,7 +732,7 @@ import requests
 # Login
 response = requests.post(
     "http://localhost:8080/api/v1/auth/login",
-    data={"username": "user@example.com", "password": "password123"}
+    json={"email": "user@example.com", "password": "password123"}
 )
 token = response.json()["access_token"]
 
@@ -706,9 +757,9 @@ response = requests.post(
 // Login
 const loginResponse = await fetch('http://localhost:8080/api/v1/auth/login', {
   method: 'POST',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body: new URLSearchParams({
-    username: 'user@example.com',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    email: 'user@example.com',
     password: 'password123'
   })
 });
@@ -741,5 +792,5 @@ Webhook support is planned for future releases to notify external systems of eve
 
 ---
 
-**Last Updated**: 2026-01-28
-**API Version**: 1.0.0
+**Last Updated**: 2026-11-18
+**Applies to**: 2.x
