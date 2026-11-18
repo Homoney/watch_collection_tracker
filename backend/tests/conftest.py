@@ -6,6 +6,7 @@ import tempfile
 
 # Point the app at a scratch database before it is imported
 os.environ.setdefault("DATA_DIR", tempfile.mkdtemp(prefix="watch-data-"))
+os.environ.setdefault("BACKUP_INTERVAL_HOURS", "0")
 import pytest
 from typing import Generator
 from fastapi.testclient import TestClient

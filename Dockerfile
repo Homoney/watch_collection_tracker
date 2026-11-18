@@ -13,8 +13,6 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DATA_DIR=/data \
-    UPLOAD_DIR=/data/uploads \
-    BACKUP_DIR=/data/backups \
     WEB_DIR=/app/web
 
 WORKDIR /app
@@ -30,5 +28,10 @@ RUN useradd --uid 1000 --user-group --no-create-home app \
 USER app
 
 EXPOSE 8000
-# X-Forwarded-For/-Proto are trusted only from TRUSTED_PROXIES
-CMD ["sh", "-c", "alembic upgrade head && exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips \"${TRUSTED_PROXIES:-127.0.0.1}\""]
+VOLUME ["/data"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=4)"
+
+# Prepares /data, keeps a generated SECRET_KEY, backs up before migrating,
+# runs migrations, then starts uvicorn (see backend/app/entrypoint.py)
+CMD ["python", "-m", "app.entrypoint"]

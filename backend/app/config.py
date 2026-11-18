@@ -1,7 +1,7 @@
 import os
 from typing import List, Optional
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,7 +18,8 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = ""
 
     # Security
-    SECRET_KEY: str
+    # Unset: read from DATA_DIR/secret_key (generated on first start)
+    SECRET_KEY: str = ""
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
@@ -29,9 +30,12 @@ class Settings(BaseSettings):
     # Built web app (index.html and assets/); not served when missing
     WEB_DIR: str = "/app/web"
 
-    # Storage
-    UPLOAD_DIR: str = "/app/storage/uploads"
-    BACKUP_DIR: str = "/app/storage/backups"
+    # Storage (default: DATA_DIR/uploads and DATA_DIR/backups)
+    UPLOAD_DIR: str = ""
+    BACKUP_DIR: str = ""
+    # Daily database backup inside the app; 0 hours switches it off
+    BACKUP_INTERVAL_HOURS: int = 24
+    BACKUP_KEEP_DAYS: int = 30
     MAX_UPLOAD_SIZE: int = 20971520  # 20MB
     MAX_DOCUMENT_SIZE: int = 10485760  # 10MB (service documents)
     MAX_IMAGES_PER_WATCH: int = 50
@@ -57,20 +61,37 @@ class Settings(BaseSettings):
     LOGIN_MAX_FAILURES: int = 5
     LOGIN_LOCKOUT_MINUTES: int = 15
 
-    @field_validator("SECRET_KEY")
-    @classmethod
-    def _strong_secret_key(cls, value: str) -> str:
-        if value.strip().upper().startswith("CHANGE_ME"):
+    @model_validator(mode="after")
+    def _fill_defaults_and_check_secret(self):
+        if not self.UPLOAD_DIR:
+            self.UPLOAD_DIR = os.path.join(self.DATA_DIR, "uploads")
+        if not self.BACKUP_DIR:
+            self.BACKUP_DIR = os.path.join(self.DATA_DIR, "backups")
+        if not self.SECRET_KEY:
+            # Written on first start by app.entrypoint
+            try:
+                with open(self.secret_key_file) as fh:
+                    self.SECRET_KEY = fh.read().strip()
+            except OSError:
+                raise ValueError(
+                    "SECRET_KEY is not set and no generated key was found at "
+                    f"{self.secret_key_file}"
+                ) from None
+        if self.SECRET_KEY.strip().upper().startswith("CHANGE_ME"):
             raise ValueError(
                 "SECRET_KEY is still the placeholder; generate one with "
                 "`openssl rand -hex 32`"
             )
-        if len(value) < 32:
+        if len(self.SECRET_KEY) < 32:
             raise ValueError(
                 "SECRET_KEY must be at least 32 characters; generate one with "
                 "`openssl rand -hex 32`"
             )
-        return value
+        return self
+
+    @property
+    def secret_key_file(self) -> str:
+        return os.path.join(self.DATA_DIR, "secret_key")
 
     @field_validator("ALGORITHM")
     @classmethod

@@ -341,9 +341,8 @@ jobs:
 
       - name: Start the container
         run: |
-          docker run -d --name wt -p 8080:8000 \
-            -e SECRET_KEY=test-secret-key-for-smoke-0123456789abcdef \
-            watch-tracker:test
+          # No settings at all: the secret key is generated into the volume
+          docker run -d --name wt -p 8080:8000 -v wt-data:/data watch-tracker:test
           curl --retry 30 --retry-delay 2 --retry-all-errors -fsS http://localhost:8080/health
 
       - name: Check the web app, API and headers
@@ -358,6 +357,18 @@ jobs:
           code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/uploads/x/y.jpg)
           echo "Unsigned /uploads/ request returned $code"
           test "$code" = "403"
+
+      - name: Check data folder, backup command and restart
+        run: |
+          set -e
+          docker exec wt ls /data/watch.db /data/secret_key /data/uploads /data/backups
+          docker exec wt python -m app.cli backup
+          test "$(docker exec wt sh -c 'ls /data/backups | wc -l')" -ge 1
+          key_before=$(docker exec wt cat /data/secret_key)
+          docker restart wt
+          curl --retry 30 --retry-delay 2 --retry-all-errors -fsS http://localhost:8080/health
+          test "$(docker exec wt cat /data/secret_key)" = "$key_before"
+          test "$(docker inspect -f '{{.Config.User}}' wt)" = "app"
 
       - name: Show logs on failure
         if: failure()

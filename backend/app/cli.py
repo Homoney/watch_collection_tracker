@@ -4,6 +4,10 @@ Create (or promote) an account without opening public registration:
 
     python -m app.cli create-user EMAIL [--admin] [--name "Full Name"]
 
+Back up the database now (into BACKUP_DIR):
+
+    python -m app.cli backup
+
 The password is read from the WATCH_USER_PASSWORD environment variable if
 set, otherwise prompted for (twice). With --admin an existing account is
 promoted to admin and its password is left unchanged.
@@ -74,7 +78,19 @@ def main(argv=None) -> int:
     cu.add_argument("email")
     cu.add_argument("--admin", action="store_true", help="make the account admin")
     cu.add_argument("--name", default=None, help="full name")
+    sub.add_parser("backup", help="copy the database into the backups folder")
     args = parser.parse_args(argv)
+
+    if args.command == "backup":
+        from app.backup import backup_database, prune_backups
+
+        path = backup_database()
+        if path is None:
+            print("Error: no SQLite database file to back up", file=sys.stderr)
+            return 1
+        prune_backups()
+        print(f"Backup written to {path}")
+        return 0
 
     from app.database import SessionLocal
 
