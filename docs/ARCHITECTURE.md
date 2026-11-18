@@ -88,7 +88,8 @@ A background task in the app takes the daily backup.
 
 ## Technology Stack
 
-Exact versions are pinned in `backend/requirements.txt` and
+Exact versions are pinned in `backend/requirements.txt` (runtime),
+`backend/requirements-dev.txt` (tests) and
 `frontend/package-lock.json`.
 
 ### Backend
@@ -571,8 +572,9 @@ log_security_event(
 ## Build and Deployment
 
 - **Image**: `docker build -t watch-tracker .` from the repository root.
-  Stage 1 runs `npm ci` and `npm run build`; stage 2 installs the Python
-  requirements and copies the backend and the built `dist/`.
+  Stage 1 runs `npm ci` and `npm run build`; stage 2 applies Debian
+  security updates, installs the runtime Python requirements (not the test
+  tools) and copies the backend and the built `dist/`.
 - **CI** (`.github/workflows/ci.yml`): backend tests (pytest on SQLite),
   frontend tests and lint, security scans, and a smoke test that builds the
   image, starts it and waits for `/health`.
