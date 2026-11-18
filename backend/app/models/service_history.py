@@ -20,7 +20,7 @@ class ServiceHistory(Base):
     )
 
     # Service information
-    service_date = Column(DateTime, nullable=False)
+    service_date = Column(DateTime, nullable=False, index=True)
     provider = Column(String, nullable=False)
     service_type = Column(
         String

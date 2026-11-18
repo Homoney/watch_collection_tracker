@@ -37,12 +37,14 @@ class Watch(Base):
         nullable=False,
         index=True,
     )
-    collection_id = Column(GUID, ForeignKey("collections.id", ondelete="SET NULL"))
+    collection_id = Column(
+        GUID, ForeignKey("collections.id", ondelete="SET NULL"), index=True
+    )
     brand_id = Column(
-        GUID, ForeignKey("brands.id", ondelete="RESTRICT"), nullable=False
+        GUID, ForeignKey("brands.id", ondelete="RESTRICT"), nullable=False, index=True
     )
     movement_type_id = Column(
-        GUID, ForeignKey("movement_types.id", ondelete="RESTRICT")
+        GUID, ForeignKey("movement_types.id", ondelete="RESTRICT"), index=True
     )
 
     # Basic information
@@ -51,7 +53,7 @@ class Watch(Base):
     serial_number = Column(String)
 
     # Purchase information
-    purchase_date = Column(DateTime)
+    purchase_date = Column(DateTime, index=True)
     retailer = Column(String)
     purchase_price = Column(Numeric(12, 2))
     purchase_currency = Column(String(3), default="USD")
@@ -68,7 +70,8 @@ class Watch(Base):
 
     # Condition
     condition = Column(
-        Enum(ConditionEnum, values_callable=lambda x: [e.value for e in x])
+        Enum(ConditionEnum, values_callable=lambda x: [e.value for e in x]),
+        index=True,
     )
 
     # Market value tracking

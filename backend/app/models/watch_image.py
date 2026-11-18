@@ -37,7 +37,7 @@ class WatchImage(Base):
     height = Column(Integer)
 
     # Display properties
-    is_primary = Column(Boolean, default=False)
+    is_primary = Column(Boolean, default=False, index=True)
     sort_order = Column(Integer, default=0)
 
     # Source tracking
