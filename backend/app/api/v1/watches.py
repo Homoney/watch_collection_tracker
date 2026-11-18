@@ -3,7 +3,7 @@ from typing import Optional
 from urllib.parse import urlsplit
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy import asc, desc, func, or_
 from sqlalchemy.orm import Session, joinedload
@@ -27,6 +27,8 @@ from app.utils.pdf_export import generate_collection_pdf, generate_watch_pdf
 from app.utils.qr_code import generate_watch_qr_code
 
 logger = logging.getLogger(__name__)
+
+NO_IMAGES_FOUND = "No images found; you can upload your own"
 
 router = APIRouter()
 
@@ -497,6 +499,7 @@ def export_all_watches_pdf(
 @router.post("/{watch_id}/fetch-images", status_code=status.HTTP_201_CREATED)
 def fetch_google_images(
     watch_id: UUID,
+    response: Response,
     limit: int = Query(default=3, ge=1, le=5, description="Number of images to fetch"),
     offset: int = Query(
         default=0, ge=0, description="Number of images to skip (for pagination)"
@@ -508,6 +511,9 @@ def fetch_google_images(
     Fetch watch images from Google Images.
     Supports fetching multiple batches via offset parameter.
     Uses brand + reference number for more accurate search.
+
+    201 with the new images; 200 with an empty list and a plain message when
+    the search finds nothing or the image source fails (never a 500 for that).
     """
     # Verify watch exists and belongs to user
     watch = (
@@ -545,57 +551,49 @@ def fetch_google_images(
             reference_number=reference_number,
             offset=offset,
         )
-
-        if not image_metadata_list:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="No images found for this watch",
-            )
-
-        # Create database records for each image
-        created_images = []
-        for idx, metadata in enumerate(image_metadata_list):
-            # Adjust sort_order to append after existing images
-            # Only set first image as primary if watch has no images yet
-            image = WatchImage(
-                watch_id=watch_id,
-                file_path=metadata["file_path"],
-                file_name=metadata["file_name"],
-                file_size=metadata["file_size"],
-                mime_type=metadata["mime_type"],
-                width=metadata.get("width"),
-                height=metadata.get("height"),
-                is_primary=(
-                    max_sort_order == -1 and idx == 0
-                ),  # Only first if no existing images
-                sort_order=max_sort_order + 1 + idx,
-                source=ImageSourceEnum.GOOGLE_IMAGES,
-            )
-            db.add(image)
-            created_images.append(image)
-
-        db.commit()
-
-        # Refresh to get IDs
-        for image in created_images:
-            db.refresh(image)
-
-        # Return image schemas
-        from app.schemas.watch_image import WatchImageResponse
-
-        return {
-            "message": f"Successfully fetched {len(created_images)} images",
-            "images": [
-                WatchImageResponse.model_validate(img).model_dump()
-                for img in created_images
-            ],
-        }
-
-    except HTTPException:
-        raise
     except Exception:
-        logger.exception("Image fetch failed for watch %s", watch_id)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to fetch images",
+        # The image source failing is not our server's error: answer like
+        # "nothing found" so the user can upload their own instead.
+        logger.warning("Image search failed for watch %s", watch_id, exc_info=True)
+        image_metadata_list = []
+
+    if not image_metadata_list:
+        response.status_code = status.HTTP_200_OK
+        return {"message": NO_IMAGES_FOUND, "images": []}
+
+    # Create database records for each image
+    created_images = []
+    for idx, metadata in enumerate(image_metadata_list):
+        # Adjust sort_order to append after existing images
+        # Only set first image as primary if watch has no images yet
+        image = WatchImage(
+            watch_id=watch_id,
+            file_path=metadata["file_path"],
+            file_name=metadata["file_name"],
+            file_size=metadata["file_size"],
+            mime_type=metadata["mime_type"],
+            width=metadata.get("width"),
+            height=metadata.get("height"),
+            is_primary=(max_sort_order == -1 and idx == 0),  # Only first if none yet
+            sort_order=max_sort_order + 1 + idx,
+            source=ImageSourceEnum.GOOGLE_IMAGES,
         )
+        db.add(image)
+        created_images.append(image)
+
+    db.commit()
+
+    # Refresh to get IDs
+    for image in created_images:
+        db.refresh(image)
+
+    # Return image schemas
+    from app.schemas.watch_image import WatchImageResponse
+
+    return {
+        "message": f"Successfully fetched {len(created_images)} images",
+        "images": [
+            WatchImageResponse.model_validate(img).model_dump()
+            for img in created_images
+        ],
+    }
