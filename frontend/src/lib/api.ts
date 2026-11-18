@@ -1,4 +1,5 @@
-import axios, { AxiosError } from 'axios'
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
+import { getAccessToken, setAccessToken } from './tokenStore'
 import type {
   LoginRequest,
   RegisterRequest,
@@ -51,7 +52,7 @@ export const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token')
+    const token = getAccessToken()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -60,37 +61,56 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
+// Single in-flight refresh shared by every request that hit a 401
+let refreshPromise: Promise<string> | null = null
+
+// Get a new access token using the HttpOnly refresh cookie.
+export const refreshAccessToken = (): Promise<string> => {
+  if (!refreshPromise) {
+    refreshPromise = axios
+      .post<TokenResponse>(`${API_URL}/v1/auth/refresh`, null, { withCredentials: true })
+      .then((response) => {
+        setAccessToken(response.data.access_token)
+        return response.data.access_token
+      })
+      .catch((err) => {
+        setAccessToken(null)
+        throw err
+      })
+      .finally(() => {
+        refreshPromise = null
+      })
+  }
+  return refreshPromise
+}
+
+const NO_REFRESH_PATHS = ['/v1/auth/login', '/v1/auth/register', '/v1/auth/refresh']
+
 // Response interceptor to handle token refresh
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config
+    const originalRequest = error.config as
+      | (InternalAxiosRequestConfig & { _retry?: boolean })
+      | undefined
+    const url = originalRequest?.url ?? ''
 
-    if (error.response?.status === 401 && originalRequest) {
-      const refreshToken = localStorage.getItem('refresh_token')
-
-      if (refreshToken) {
-        try {
-          const response = await axios.post<TokenResponse>(
-            `${API_URL}/v1/auth/refresh`,
-            { refresh_token: refreshToken }
-          )
-
-          const { access_token, refresh_token } = response.data
-
-          localStorage.setItem('access_token', access_token)
-          localStorage.setItem('refresh_token', refresh_token)
-
-          // Retry original request
-          originalRequest.headers.Authorization = `Bearer ${access_token}`
-          return api(originalRequest)
-        } catch (refreshError) {
-          // Refresh failed, clear tokens and redirect to login
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !NO_REFRESH_PATHS.some((p) => url.endsWith(p))
+    ) {
+      originalRequest._retry = true
+      try {
+        const accessToken = await refreshAccessToken()
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`
+        return api(originalRequest)
+      } catch (refreshError) {
+        if (window.location.pathname !== '/login') {
           window.location.href = '/login'
-          return Promise.reject(refreshError)
         }
+        return Promise.reject(refreshError)
       }
     }
 

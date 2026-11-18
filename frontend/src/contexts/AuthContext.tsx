@@ -1,7 +1,8 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { authApi } from '@/lib/api'
+import { authApi, refreshAccessToken } from '@/lib/api'
+import { setAccessToken } from '@/lib/tokenStore'
 import type { User, LoginRequest, RegisterRequest } from '@/types'
 
 interface AuthContextType {
@@ -24,15 +25,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const initAuth = async () => {
-      const token = localStorage.getItem('access_token')
-      if (token) {
-        try {
-          const userData = await authApi.getMe()
-          setUser(userData)
-        } catch (error) {
-          localStorage.removeItem('access_token')
-          localStorage.removeItem('refresh_token')
-        }
+      // Restore the session from the HttpOnly refresh cookie, if any
+      try {
+        await refreshAccessToken()
+        const userData = await authApi.getMe()
+        setUser(userData)
+      } catch {
+        setAccessToken(null)
       }
       setIsLoading(false)
     }
@@ -42,8 +41,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (data: LoginRequest) => {
     const response = await authApi.login(data)
-    localStorage.setItem('access_token', response.access_token)
-    localStorage.setItem('refresh_token', response.refresh_token)
+    setAccessToken(response.access_token)
 
     const userData = await authApi.getMe()
     setUser(userData)
@@ -52,8 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (data: RegisterRequest) => {
     const response = await authApi.register(data)
-    localStorage.setItem('access_token', response.access_token)
-    localStorage.setItem('refresh_token', response.refresh_token)
+    setAccessToken(response.access_token)
 
     const userData = await authApi.getMe()
     setUser(userData)
@@ -61,12 +58,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   const logout = () => {
-    authApi.logout().catch(() => {
-      // Ignore errors, we're logging out anyway
-    })
+    authApi
+      .logout()
+      .catch(() => {
+        // Ignore errors, we're logging out anyway
+      })
+      .finally(() => setAccessToken(null))
 
-    localStorage.removeItem('access_token')
-    localStorage.removeItem('refresh_token')
     setUser(null)
     navigate('/login')
   }

@@ -43,7 +43,8 @@ class UserResponse(UserBase):
 
 class TokenResponse(BaseModel):
     access_token: str
-    refresh_token: str
+    # Omitted when the refresh token travels only in the HttpOnly cookie
+    refresh_token: Optional[str] = None
     token_type: str = "bearer"
 
 

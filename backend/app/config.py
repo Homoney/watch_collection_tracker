@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -32,6 +32,13 @@ class Settings(BaseSettings):
     # `python -m app.cli create-user EMAIL --admin`.
     ALLOW_REGISTRATION: bool = False
     INITIAL_ADMIN_EMAIL: str = ""
+
+    # Refresh token cookie. None = Secure when the request came over HTTPS.
+    COOKIE_SECURE: Optional[bool] = None
+
+    # Login throttling per account
+    LOGIN_MAX_FAILURES: int = 5
+    LOGIN_LOCKOUT_MINUTES: int = 15
 
     @property
     def database_url(self) -> str:
