@@ -157,7 +157,7 @@ async def api_root():
     return {"message": "Watch Collection Tracker API", "version": app.version}
 
 
-@app.get("/health")
+@app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
     return {"status": "healthy"}
 
