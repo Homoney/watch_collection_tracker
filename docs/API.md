@@ -682,7 +682,7 @@ The app enforces rate limits per client address (`backend/app/middleware/rate_li
 |-----------------|-------|-------|
 | `/api/v1/auth/login`, `/api/v1/auth/register` | 5 req/min | 3 |
 | `/api/v1/auth/change-password`, `/api/v1/auth/refresh` | 10 req/min | 5 |
-| `POST` uploads (`/images`, `/fetch-images`, service documents) | 10 req/min | 10 |
+| `POST` uploads (`/images`, `/reference-photo`, service documents) | 10 req/min | 10 |
 | `/api/v1/spec-lookup` | 20 req/min | 10 |
 | `/api/*` (general) | 10 req/sec | 20 |
 
@@ -711,7 +711,7 @@ The sections above show request and response bodies for the most used calls. The
 | `GET /api/v1/watches/{watch_id}/qr-code?base_url=...` | PNG QR code linking to the watch page; `base_url` must be this site |
 | `GET /api/v1/watches/{watch_id}/export/pdf` | One watch as a PDF |
 | `GET /api/v1/watches/export/pdf?collection_id=...` | All watches (or one collection) as a PDF |
-| `POST /api/v1/watches/{watch_id}/fetch-images` | Look up and import images for the watch (upload rate limit applies) |
+| `POST /api/v1/watches/{watch_id}/reference-photo` | Save WatchBase's photo of the watch as a reference photo; optional body `{"watchbase_id": 123}` (from Look up), otherwise the watch's reference number is used. 201 with `image` when saved; 200 with `status`, `message` and `image: null` otherwise (no key, not found, several matches, no photo, source down, already has one). Upload rate limit applies |
 | `GET /api/v1/atomic-time` | Reference time for accuracy readings |
 | `POST`, `GET /api/v1/watches/{watch_id}/accuracy-readings` | Record a movement accuracy reading; list readings with drift |
 | `GET`, `PUT`, `DELETE /api/v1/watches/{watch_id}/accuracy-readings/{reading_id}` | One reading |

@@ -233,7 +233,7 @@ revisions. Foreign keys are switched on for every connection.
 - Stores image metadata
 - Primary image designation
 - Sort order for gallery display
-- Source tracking (user upload, Google, URL)
+- Source tracking (user upload, URL import, WatchBase reference photo with its source page)
 
 **service_history**
 - Maintenance records

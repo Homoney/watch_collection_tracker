@@ -77,7 +77,7 @@ export interface CollectionUpdate {
 }
 
 // Watch Images
-export type ImageSource = 'user_upload' | 'google_images' | 'url_import'
+export type ImageSource = 'user_upload' | 'google_images' | 'url_import' | 'reference_photo'
 
 export interface WatchImage {
   id: string
@@ -91,6 +91,7 @@ export interface WatchImage {
   is_primary: boolean
   sort_order: number
   source: ImageSource
+  source_url?: string | null  // page a reference photo came from
   created_at: string
   url: string
 }
@@ -485,6 +486,15 @@ export interface SpecLookupResult {
     source?: SpecSource
   } | null
   links: { label: string; url: string }[]
+  /** The matched WatchBase watch, and whether it has a photo to save */
+  watchbase_id: number | null
+  has_photo: boolean
+}
+
+export interface ReferencePhotoResult {
+  status: 'saved' | 'exists' | 'no_key' | 'no_reference' | 'choices' | 'none' | 'bad_key' | 'unavailable'
+  message: string
+  image: WatchImage | null
 }
 
 export interface WatchBaseKeyStatus {

@@ -10,9 +10,14 @@ import type { WatchCreate, WatchUpdate, Watch, SpecLookupResult, SpecSource } fr
 
 type FormField = keyof WatchCreate
 
+export interface WatchFormExtras {
+  /** Save this WatchBase watch's photo as a reference photo after saving */
+  referencePhotoWatchbaseId?: number
+}
+
 interface WatchFormProps {
   defaultValues?: Watch
-  onSubmit: (data: WatchCreate | WatchUpdate) => void | Promise<void>
+  onSubmit: (data: WatchCreate | WatchUpdate, extras?: WatchFormExtras) => void | Promise<void>
   onCancel: () => void
   isLoading?: boolean
 }
@@ -43,6 +48,9 @@ export default function WatchForm({
 
   // Fields the reference look-up filled, and where from
   const [filledFrom, setFilledFrom] = useState<Partial<Record<string, SpecSource>>>({})
+  // WatchBase watch with a photo, from the last look-up; saved after the watch
+  const [photoFrom, setPhotoFrom] = useState<number | null>(null)
+  const [savePhoto, setSavePhoto] = useState(true)
 
   const {
     register,
@@ -111,7 +119,9 @@ export default function WatchForm({
       movement_type_id: data.movement_type_id || null,
       condition: data.condition || null,
     }
-    onSubmit(formattedData as WatchCreate | WatchUpdate)
+    onSubmit(formattedData as WatchCreate | WatchUpdate, {
+      referencePhotoWatchbaseId: photoFrom && savePhoto ? photoFrom : undefined,
+    })
   }
 
   // Put a look-up answer into the empty fields only; never overwrite
@@ -146,6 +156,9 @@ export default function WatchForm({
       filled.complications = result.sources.complications
     }
     setFilledFrom((prev) => ({ ...prev, ...filled }))
+    if (result.status === 'ok') {
+      setPhotoFrom(result.has_photo && result.watchbase_id ? result.watchbase_id : null)
+    }
   }
 
   const toggleComplication = (complicationName: string) => {
@@ -200,6 +213,20 @@ export default function WatchForm({
             })}
             onResult={applyLookup}
           />
+          {photoFrom && (
+            <label className="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-100">
+              <input
+                type="checkbox"
+                checked={savePhoto}
+                onChange={(e) => setSavePhoto(e.target.checked)}
+                className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>
+                Also save WatchBase's photo of this watch as a reference photo (kept private,
+                labelled with its source; your own photos stay first)
+              </span>
+            </label>
+          )}
         </div>
 
         <Input

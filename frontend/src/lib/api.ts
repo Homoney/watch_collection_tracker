@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { getAccessToken, setAccessToken } from './tokenStore'
 import type {
+  ReferencePhotoResult,
   SpecLookupResult,
   WatchBaseKeyStatus,
   LoginRequest,
@@ -568,6 +569,17 @@ export const settingsApi = {
   },
   clearWatchBaseKey: async (): Promise<WatchBaseKeyStatus> => {
     const response = await api.delete<WatchBaseKeyStatus>('/v1/settings/watchbase-key')
+    return response.data
+  },
+}
+
+// WatchBase's photo of a watch, saved as a labelled private reference photo
+export const referencePhotoApi = {
+  save: async (watchId: string, watchbaseId?: number): Promise<ReferencePhotoResult> => {
+    const response = await api.post<ReferencePhotoResult>(
+      `/v1/watches/${watchId}/reference-photo`,
+      watchbaseId ? { watchbase_id: watchbaseId } : {}
+    )
     return response.data
   },
 }

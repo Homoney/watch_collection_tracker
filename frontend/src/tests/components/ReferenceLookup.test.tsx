@@ -48,6 +48,8 @@ const okAnswer: SpecLookupResult = {
   choices: [],
   movement: { caliber: '3235', jewels: 31, frequency: '28,800 bph', source: { name: 'Caliber Corner', url: 'https://calibercorner.com/rolex-caliber-3235/' } },
   links: [{ label: 'WatchBase', url: 'https://duckduckgo.com/?q=site%3Awatchbase.com+126610LN' }],
+  watchbase_id: 31501,
+  has_photo: true,
 }
 
 function renderForm() {
@@ -91,12 +93,38 @@ describe('reference look-up on the watch form', () => {
 
     await user.click(screen.getByRole('button', { name: 'Add Watch' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    const sent = onSubmit.mock.calls[0][0]
+    const [sent, extras] = onSubmit.mock.calls[0]
+    // Photo offered and kept ticked: the parent saves it after the watch
+    expect(extras).toEqual({ referencePhotoWatchbaseId: 31501 })
     expect(sent.brand_id).toBe('b-rolex')
     expect(sent.movement_type_id).toBe('mt-auto')
     expect(sent.complications).toEqual(['Date', 'Dive Bezel'])
     expect(sent.caliber).toBe('3235')
     expect(sent.model).toBe('My Sub')
+  })
+
+  it('can untick the reference photo', async () => {
+    vi.spyOn(specLookupApi, 'lookup').mockResolvedValue(okAnswer)
+    const onSubmit = renderForm()
+    const user = userEvent.setup()
+    await user.type(screen.getByPlaceholderText('e.g., 126610LN'), '126610LN')
+    await user.click(screen.getByRole('button', { name: /look up/i }))
+    const box = await screen.findByRole('checkbox', { name: /reference photo/i })
+    expect(box).toBeChecked()
+    await user.click(box)
+    await user.click(screen.getByRole('button', { name: 'Add Watch' }))
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled())
+    expect(onSubmit.mock.calls[0][1]).toEqual({ referencePhotoWatchbaseId: undefined })
+  })
+
+  it('offers no photo when WatchBase has none', async () => {
+    vi.spyOn(specLookupApi, 'lookup').mockResolvedValue({ ...okAnswer, has_photo: false })
+    renderForm()
+    const user = userEvent.setup()
+    await user.type(screen.getByPlaceholderText('e.g., 126610LN'), '126610LN')
+    await user.click(screen.getByRole('button', { name: /look up/i }))
+    await screen.findByText(/Filled the empty fields/)
+    expect(screen.queryByRole('checkbox', { name: /reference photo/i })).not.toBeInTheDocument()
   })
 
   it('offers a choice when several watches match, then looks up the one picked', async () => {

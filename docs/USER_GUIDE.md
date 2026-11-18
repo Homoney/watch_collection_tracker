@@ -96,6 +96,7 @@ Next to **Reference Number** on the Add and Edit forms is a **Look up** button. 
 - It only fills fields that are still empty; anything you typed stays.
 - Each filled field says where the value came from, with a link (for example "Filled from WatchBase").
 - If several watches match (for example `SBGE2`), it lists them; click yours.
+- If WatchBase has a photo of the watch, it offers to save it as a reference photo (see [Reference photo from WatchBase](#reference-photo-from-watchbase)).
 - When it finds the movement's caliber, it also shows movement facts such as jewels, beat rate and power reserve, from [Caliber Corner](https://calibercorner.com) with a link to its page.
 - It always shows links to look the reference up yourself (WatchBase, Caliber Corner and the brand's own site).
 
@@ -220,6 +221,17 @@ Upload and manage photos of your watches.
 - JPG, PNG, GIF, WebP
 - Maximum size: 20MB per image
 - Automatically extracts dimensions
+
+### Reference photo from WatchBase
+
+With a WatchBase key set (see [Administration](#reference-look-up-key-watchbase)), the app can save WatchBase's catalogue photo of your exact reference:
+
+- **From Look up**: after Look up finds the watch, tick "Also save WatchBase's photo" (ticked by default) and save the form.
+- **On the watch page**: click **Get reference photo**. It uses the watch's reference number; if several watches match, use Look up on the Edit form to pick yours.
+
+The photo is a private copy on your server, labelled **Reference photo** with a link to its WatchBase page. A watch has at most one. It never replaces your own photos: it only becomes the primary photo when the watch has no other photo. Delete it like any other image. Reference photos are left out of PDF exports, because WatchBase does not license its photos for sharing.
+
+If no photo is found, the app says so; upload your own instead. (The old "Fetch from Google Images" button is gone: Google no longer serves image results to apps.)
 
 ### Managing Images
 
