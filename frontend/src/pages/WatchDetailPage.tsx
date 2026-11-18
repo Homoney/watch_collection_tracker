@@ -40,6 +40,7 @@ export default function WatchDetailPage() {
   const queryClient = useQueryClient()
   const [isFetchingImages, setIsFetchingImages] = useState(false)
   const [imageOffset, setImageOffset] = useState(0)
+  const [imageFetchMessage, setImageFetchMessage] = useState<string | null>(null)
 
   const handleUpdate = async (data: WatchUpdate) => {
     if (!id) return
@@ -148,8 +149,16 @@ export default function WatchDetailPage() {
   const handleFetchGoogleImages = async () => {
     if (!id) return
     setIsFetchingImages(true)
+    setImageFetchMessage(null)
     try {
-      await api.post(`/v1/watches/${id}/fetch-images?offset=${imageOffset}`)
+      const { data } = await api.post<{ message: string; images: unknown[] }>(
+        `/v1/watches/${id}/fetch-images?offset=${imageOffset}`
+      )
+      if (!data.images?.length) {
+        // Nothing found (or the image source failed): say so plainly
+        setImageFetchMessage(data.message || 'No images found; you can upload your own')
+        return
+      }
       // Invalidate queries to refetch watch data with new images
       queryClient.invalidateQueries({ queryKey: ['watches', id] })
       queryClient.invalidateQueries({ queryKey: ['watches'] })
@@ -158,7 +167,7 @@ export default function WatchDetailPage() {
     } catch (error: unknown) {
       const err = error as { response?: { data?: { detail?: string } } }
       console.error('Failed to fetch images:', error)
-      alert(err.response?.data?.detail || 'Failed to fetch images from Google')
+      setImageFetchMessage(err.response?.data?.detail || 'Failed to fetch images from Google')
     } finally {
       setIsFetchingImages(false)
     }
@@ -273,6 +282,12 @@ export default function WatchDetailPage() {
                   </Button>
                 </div>
               </>
+            )}
+
+            {imageFetchMessage && (
+              <p role="status" className="text-center text-sm text-gray-600 dark:text-gray-300">
+                {imageFetchMessage}
+              </p>
             )}
 
             <div className="border-t border-gray-200 dark:border-gray-700 pt-6">

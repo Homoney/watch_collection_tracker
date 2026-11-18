@@ -39,10 +39,11 @@ def fetch_watch_images(
         offset: Number of images to skip (for pagination)
 
     Returns:
-        List of image metadata dicts with file info
+        List of image metadata dicts with file info; empty when the search
+        finds nothing or no image could be downloaded
 
     Raises:
-        Exception: If image fetching fails
+        Exception: If the image source fails unexpectedly
     """
     # Create search query - prefer reference number for accuracy
     if reference_number:
@@ -61,14 +62,15 @@ def fetch_watch_images(
         image_urls = _scrape_google_images(search_query, fetch_count)
 
         if not image_urls:
-            raise Exception("No images found in search results")
+            logger.info("Image search found nothing for %r", search_query)
+            return []
 
         # Skip offset images and take the next 'limit' images
         # Get extras in case some fail
         urls_to_fetch = image_urls[offset : offset + limit + 10]
 
         if not urls_to_fetch:
-            raise Exception("No more images available at this offset")
+            return []  # no more images at this offset
 
         # Download and process images
         image_metadata = []
@@ -93,7 +95,7 @@ def fetch_watch_images(
                 continue
 
         if not image_metadata:
-            raise Exception("Failed to download any images")
+            logger.info("No image could be downloaded for %r", search_query)
 
         return image_metadata
 
