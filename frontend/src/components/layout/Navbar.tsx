@@ -48,8 +48,8 @@ export default function Navbar() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <span className="text-blue-100 text-sm">{user?.email}</span>
+          <div className="flex items-center space-x-4 min-w-0">
+            <span className="text-blue-100 text-sm truncate">{user?.email}</span>
             <Button variant="secondary" size="sm" onClick={logout}>
               Logout
             </Button>
