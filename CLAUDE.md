@@ -1,8 +1,10 @@
 # Claude Context - Watch Collection Tracker
 
-**Last Updated**: 2026-01-29
-**Current Phase**: Phase 9 Complete ✓ (Movement Accuracy Tracking)
-**Latest Changes**: Comprehensive movement accuracy tracking with atomic clock synchronization, drift calculations, analytics, and visualizations.
+**Last Updated**: 2026-11-18
+**Current Version**: 2.0.1 (single image `dhomoney/watch-tracker`, SQLite, one `/data` volume, port 8080 -> 8000, runs as UID 1000)
+**Versioning**: semver `x.y.z` (patch = fixes/security/deps, minor = features or behaviour changes, major = breaking). Version lives in `frontend/package.json`, `backend/app/main.py` and git tag `vX.Y.Z`; see README "Versioning and releases". Every merge to `main` publishes `:latest`.
+
+The phase list below is the build history. Phases 1-9 ran on the 1.x stack (PostgreSQL, Redis, nginx, separate backend/frontend images); 2.0 replaced it. Where this file and the code disagree, trust the code and README/docs.
 
 ---
 
@@ -26,7 +28,7 @@ Full-stack watch collection management with multi-user support. FastAPI backend,
 ## Completed Phases
 
 ### ✅ Phase 1: Foundation
-Docker Compose, PostgreSQL, FastAPI auth (JWT), React frontend, Nginx reverse proxy
+Docker Compose, PostgreSQL, FastAPI auth (JWT), React frontend, Nginx reverse proxy (1.x; replaced in 2.0 by the single image with SQLite)
 
 ### ✅ Phase 2: Core CRUD
 Reference data, Collections CRUD, Watches CRUD, filtering/sorting/pagination
@@ -35,7 +37,7 @@ Reference data, Collections CRUD, Watches CRUD, filtering/sorting/pagination
 - File upload with drag-and-drop (JPG, PNG, GIF, WebP, 20MB max)
 - Primary image management with auto-promotion
 - Full-screen lightbox with keyboard navigation
-- Secure storage: `/app/storage/uploads/{watch_id}/`
+- Storage: `/data/uploads/{watch_id}/` (`UPLOAD_DIR`, default `DATA_DIR/uploads`)
 - The app serves `/uploads/` only with signed, expiring URLs
 
 ### ✅ Phase 4: Service History
@@ -43,7 +45,7 @@ Reference data, Collections CRUD, Watches CRUD, filtering/sorting/pagination
 - Document upload (PDF, JPG, PNG, 10MB max)
 - Timeline view with overdue alerts
 - Cascade delete service → documents
-- Storage: `/app/storage/uploads/service-docs/{watch_id}/{service_id}/`
+- Storage: `/data/uploads/service-docs/{watch_id}/{service_id}/`
 
 ### ✅ Phase 5: Market Value & Analytics
 - Historical market values with multiple sources (manual, chrono24, api)
@@ -69,13 +71,13 @@ Reference data, Collections CRUD, Watches CRUD, filtering/sorting/pagination
 **Performance**:
 - DB query optimization (10-50x faster)
 - 12 performance indexes
-- Full-text search with GIN indexes (10-100x faster)
+- Full-text search with GIN indexes (1.x only; 2.x uses case-insensitive substring search on SQLite)
 - Code splitting (40-60% smaller bundles)
 - HTTP cache headers on reference data
 - API p95 < 200ms
 **Documentation**: 60+ pages (API.md, USER_GUIDE.md, ARCHITECTURE.md)
 **CI/CD**: 8-job pipeline (tests, security scanning, builds, integration tests)
-**Production**: docker-compose.prod.yml, health checks, resource limits, backups
+**Production**: docker-compose.prod.yml (removed in 2.0), health checks, resource limits, backups
 
 ### ✅ Phase 8: User Management & UI Fixes
 **User Management**:
@@ -155,7 +157,10 @@ frontend/src/
   ├── pages/           # WatchDetailPage, AnalyticsPage, ComparePage, AdminPage
   └── lib/api.ts       # API client
 
-storage/
+/data/                 # the one volume (DATA_DIR)
+  ├── watch.db         # SQLite database
+  ├── secret_key       # generated when SECRET_KEY is not set
+  ├── backups/         # daily and pre-migration database backups
   └── uploads/
       ├── {watch_id}/                    # Watch images
       └── service-docs/{watch_id}/{service_id}/  # Service documents
@@ -208,6 +213,8 @@ storage/
 ---
 
 ## Testing Credentials
+
+Local development data only (not created by the app or the tests):
 
 **User**: `imagetest@example.com` / `testpass123`
 **Test Watch ID**: `f98edb57-b35c-4b7e-846f-b04bd95ceb75`
@@ -277,8 +284,8 @@ cd backend && pytest   # temporary SQLite database
 
 ### View Files
 ```bash
-ls -lh storage/uploads/{watch_id}/
-ls -lh storage/uploads/service-docs/{watch_id}/{service_id}/
+docker exec watch-tracker ls -lh /data/uploads/{watch_id}/
+docker exec watch-tracker ls -lh /data/uploads/service-docs/{watch_id}/{service_id}/
 ```
 
 ### Test API (curl)
@@ -339,7 +346,7 @@ All optional (see README "Settings"): `INITIAL_ADMIN_EMAIL`, `ALLOW_REGISTRATION
 - Filename sanitization (directory traversal prevention)
 - SQL injection prevention (SQLAlchemy ORM)
 - XSS prevention (React auto-escaping)
-- CORS configured
+- No CORS needed (web app and API share one origin)
 - Password hashing (bcrypt)
 - Security headers (CSP, Permissions Policy)
 - Rate limiting (in-app, per address) and per-account lockout
@@ -369,7 +376,7 @@ All optional (see README "Settings"): `INITIAL_ADMIN_EMAIL`, `ALLOW_REGISTRATION
 ### Optimizations Applied
 - Database query optimization with SQL aggregation
 - 12 performance indexes
-- PostgreSQL full-text search with GIN indexes
+- PostgreSQL full-text search with GIN indexes (1.x only)
 - Frontend code splitting (React.lazy)
 - React.memo and useCallback
 - Image lazy loading
@@ -524,7 +531,7 @@ interface WatchAnalytics {
 **Bug Fixes**:
 - Enum serialization (ValueSourceEnum, ImageSourceEnum) - fixed with `values_callable`
 - Collection analytics 422 error - route conflict fixed by separating routers
-- 502 Bad Gateway - nginx IP resolution fixed with restart
+- 502 Bad Gateway - nginx IP resolution fixed with restart (1.x; no nginx since 2.0)
 
 **Production Ready**: ✅ Testing, Security, Performance, Documentation, CI/CD, Deployment
 

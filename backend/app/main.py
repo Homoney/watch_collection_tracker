@@ -110,7 +110,7 @@ Authorization: Bearer <your_access_token>
     ],
 )
 
-# Cache middleware (must be before CORS)
+# Cache headers (innermost of the middleware below)
 app.add_middleware(CacheMiddleware, cache_time=300)
 
 # Security headers and compression (outermost, so they cover every response)
