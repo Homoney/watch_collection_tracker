@@ -344,7 +344,7 @@ jobs:
           docker run -d --name wt -p 8080:8000 \
             -e SECRET_KEY=test-secret-key-for-smoke-0123456789abcdef \
             watch-tracker:test
-          curl --retry 30 --retry-delay 2 --retry-connrefused -fsS http://localhost:8080/health
+          curl --retry 30 --retry-delay 2 --retry-all-errors -fsS http://localhost:8080/health
 
       - name: Check the web app, API and headers
         run: |
