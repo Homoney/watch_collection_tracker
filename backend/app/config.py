@@ -21,11 +21,6 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost"
 
-    # Redis cache (optional; the app runs without it)
-    REDIS_HOST: str = "redis"
-    REDIS_PORT: int = 6379
-    REDIS_PASSWORD: str = ""
-
     # Storage
     UPLOAD_DIR: str = "/app/storage/uploads"
     BACKUP_DIR: str = "/app/storage/backups"
