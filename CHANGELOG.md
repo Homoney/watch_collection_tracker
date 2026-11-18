@@ -2,6 +2,31 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [1.2.0] - 2026-11-18
+
+Hardening release (sessions, uploads, configuration, deployment). Read "Upgrade notes" before deploying.
+
+### Upgrade notes (behaviour changes)
+- **Run database migrations** (`alembic upgrade head`; the backend container does this on start). Migration `005` adds session and login-guard columns.
+- **`SECRET_KEY` must be at least 32 characters** and not the `.env.example` placeholder, or the backend will not start. Generate one with `openssl rand -hex 32`. Changing it signs everyone out.
+- **Everyone signs in again once** after upgrading. The refresh token now lives in an `HttpOnly` cookie and the access token in memory only.
+- **Logout ends the user's sessions on all devices.** Changing a password keeps the current browser signed in and ends other sessions.
+- **Login lockout:** 5 wrong passwords lock the account for 15 minutes (`LOGIN_MAX_FAILURES`, `LOGIN_LOCKOUT_MINUTES`). An admin password reset clears the lock.
+- **Behind a TLS proxy** that does not send `X-Forwarded-Proto`, set `COOKIE_SECURE=true`.
+- **Uploads are validated:** files must be real images (JPEG/PNG/GIF/WebP) or PDFs; defaults of 50 images per watch and 20 documents per service record (`MAX_IMAGES_PER_WATCH`, `MAX_DOCUMENTS_PER_SERVICE`, `MAX_DOCUMENT_SIZE`).
+- **Production compose requires `REDIS_PASSWORD`**; set it before `docker compose up`.
+- **QR codes:** `base_url` must be this site or an entry in `ALLOWED_ORIGINS`.
+- **Very common passwords are refused** on sign-up, change and reset.
+- The reference-time endpoint now requires sign-in.
+- HTTPS server block and HSTS are ready to enable in `nginx/nginx.conf` (opt-in); the production nginx config mount was corrected.
+
+### Changed
+- CORS is handled by the backend (`ALLOWED_ORIGINS`) only; nginx security headers apply to all locations.
+- Rate limits added for password change, token refresh and uploads.
+- Error responses no longer include internal error text; logging replaces `print()`.
+- Search treats `%` and `_` literally.
+- CI workflow permissions are least-privilege; the Trivy action is pinned.
+
 ## [1.1.0] - 2026-11-18
 
 Upgrade and hardening release. Read "Upgrade notes" before deploying.
