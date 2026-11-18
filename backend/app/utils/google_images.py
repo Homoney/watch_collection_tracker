@@ -11,6 +11,7 @@ import httpx
 from bs4 import BeautifulSoup
 from PIL import Image
 
+from app.config import settings
 from app.utils.safe_fetch import fetch_bytes
 
 logger = logging.getLogger(__name__)
@@ -21,7 +22,7 @@ def fetch_watch_images(
     model: str,
     watch_id: str,
     limit: int = 3,
-    storage_path: str = "/app/storage",
+    upload_root: Optional[str] = None,
     reference_number: Optional[str] = None,
     offset: int = 0,
 ) -> List[dict]:
@@ -33,7 +34,7 @@ def fetch_watch_images(
         model: Watch model name
         watch_id: UUID of the watch
         limit: Number of images to fetch (default: 3)
-        storage_path: Base storage path
+        upload_root: Folder for uploaded files (default: settings.UPLOAD_DIR)
         reference_number: Optional reference number for more accurate search
         offset: Number of images to skip (for pagination)
 
@@ -50,7 +51,7 @@ def fetch_watch_images(
         search_query = f"{brand} {model} watch"
 
     # Create upload directory for this watch
-    upload_dir = Path(storage_path) / "uploads" / watch_id
+    upload_dir = Path(upload_root or settings.UPLOAD_DIR) / watch_id
     upload_dir.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -256,7 +257,7 @@ def _download_and_process_image(
 
 
 async def fetch_watch_images_from_urls(
-    urls: List[str], watch_id: str, storage_path: str = "/app/storage"
+    urls: List[str], watch_id: str, upload_root: Optional[str] = None
 ) -> List[dict]:
     """
     Download watch images from provided URLs.
@@ -264,12 +265,12 @@ async def fetch_watch_images_from_urls(
     Args:
         urls: List of image URLs to download
         watch_id: UUID of the watch
-        storage_path: Base storage path
+        upload_root: Folder for uploaded files (default: settings.UPLOAD_DIR)
 
     Returns:
         List of image metadata dicts with file info
     """
-    upload_dir = Path(storage_path) / "uploads" / watch_id
+    upload_dir = Path(upload_root or settings.UPLOAD_DIR) / watch_id
     upload_dir.mkdir(parents=True, exist_ok=True)
 
     image_metadata = []

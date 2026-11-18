@@ -191,7 +191,7 @@ class TestGenerateWatchPDF:
             ]
         }
 
-        pdf_buffer = generate_watch_pdf(watch_data, storage_path="/tmp/nonexistent")
+        pdf_buffer = generate_watch_pdf(watch_data, upload_dir="/tmp/nonexistent")
 
         # Should still generate PDF even if images don't exist
         assert isinstance(pdf_buffer, BytesIO)
