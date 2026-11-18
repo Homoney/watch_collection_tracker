@@ -16,13 +16,11 @@ KEY = "k" * 40
 
 class TestDatabaseUrl:
     def test_default_is_sqlite_in_data_dir(self, monkeypatch):
-        for var in ("DATABASE_URL", "POSTGRES_USER"):
-            monkeypatch.delenv(var, raising=False)
+        monkeypatch.delenv("DATABASE_URL", raising=False)
         s = Settings(SECRET_KEY=KEY, DATA_DIR="/srv/x", _env_file=None)
         assert s.database_url == "sqlite:////srv/x/watch.db"
 
     def test_database_url_wins(self, monkeypatch):
-        monkeypatch.delenv("POSTGRES_USER", raising=False)
         s = Settings(SECRET_KEY=KEY, DATABASE_URL="sqlite:///tmp/a.db", _env_file=None)
         assert s.database_url == "sqlite:///tmp/a.db"
 
@@ -103,7 +101,7 @@ class TestWriteLock:
 
         session = sessionmaker(bind=eng)()
         try:
-            take_write_lock(session, 1)
+            take_write_lock(session)
             other = sqlite3.connect(db_file, timeout=0.1)
             with pytest.raises(sqlite3.OperationalError, match="locked"):
                 other.execute("INSERT INTO users VALUES (1)")

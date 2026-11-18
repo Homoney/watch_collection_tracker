@@ -18,11 +18,6 @@ class TestQrBaseUrl:
         assert r.status_code == 200
         assert r.headers["content-type"] == "image/png"
 
-    def test_allowed_origin(self, client, auth_headers, test_watch, monkeypatch):
-        monkeypatch.setattr(settings, "ALLOWED_ORIGINS", "https://watches.example")
-        r = client.get(self.url(test_watch, "https://watches.example"), headers=auth_headers)
-        assert r.status_code == 200
-
     def test_other_site_rejected(self, client, auth_headers, test_watch):
         r = client.get(self.url(test_watch, "https://other.example"), headers=auth_headers)
         assert r.status_code == 400

@@ -69,3 +69,4 @@ docker-compose.override.yml
 *.pem
 *.crt
 *.key
+.data/

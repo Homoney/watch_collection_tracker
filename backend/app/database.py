@@ -6,10 +6,7 @@ from app.config import settings
 
 
 def make_engine(url: str) -> Engine:
-    """Create the engine. SQLite gets the settings a small web app needs."""
-    if not url.startswith("sqlite"):
-        return create_engine(url, pool_pre_ping=True, pool_recycle=3600)
-
+    """Create the SQLite engine with the settings a small web app needs."""
     eng = create_engine(url, connect_args={"check_same_thread": False, "timeout": 5})
 
     @event.listens_for(eng, "connect")
@@ -36,17 +33,13 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
 
-def take_write_lock(db: Session, pg_lock_key: int) -> None:
+def take_write_lock(db: Session) -> None:
     """Serialise a check-then-insert section until the transaction ends.
 
-    SQLite: a write statement makes this transaction the single writer now
-    (it matches no rows), so other writers wait on busy_timeout.
-    PostgreSQL: a transaction-scoped advisory lock.
+    A write statement (it matches no rows) makes this transaction SQLite's
+    single writer now, so other writers wait on busy_timeout.
     """
-    if db.get_bind().dialect.name == "sqlite":
-        db.execute(text("UPDATE users SET token_version = token_version WHERE 0"))
-    else:
-        db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": pg_lock_key})
+    db.execute(text("UPDATE users SET token_version = token_version WHERE 0"))
 
 
 def get_db():

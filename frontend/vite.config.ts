@@ -16,6 +16,11 @@ export default defineConfig({
     watch: {
       usePolling: true,
     },
+    // Development: the API and uploads come from the backend on port 8000
+    proxy: {
+      '/api': 'http://localhost:8000',
+      '/uploads': 'http://localhost:8000',
+    },
   },
   build: {
     outDir: 'dist',

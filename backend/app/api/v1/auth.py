@@ -28,9 +28,6 @@ from app.utils.logging import log_security_event
 
 router = APIRouter()
 
-# Arbitrary constant identifying the registration advisory lock
-REGISTER_LOCK_KEY = 7_141_901
-
 REFRESH_COOKIE = "refresh_token"
 REFRESH_COOKIE_PATH = "/api/v1/auth"
 
@@ -107,7 +104,7 @@ def register(
     """
     # Serialise registrations so the "empty database" check and the insert
     # cannot race (two simultaneous first sign-ups).
-    take_write_lock(db, REGISTER_LOCK_KEY)
+    take_write_lock(db)
 
     is_bootstrap_admin = (
         bool(settings.INITIAL_ADMIN_EMAIL)

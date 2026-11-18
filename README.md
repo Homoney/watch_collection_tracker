@@ -24,210 +24,121 @@ A modern web application for watch collectors to track their collections with mu
 
 ## Tech Stack
 
-### Backend
-- **FastAPI** (Python 3.11+) - Modern async web framework
-- **SQLAlchemy** - ORM for database operations
-- **Alembic** - Database migrations
-- **PostgreSQL 16** - Relational database
-- **JWT Authentication** - Secure token-based auth
-- **Pillow** - Image processing
+- **Backend**: FastAPI (Python 3.11), SQLAlchemy, Alembic, SQLite, Pillow, JWT authentication
+- **Frontend**: React 18, TypeScript, Vite, Tailwind CSS, TanStack Query, React Router, React Hook Form, Recharts, Lucide React
+- **Packaging**: one Docker image (amd64 and arm64). The FastAPI app serves the API, the web app and uploaded files from a single process, and keeps everything in one `/data` volume.
 
-### Frontend
-- **React 18** + **TypeScript** - Modern UI framework
-- **Vite** - Fast build tool
-- **TailwindCSS** - Utility-first CSS
-- **TanStack Query** - Data fetching and caching
-- **React Router** - Client-side routing
-- **React Hook Form** - Form management
-- **Recharts** - Charting library for data visualization
-- **Lucide React** - Icon library
-- **date-fns** - Date formatting and manipulation
+## Install
 
-### Infrastructure
-- **Docker** - Containerization
-- **Docker Compose** - Multi-container orchestration
-- **Nginx** - Reverse proxy and static file serving
-- **Let's Encrypt** - SSL/TLS certificates (optional)
+You need Docker. Run:
 
-## Project Structure
-
-```
-watch-collection-tracker/
-├── backend/                 # FastAPI backend
-│   ├── app/
-│   │   ├── api/v1/         # API routes
-│   │   ├── core/           # Security, dependencies
-│   │   ├── models/         # SQLAlchemy models
-│   │   ├── schemas/        # Pydantic schemas
-│   │   ├── services/       # Business logic
-│   │   └── utils/          # Utilities
-│   ├── alembic/            # Database migrations
-│   ├── Dockerfile
-│   └── requirements.txt
-├── frontend/               # React frontend
-│   ├── src/
-│   │   ├── components/    # Reusable components
-│   │   ├── contexts/      # React contexts
-│   │   ├── hooks/         # Custom hooks
-│   │   ├── lib/           # API client, utilities
-│   │   ├── pages/         # Page components
-│   │   └── types/         # TypeScript types
-│   ├── Dockerfile
-│   └── package.json
-├── nginx/                  # Nginx reverse proxy
-│   ├── Dockerfile
-│   └── nginx.conf
-├── storage/               # Persistent storage
-│   ├── uploads/          # User-uploaded files
-│   │   ├── {watch_id}/   # Watch images
-│   │   └── service-docs/ # Service documents
-│   └── backups/          # Database backups
-├── docker-compose.yml
-├── .env.example
-└── README.md
+```sh
+docker run -d --name watch-tracker --restart unless-stopped \
+  -p 8080:8000 -v watch-data:/data \
+  -e INITIAL_ADMIN_EMAIL=you@example.com \
+  dhomoney/watch-tracker:latest
 ```
 
-## Quick Start
+Open http://localhost:8080 and register with the email you set in `INITIAL_ADMIN_EMAIL`. That first account becomes the admin. Public sign-up is off. The admin adds other people, or you can set `ALLOW_REGISTRATION=true`.
 
-### Option 1: Docker Hub (Recommended for Users)
+You can also create an account from the command line:
 
-The easiest way to get started is using our pre-built images from Docker Hub:
-
-**[📦 View on Docker Hub](https://hub.docker.com/r/dhomoney/watch-tracker-backend)**
-
-See **[DOCKER_HUB.md](./DOCKER_HUB.md)** for complete Docker Hub deployment instructions.
-
-Quick install:
-```bash
-# Download compose file and configuration
-curl -O https://raw.githubusercontent.com/Homoney/watch_collection_tracker/main/docker-compose.hub.yml
-curl -O https://raw.githubusercontent.com/Homoney/watch_collection_tracker/main/.env.example
-mkdir -p nginx storage/uploads
-curl -o nginx/nginx.conf https://raw.githubusercontent.com/Homoney/watch_collection_tracker/main/nginx/nginx.conf
-
-# Configure
-cp .env.example .env
-nano .env  # Set POSTGRES_PASSWORD and SECRET_KEY
-
-# Start
-docker-compose -f docker-compose.hub.yml up -d
+```sh
+docker exec -it watch-tracker python -m app.cli create-user you@example.com --admin
 ```
 
-### Option 2: Build from Source (For Developers)
+### With Docker Compose
 
-#### Prerequisites
+Download [`docker-compose.yml`](docker-compose.yml) and, optionally, [`.env.example`](.env.example) as `.env`. Then run:
 
-- Docker and Docker Compose
-- Git
-
-#### Installation
-
-1. **Clone the repository**
-```bash
-git clone <repository-url>
-cd watch-collection-tracker
+```sh
+docker compose up -d
 ```
 
-2. **Create environment file**
-```bash
-cp .env.example .env
+### What is in `/data`
+
+| Path | Contents |
+|---|---|
+| `watch.db` | the SQLite database |
+| `uploads/` | watch images and service documents |
+| `backups/` | daily database backups |
+| `secret_key` | the signing key, generated on first start (if `SECRET_KEY` is not set) |
+
+Copying this folder while the container is stopped is a full backup. Keep `/data` on a local disk; SQLite should not live on network storage (NFS or SMB).
+
+The container runs as user ID 1000. A named volume (as above) works without changes. For a bind mount (`-v /srv/watch:/data`), run `chown -R 1000 /srv/watch` first, or start the container with `--user` set to your own user ID.
+
+### Settings
+
+All settings are optional environment variables.
+
+| Variable | Default | What it does |
+|---|---|---|
+| `INITIAL_ADMIN_EMAIL` | (none) | Registering with this email on an empty database creates the admin |
+| `ALLOW_REGISTRATION` | `false` | Let anyone with the address create an account |
+| `SECRET_KEY` | generated | Signs logins and file links. If you set it: 32+ random characters, never change it |
+| `TRUSTED_PROXIES` | `127.0.0.1` | Address of your reverse proxy, so rate limits see real client addresses |
+| `BACKUP_KEEP_DAYS` | `30` | Days to keep the daily backups |
+| `BACKUP_INTERVAL_HOURS` | `24` | Hours between automatic backups (`0` turns them off) |
+| `UPLOAD_URL_TTL_SECONDS` | `3600` | Lifetime of the signed links to uploaded files |
+| `MAX_UPLOAD_SIZE` | `20971520` | Largest image upload in bytes (20 MB) |
+| `MAX_DOCUMENT_SIZE` | `10485760` | Largest service document in bytes (10 MB) |
+| `LOGIN_MAX_FAILURES` / `LOGIN_LOCKOUT_MINUTES` | `5` / `15` | Lock an account after repeated wrong passwords |
+| `COOKIE_SECURE` | auto | Force the `Secure` flag on the login cookie |
+| `TZ` | `UTC` | Time zone for log times |
+
+### Backups and restore
+
+The app backs up the database once a day into `/data/backups` and deletes backups older than `BACKUP_KEEP_DAYS`. It also takes a backup before it runs a database migration. To back up now:
+
+```sh
+docker exec watch-tracker python -m app.cli backup
 ```
 
-3. **Edit `.env` file**
+To restore: stop the container, copy a backup over `/data/watch.db`, then start the container again.
 
-Generate a secure secret key:
-```bash
-openssl rand -hex 32
+Uploaded files are not inside the database. Back up the whole `/data` folder to keep them.
+
+### Upgrade
+
+```sh
+docker pull dhomoney/watch-tracker:latest
+docker rm -f watch-tracker
+# then the same docker run command as above
 ```
 
-Update the following in `.env`:
-```
-SECRET_KEY=<your-generated-secret-key>
-POSTGRES_PASSWORD=<your-secure-password>
-```
+With Compose, run `docker compose pull && docker compose up -d`. Migrations run on start, after an automatic backup.
 
-4. **Start the application**
-```bash
-docker-compose up -d
-```
+### HTTPS and reverse proxies
 
-5. **Wait for services to be ready**
-```bash
-docker-compose logs -f
-```
-
-6. **Access the application**
-- Frontend: http://localhost:8080
-- API Docs: http://localhost:8080/api/docs
-- Health Check: http://localhost:8080/health
-
-### First Time Setup
-
-1. Visit http://localhost:8080
-2. Click "Sign up" to create your account
-3. Start adding watches to your collection!
-
-**Note**: The application runs on port 8080 by default to avoid conflicts with K3s (Kubernetes).
+The container speaks plain HTTP on port 8000. For HTTPS, put a reverse proxy in front of it, for example Caddy, Traefik or nginx. Set `TRUSTED_PROXIES` to the proxy's address so that rate limits and the secure login cookie work correctly.
 
 ## Development
 
-### Backend Development
+```sh
+# Backend (http://localhost:8000)
+cd backend
+python -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+export DATA_DIR=$PWD/../.data SECRET_KEY=$(openssl rand -hex 32)
+python -m app.entrypoint     # creates .data, migrates, starts uvicorn
 
-```bash
-# Enter backend container
-docker-compose exec backend bash
-
-# Run migrations
-alembic upgrade head
-
-# Create new migration
-alembic revision --autogenerate -m "description"
-
-# Access Python shell with app context
-python -c "from app.database import SessionLocal; db = SessionLocal()"
-```
-
-### Frontend Development
-
-```bash
-# Enter frontend container
-docker-compose exec frontend sh
-
-# Install dependencies
+# Frontend (http://localhost:3000; /api and /uploads go to the backend)
+cd frontend
 npm install
-
-# Run development server
 npm run dev
-
-# Build for production
-npm run build
 ```
 
-### Database Management
+Tests:
 
-```bash
-# Access PostgreSQL
-docker-compose exec postgres psql -U watchuser -d watch_tracker
-
-# Backup database
-docker-compose exec postgres pg_dump -U watchuser watch_tracker > backup.sql
-
-# Restore database
-docker-compose exec -T postgres psql -U watchuser watch_tracker < backup.sql
+```sh
+cd backend && pytest          # uses a temporary SQLite database
+cd frontend && npm test
 ```
 
-### Logs
+Build the image from a checkout with `docker build -t watch-tracker .`.
 
-```bash
-# View all logs
-docker-compose logs -f
-
-# View specific service logs
-docker-compose logs -f backend
-docker-compose logs -f frontend
-docker-compose logs -f postgres
-docker-compose logs -f nginx
-```
+New migration: `cd backend && alembic revision --autogenerate -m "describe change"` (Alembic runs in batch mode, so `ALTER TABLE` works on SQLite).
 
 ## API Documentation
 
@@ -312,90 +223,21 @@ Once the application is running, visit http://localhost:8080/api/docs for intera
 
 ## Security
 
-- **Password Hashing**: bcrypt with 12 rounds
-- **JWT Tokens**: 30-minute access tokens, 7-day refresh tokens
-- **CORS**: Configured whitelist for allowed origins
-- **Rate Limiting**: API endpoint rate limiting via Nginx
-- **HTTPS**: SSL/TLS support (configure in production)
-- **Security Headers**: X-Frame-Options, X-Content-Type-Options, X-XSS-Protection
-- **Input Validation**: Pydantic schemas, file type/size validation
-- **SQL Injection Protection**: SQLAlchemy ORM with parameterized queries
-
-## Production Deployment
-
-### Prerequisites
-- Domain name
-- SSL certificate (Let's Encrypt recommended)
-- Server with Docker and Docker Compose
-
-### Steps
-
-1. **Update environment variables**
-```bash
-ALLOWED_ORIGINS=https://yourdomain.com
-VITE_API_URL=https://yourdomain.com/api
-```
-
-2. **Configure SSL in nginx**
-
-Uncomment HTTPS configuration in `nginx/nginx.conf` and add SSL certificates to `./ssl/` directory.
-
-3. **Build and deploy**
-```bash
-docker-compose -f docker-compose.yml up -d --build
-```
-
-4. **Set up automatic SSL renewal** (if using Let's Encrypt)
-```bash
-# Add cron job for certificate renewal
-0 0 * * * docker-compose exec nginx nginx -s reload
-```
+- **Passwords**: bcrypt; common passwords are refused; accounts lock after repeated failures
+- **Sessions**: short-lived access tokens; the refresh token sits in an HttpOnly, SameSite=Strict cookie; logout and password changes end all sessions
+- **Uploaded files**: served only through signed, expiring links; contents are checked to be real images or PDFs
+- **Rate limits**: per-address limits on sign-in, account changes, uploads and the API
+- **Headers**: Content Security Policy, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+- **Input validation**: Pydantic schemas; SQLAlchemy ORM with bound parameters
+- **Container**: runs as a non-root user
 
 ## Troubleshooting
 
-### Backend won't start
-```bash
-# Check logs
-docker-compose logs backend
-
-# Verify database connection
-docker-compose exec backend python -c "from app.database import engine; engine.connect()"
-
-# Rebuild container
-docker-compose up -d --build backend
-```
-
-### Frontend build fails
-```bash
-# Check Node version
-docker-compose exec frontend node --version
-
-# Clear node_modules and reinstall
-docker-compose exec frontend rm -rf node_modules package-lock.json
-docker-compose exec frontend npm install
-```
-
-### Database migration issues
-```bash
-# Check migration status
-docker-compose exec backend alembic current
-
-# Downgrade and re-upgrade
-docker-compose exec backend alembic downgrade -1
-docker-compose exec backend alembic upgrade head
-```
-
-### Port conflicts
-```bash
-# Change ports in .env
-HTTP_PORT=8080
-FRONTEND_PORT=3001
-BACKEND_PORT=8001
-
-# Restart services
-docker-compose down
-docker-compose up -d
-```
+- **Container exits at start with "is not writable"**: the `/data` bind mount belongs to another user. Run `chown -R 1000 <folder>`.
+- **Logs**: `docker logs watch-tracker`
+- **Health**: `curl http://localhost:8080/health`, or check `docker ps` (healthy/unhealthy)
+- **Migration state**: `docker exec watch-tracker alembic current`
+- **Locked out of the admin account**: `docker exec -it watch-tracker python -m app.cli create-user you@example.com --admin` promotes an existing account
 
 ## Development Roadmap
 
@@ -486,7 +328,6 @@ docker-compose up -d
 - Image lazy loading
 - Bundle size optimization
 - HTTP caching middleware
-- Redis caching infrastructure
 
 **Sprint 3: Documentation + Deployment Preparation**
 - Comprehensive API documentation (8,500+ words, 50+ endpoints)

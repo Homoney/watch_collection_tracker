@@ -3,7 +3,6 @@ import contextlib
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
 from app.api.v1 import (
@@ -113,15 +112,6 @@ Authorization: Bearer <your_access_token>
 
 # Cache middleware (must be before CORS)
 app.add_middleware(CacheMiddleware, cache_time=300)
-
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_origins_list,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
 # Security headers and compression (outermost, so they cover every response)
 app.add_middleware(RateLimitMiddleware)

@@ -1,5 +1,5 @@
 import os
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -9,13 +9,6 @@ class Settings(BaseSettings):
     # Database: a SQLite file. DATABASE_URL overrides the path.
     DATA_DIR: str = "/data"
     DATABASE_URL: str = ""
-    # Legacy PostgreSQL settings, used only while DATABASE_URL is unset and
-    # POSTGRES_USER is set (the old compose files). Removed with them.
-    POSTGRES_USER: str = ""
-    POSTGRES_PASSWORD: str = ""
-    POSTGRES_HOST: str = "postgres"
-    POSTGRES_PORT: int = 5432
-    POSTGRES_DB: str = ""
 
     # Security
     # Unset: read from DATA_DIR/secret_key (generated on first start)
@@ -23,9 +16,6 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-
-    # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost"
 
     # Built web app (index.html and assets/); not served when missing
     WEB_DIR: str = "/app/web"
@@ -104,18 +94,12 @@ class Settings(BaseSettings):
     def database_url(self) -> str:
         if self.DATABASE_URL:
             return self.DATABASE_URL
-        if self.POSTGRES_USER:
-            return (
-                f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-                f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-            )
         return f"sqlite:///{os.path.join(self.DATA_DIR, 'watch.db')}"
 
-    @property
-    def allowed_origins_list(self) -> List[str]:
-        return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
-
-    model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
+    # extra="ignore": settings from older installs (POSTGRES_*, ...) are ignored
+    model_config = SettingsConfigDict(
+        env_file=".env", case_sensitive=True, extra="ignore"
+    )
 
 
 settings = Settings()

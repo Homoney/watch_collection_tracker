@@ -8,7 +8,6 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import asc, desc, func, or_
 from sqlalchemy.orm import Session, joinedload
 
-from app.config import settings
 from app.core.deps import get_current_user
 from app.database import get_db
 from app.models.collection import Collection
@@ -324,10 +323,8 @@ def _is_allowed_base_url(base_url: str, request: Request) -> bool:
         return False
     if parts.path not in ("", "/"):
         return False
-    origin = f"{parts.scheme}://{parts.netloc}".lower()
-    allowed = {o.rstrip("/").lower() for o in settings.allowed_origins_list}
     request_host = (request.headers.get("host") or "").split(":")[0].lower()
-    return origin in allowed or parts.hostname.lower() == request_host
+    return parts.hostname.lower() == request_host
 
 
 @router.get("/{watch_id}/qr-code")
@@ -345,8 +342,8 @@ def get_watch_qr_code(
     Generate a QR code for a watch that links to its detail page.
     Returns a PNG image that can be downloaded, printed, or displayed.
 
-    base_url must be this site (the host the request came to) or one of
-    ALLOWED_ORIGINS, with no path, query or credentials.
+    base_url must be this site (the host the request came to), with no path,
+    query or credentials.
     """
     if not _is_allowed_base_url(base_url, request):
         raise HTTPException(
