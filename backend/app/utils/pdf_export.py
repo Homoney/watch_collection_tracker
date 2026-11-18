@@ -18,6 +18,8 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from app.config import settings
+
 
 def format_currency(amount: Optional[float], currency: str) -> str:
     """Format currency for display"""
@@ -40,13 +42,13 @@ def format_date(date_str: Optional[str]) -> str:
         return date_str
 
 
-def generate_watch_pdf(watch_data: dict, storage_path: str = "/app/storage") -> BytesIO:
+def generate_watch_pdf(watch_data: dict, upload_dir: Optional[str] = None) -> BytesIO:
     """
     Generate a PDF document for a single watch.
 
     Args:
         watch_data: Watch data dictionary from database
-        storage_path: Base path for uploaded images
+        upload_dir: Folder with uploaded files (default: settings.UPLOAD_DIR)
 
     Returns:
         BytesIO buffer containing the PDF
@@ -91,7 +93,9 @@ def generate_watch_pdf(watch_data: dict, storage_path: str = "/app/storage") -> 
         primary_image = next(
             (img for img in images if img.get("is_primary")), images[0]
         )
-        image_path = os.path.join(storage_path, "uploads", primary_image["file_path"])
+        image_path = os.path.join(
+            upload_dir or settings.UPLOAD_DIR, primary_image["file_path"]
+        )
 
         if os.path.exists(image_path):
             try:
@@ -341,7 +345,7 @@ def generate_watch_pdf(watch_data: dict, storage_path: str = "/app/storage") -> 
 def generate_collection_pdf(
     watches: List[dict],
     collection_name: str = "My Collection",
-    storage_path: str = "/app/storage",
+    upload_dir: Optional[str] = None,
 ) -> BytesIO:
     """
     Generate a PDF document for a collection of watches.
@@ -349,7 +353,7 @@ def generate_collection_pdf(
     Args:
         watches: List of watch data dictionaries
         collection_name: Name of the collection
-        storage_path: Base path for uploaded images
+        upload_dir: Folder with uploaded files (default: settings.UPLOAD_DIR)
 
     Returns:
         BytesIO buffer containing the PDF
@@ -453,7 +457,7 @@ def generate_collection_pdf(
                 (img for img in images if img.get("is_primary")), images[0]
             )
             image_path = os.path.join(
-                storage_path, "uploads", primary_image["file_path"]
+                upload_dir or settings.UPLOAD_DIR, primary_image["file_path"]
             )
 
             if os.path.exists(image_path):

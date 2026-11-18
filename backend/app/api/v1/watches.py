@@ -456,7 +456,17 @@ def export_all_watches_pdf(
     # Convert to list of dicts
     from app.schemas.watch import WatchListResponse
 
-    watches_data = [WatchListResponse.model_validate(w).model_dump() for w in watches]
+    # The PDF shows each watch's primary image, so pass the image list too
+    watches_data = [
+        {
+            **WatchListResponse.model_validate(w).model_dump(),
+            "images": [
+                {"file_path": img.file_path, "is_primary": img.is_primary}
+                for img in w.images
+            ],
+        }
+        for w in watches
+    ]
 
     # Determine collection name
     if collection_id:
