@@ -15,3 +15,9 @@ Saved responses for the reference look-up tests (no live calls in CI).
   User-Agent: `/filter/results?q=` answers for 126610LN (one watch), 5711/1A
   (five) and an unknown reference (none), and the `<head>` of the 126610LN
   watch page (its `og:image` tag; the body is trimmed).
+- `wb_live_*.json`: real WatchBase Data Feed API answers recorded on
+  2026-11-18 with David's key (2 Watch calls, 3 searches): search/refnr for
+  126610LN, SBGE201 and an unknown reference, and the Watch answers for ids
+  42294 (126610LN-0001) and 31034 (SBGE201). Long `description` texts are
+  trimmed; the key is not in them. The hand-made `wb_*.json` files above are
+  kept for the error and choice cases.

@@ -131,6 +131,9 @@ def to_fields(w: dict) -> Tuple[dict, dict]:
                 cal.get("hands"),
                 cal.get("chronograph"),
                 cal.get("additional"),
+                cal.get("date"),
+                cal.get("astronomical"),
+                cal.get("acoustic"),
                 (
                     cal.get("display")
                     if "date" in str(cal.get("display", "")).lower()

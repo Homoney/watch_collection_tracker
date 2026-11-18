@@ -351,6 +351,70 @@ class TestParsing:
 # ------------------------------------------------------------------ key setting
 
 
+class TestRecordedLiveAnswers:
+    """Answers recorded from the real WatchBase Data Feed API on 2026-11-18
+    (wb_live_*.json; long description texts trimmed, no key in them)."""
+
+    def lookup(self, client, auth_headers, monkeypatch, net, ref, search, watches):
+        use_handler(
+            monkeypatch,
+            net.wb_answers(
+                fixture(search), {k: fixture(v) for k, v in watches.items()}
+            ),
+        )
+        r = client.get(URL, params={"reference": ref}, headers=auth_headers)
+        assert r.status_code == 200
+        return r.json()
+
+    def test_rolex_126610ln(self, client, auth_headers, with_key, monkeypatch):
+        caliber_corner(with_key)
+        body = self.lookup(
+            client, auth_headers, monkeypatch, with_key, "126610LN",
+            "wb_live_search_126610LN.json", {"42294": "wb_live_watch_42294.json"},
+        )
+        assert body["status"] == "ok"
+        assert body["watchbase_id"] == 42294
+        assert body["has_photo"] is True
+        f = body["fields"]
+        assert f["model"] == "Submariner Date 41 Stainless Steel / Black / Cerachrom"
+        assert f["movement_type_name"] == "Automatic"
+        assert Decimal(str(f["case_diameter"])) == Decimal("41.00")
+        assert Decimal(str(f["lug_width"])) == Decimal("21.00")
+        assert "case_thickness" not in f
+        assert (f["water_resistance"], f["power_reserve"]) == (300, 70)
+        assert (f["caliber"], f["crystal"], f["case_material"]) == (
+            "3235", "Sapphire", "Stainless Steel",
+        )
+        # The live answer has the date in caliber.date, not in the hands
+        assert set(f["complications"]) == {"Date", "Dive Bezel"}
+        assert body["sources"]["model"]["url"] == (
+            "https://watchbase.com/rolex/submariner/126610ln-0001"
+        )
+
+    def test_grand_seiko_sbge201(self, client, auth_headers, with_key, monkeypatch):
+        body = self.lookup(
+            client, auth_headers, monkeypatch, with_key, "SBGE201",
+            "wb_live_search_SBGE201.json", {"31034": "wb_live_watch_31034.json"},
+        )
+        assert body["status"] == "ok"
+        f = body["fields"]
+        assert f["movement_type_name"] == "Spring Drive"
+        assert Decimal(str(f["case_thickness"])) == Decimal("14.70")
+        assert "lug_width" not in f
+        assert (f["caliber"], f["water_resistance"], f["power_reserve"]) == (
+            "9R66", 100, 72,
+        )
+        assert "GMT" in f["complications"]
+        assert body["movement"]["jewels"] == 30
+
+    def test_not_found(self, client, auth_headers, with_key, monkeypatch):
+        body = self.lookup(
+            client, auth_headers, monkeypatch, with_key, "ZZQ99999X",
+            "wb_live_search_none.json", {},
+        )
+        assert body["status"] == "not_found"
+
+
 @pytest.fixture
 def admin_headers(test_db):
     admin = User(
