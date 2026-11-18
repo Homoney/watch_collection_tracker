@@ -2,6 +2,7 @@ FROM nginx:alpine
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
+COPY locations.conf /etc/nginx/locations.conf
 
 # Create uploads directory
 RUN mkdir -p /usr/share/nginx/uploads
