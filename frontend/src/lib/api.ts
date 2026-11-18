@@ -130,6 +130,12 @@ export const authApi = {
     return response.data
   },
 
+  // True only while no account exists, so the first sign-up makes the admin
+  setupStatus: async (): Promise<{ setup_required: boolean }> => {
+    const response = await api.get<{ setup_required: boolean }>('/v1/auth/setup-status')
+    return response.data
+  },
+
   logout: async (): Promise<void> => {
     await api.post('/v1/auth/logout')
   },
