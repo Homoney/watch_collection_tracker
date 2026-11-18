@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.watch import ConditionEnum
 from app.schemas.watch_image import WatchImageResponse
@@ -89,16 +89,14 @@ class BrandInWatch(BaseModel):
     id: UUID
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovementTypeInWatch(BaseModel):
     id: UUID
     name: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CollectionInWatch(BaseModel):
@@ -106,8 +104,7 @@ class CollectionInWatch(BaseModel):
     name: str
     color: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WatchResponse(WatchBase):
@@ -120,8 +117,7 @@ class WatchResponse(WatchBase):
     collection: Optional[CollectionInWatch] = None
     images: List[WatchImageResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class WatchListResponse(BaseModel):
@@ -139,8 +135,7 @@ class WatchListResponse(BaseModel):
     collection: Optional[CollectionInWatch] = None
     primary_image: Optional[WatchImageResponse] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PaginatedWatchResponse(BaseModel):
