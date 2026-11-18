@@ -242,6 +242,8 @@ class TestRegistration:
         monkeypatch.setattr(settings, "INITIAL_ADMIN_EMAIL", "owner@example.com")
         r = client.post(REG, json={"email": "x@example.com", "password": "watch-pass-123"})
         assert r.status_code == 403
+        assert "INITIAL_ADMIN_EMAIL" in r.json()["detail"]
+        assert "owner@example.com" not in r.text
 
     def test_open_registration_never_grants_admin(self, client, test_db):
         r = client.post(REG, json={"email": "a@example.com", "password": "watch-pass-123"})
@@ -272,3 +274,30 @@ class TestCreateUserCommand:
     def test_short_password(self, test_db):
         with pytest.raises(ValueError):
             create_user(test_db, "u@example.com", "short")
+
+
+# ---------------------------------------------------------------- setup status
+
+SETUP = "/api/v1/auth/setup-status"
+
+
+class TestSetupStatus:
+    def test_true_on_empty_database(self, client, test_db, monkeypatch):
+        monkeypatch.setattr(settings, "INITIAL_ADMIN_EMAIL", "owner@example.com")
+        r = client.get(SETUP)
+        assert r.status_code == 200
+        assert r.json() == {"setup_required": True}
+        assert "owner@example.com" not in r.text
+
+    def test_false_when_users_exist(self, client, test_db, test_user):
+        r = client.get(SETUP)
+        assert r.status_code == 200
+        assert r.json() == {"setup_required": False}
+
+    def test_turns_false_after_first_sign_up(self, client, test_db, monkeypatch):
+        monkeypatch.setattr(settings, "ALLOW_REGISTRATION", False)
+        monkeypatch.setattr(settings, "INITIAL_ADMIN_EMAIL", "owner@example.com")
+        assert client.get(SETUP).json()["setup_required"] is True
+        r = client.post(REG, json={"email": "owner@example.com", "password": "watch-pass-123"})
+        assert r.status_code == 201
+        assert client.get(SETUP).json() == {"setup_required": False}
