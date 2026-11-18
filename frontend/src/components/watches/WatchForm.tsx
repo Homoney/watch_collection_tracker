@@ -11,8 +11,11 @@ import type { WatchCreate, WatchUpdate, Watch, SpecLookupResult, SpecSource } fr
 type FormField = keyof WatchCreate
 
 export interface WatchFormExtras {
-  /** Save this WatchBase watch's photo as a reference photo after saving */
-  referencePhotoWatchbaseId?: number
+  /**
+   * Save WatchBase's photo as a reference photo after saving: the matched
+   * watch's (watchbaseId), or without a key the one found by reference number.
+   */
+  referencePhoto?: { watchbaseId?: number }
 }
 
 interface WatchFormProps {
@@ -48,8 +51,9 @@ export default function WatchForm({
 
   // Fields the reference look-up filled, and where from
   const [filledFrom, setFilledFrom] = useState<Partial<Record<string, SpecSource>>>({})
-  // WatchBase watch with a photo, from the last look-up; saved after the watch
-  const [photoFrom, setPhotoFrom] = useState<number | null>(null)
+  // Photo to save after the watch, from the last look-up: a matched WatchBase
+  // watch with a photo, or (no key) a try by reference number
+  const [photoFrom, setPhotoFrom] = useState<{ watchbaseId?: number } | null>(null)
   const [savePhoto, setSavePhoto] = useState(true)
 
   const {
@@ -120,7 +124,7 @@ export default function WatchForm({
       condition: data.condition || null,
     }
     onSubmit(formattedData as WatchCreate | WatchUpdate, {
-      referencePhotoWatchbaseId: photoFrom && savePhoto ? photoFrom : undefined,
+      referencePhoto: photoFrom && savePhoto ? photoFrom : undefined,
     })
   }
 
@@ -157,7 +161,9 @@ export default function WatchForm({
     }
     setFilledFrom((prev) => ({ ...prev, ...filled }))
     if (result.status === 'ok') {
-      setPhotoFrom(result.has_photo && result.watchbase_id ? result.watchbase_id : null)
+      setPhotoFrom(result.has_photo && result.watchbase_id ? { watchbaseId: result.watchbase_id } : null)
+    } else if (result.status === 'links_only' && result.reference) {
+      setPhotoFrom({})
     }
   }
 
@@ -222,8 +228,11 @@ export default function WatchForm({
                 className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span>
-                Also save WatchBase's photo of this watch as a reference photo (kept private,
-                labelled with its source; your own photos stay first)
+                {photoFrom.watchbaseId
+                  ? "Also save WatchBase's photo of this watch"
+                  : "Also look for this reference's photo on WatchBase"}{' '}
+                as a reference photo (kept private, labelled with its source; your own photos
+                stay first)
               </span>
             </label>
           )}

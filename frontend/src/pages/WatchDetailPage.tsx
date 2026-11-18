@@ -46,8 +46,8 @@ export default function WatchDetailPage() {
     try {
       await updateMutation.mutateAsync({ id, data })
       setIsEditModalOpen(false)
-      if (extras?.referencePhotoWatchbaseId) {
-        await handleReferencePhoto(extras.referencePhotoWatchbaseId)
+      if (extras?.referencePhoto) {
+        await handleReferencePhoto(extras.referencePhoto.watchbaseId)
       }
     } catch (error) {
       console.error('Failed to update watch:', error)

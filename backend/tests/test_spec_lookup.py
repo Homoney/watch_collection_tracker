@@ -8,7 +8,7 @@ import os
 import stat
 from decimal import Decimal
 from pathlib import Path
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, urlsplit
 
 import httpx
 import pytest
@@ -109,7 +109,8 @@ class TestWithoutKey:
         labels = [link["label"] for link in body["links"]]
         assert labels == ["WatchBase", "Caliber Corner", "Rolex website"]
         assert "126610LN" in body["links"][0]["url"]
-        assert "rolex.com" in body["links"][2]["url"]
+        brand_query = parse_qs(urlsplit(body["links"][2]["url"]).query)["q"][0]
+        assert brand_query.startswith("site:rolex.com ")
         assert net.calls == []  # nothing fetched without a caliber
 
     def test_caliber_given_gets_movement_facts(

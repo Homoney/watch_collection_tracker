@@ -95,7 +95,7 @@ describe('reference look-up on the watch form', () => {
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
     const [sent, extras] = onSubmit.mock.calls[0]
     // Photo offered and kept ticked: the parent saves it after the watch
-    expect(extras).toEqual({ referencePhotoWatchbaseId: 31501 })
+    expect(extras).toEqual({ referencePhoto: { watchbaseId: 31501 } })
     expect(sent.brand_id).toBe('b-rolex')
     expect(sent.movement_type_id).toBe('mt-auto')
     expect(sent.complications).toEqual(['Date', 'Dive Bezel'])
@@ -114,7 +114,7 @@ describe('reference look-up on the watch form', () => {
     await user.click(box)
     await user.click(screen.getByRole('button', { name: 'Add Watch' }))
     await waitFor(() => expect(onSubmit).toHaveBeenCalled())
-    expect(onSubmit.mock.calls[0][1]).toEqual({ referencePhotoWatchbaseId: undefined })
+    expect(onSubmit.mock.calls[0][1]).toEqual({ referencePhoto: undefined })
   })
 
   it('offers no photo when WatchBase has none', async () => {
@@ -160,14 +160,25 @@ describe('reference look-up on the watch form', () => {
       fields: {},
       sources: {},
       movement: null,
+      watchbase_id: null,
+      has_photo: false,
     })
-    renderForm()
+    const onSubmit = renderForm()
     const user = userEvent.setup()
     await user.type(screen.getByPlaceholderText('e.g., 126610LN'), '126610LN')
+    await user.type(screen.getByPlaceholderText('e.g., Submariner, Speedmaster'), 'Sub')
+    const brand = screen.getByRole('option', { name: 'Rolex' }).closest('select')!
+    await user.selectOptions(brand, 'b-rolex')
     await user.click(screen.getByRole('button', { name: /look up/i }))
     expect(await screen.findByText(/Automatic look-up is off/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /WatchBase/ })).toHaveAttribute('target', '_blank')
     expect(screen.queryByText(/Filled from/)).not.toBeInTheDocument()
+    // The photo still comes from WatchBase's public page, found by reference
+    const box = screen.getByRole('checkbox', { name: /look for this reference's photo/i })
+    expect(box).toBeChecked()
+    await user.click(screen.getByRole('button', { name: 'Add Watch' }))
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled())
+    expect(onSubmit.mock.calls[0][1]).toEqual({ referencePhoto: {} })
   })
 
   it('asks for a reference before looking up', async () => {

@@ -492,7 +492,7 @@ export interface SpecLookupResult {
 }
 
 export interface ReferencePhotoResult {
-  status: 'saved' | 'exists' | 'no_key' | 'no_reference' | 'choices' | 'none' | 'bad_key' | 'unavailable'
+  status: 'saved' | 'exists' | 'no_reference' | 'choices' | 'none' | 'bad_key' | 'unavailable'
   message: string
   image: WatchImage | null
 }

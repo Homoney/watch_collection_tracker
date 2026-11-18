@@ -11,3 +11,7 @@ Saved responses for the reference look-up tests (no live calls in CI).
 - `wb_photo_*.png`: stand-in images for WatchBase's photo server (a drawn
   placeholder, not a real WatchBase photo); `wb_photo_small.png` is below the
   200 px minimum.
+- `site_*`: WatchBase's public site, saved on 2026-11-18 with the app's
+  User-Agent: `/filter/results?q=` answers for 126610LN (one watch), 5711/1A
+  (five) and an unknown reference (none), and the `<head>` of the 126610LN
+  watch page (its `og:image` tag; the body is trimmed).

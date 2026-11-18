@@ -96,7 +96,7 @@ Next to **Reference Number** on the Add and Edit forms is a **Look up** button. 
 - It only fills fields that are still empty; anything you typed stays.
 - Each filled field says where the value came from, with a link (for example "Filled from WatchBase").
 - If several watches match (for example `SBGE2`), it lists them; click yours.
-- If WatchBase has a photo of the watch, it offers to save it as a reference photo (see [Reference photo from WatchBase](#reference-photo-from-watchbase)).
+- It offers to save WatchBase's photo of the watch as a reference photo, with or without a key (see [Reference photo from WatchBase](#reference-photo-from-watchbase)).
 - When it finds the movement's caliber, it also shows movement facts such as jewels, beat rate and power reserve, from [Caliber Corner](https://calibercorner.com) with a link to its page.
 - It always shows links to look the reference up yourself (WatchBase, Caliber Corner and the brand's own site).
 
@@ -224,10 +224,12 @@ Upload and manage photos of your watches.
 
 ### Reference photo from WatchBase
 
-With a WatchBase key set (see [Administration](#reference-look-up-key-watchbase)), the app can save WatchBase's catalogue photo of your exact reference:
+The app can save WatchBase's catalogue photo of your exact reference. This works without a WatchBase key:
 
-- **From Look up**: after Look up finds the watch, tick "Also save WatchBase's photo" (ticked by default) and save the form.
-- **On the watch page**: click **Get reference photo**. It uses the watch's reference number; if several watches match, use Look up on the Edit form to pick yours.
+- **From Look up**: after Look up, tick "Also save WatchBase's photo" (ticked by default) and save the form. Without a key the box reads "Also look for this reference's photo on WatchBase".
+- **On the watch page**: click **Get reference photo**. It uses the watch's reference number. If several watches match, type the full reference (for example `5711/1A-010` rather than `5711/1A`), or, with a key, use Look up on the Edit form to pick yours.
+
+With a key, the photo comes with the watch's WatchBase record. Without one, the app searches WatchBase's public site for the reference and takes the main photo of the watch page it finds (two requests at most, one per second).
 
 The photo is a private copy on your server, labelled **Reference photo** with a link to its WatchBase page. A watch has at most one. It never replaces your own photos: it only becomes the primary photo when the watch has no other photo. Delete it like any other image. Reference photos are left out of PDF exports, because WatchBase does not license its photos for sharing.
 

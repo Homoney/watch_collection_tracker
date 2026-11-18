@@ -86,10 +86,10 @@ export default function WatchListPage() {
     try {
       const created = await createMutation.mutateAsync(data)
       setIsAddModalOpen(false)
-      if (extras?.referencePhotoWatchbaseId && created?.id) {
+      if (extras?.referencePhoto && created?.id) {
         // The watch is saved either way; a missing photo is not an error here
         await referencePhotoApi
-          .save(created.id, extras.referencePhotoWatchbaseId)
+          .save(created.id, extras.referencePhoto.watchbaseId)
           .catch(() => undefined)
         queryClient.invalidateQueries({ queryKey: ['watches'] })
       }

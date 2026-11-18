@@ -711,7 +711,7 @@ The sections above show request and response bodies for the most used calls. The
 | `GET /api/v1/watches/{watch_id}/qr-code?base_url=...` | PNG QR code linking to the watch page; `base_url` must be this site |
 | `GET /api/v1/watches/{watch_id}/export/pdf` | One watch as a PDF |
 | `GET /api/v1/watches/export/pdf?collection_id=...` | All watches (or one collection) as a PDF |
-| `POST /api/v1/watches/{watch_id}/reference-photo` | Save WatchBase's photo of the watch as a reference photo; optional body `{"watchbase_id": 123}` (from Look up), otherwise the watch's reference number is used. 201 with `image` when saved; 200 with `status`, `message` and `image: null` otherwise (no key, not found, several matches, no photo, source down, already has one). Upload rate limit applies |
+| `POST /api/v1/watches/{watch_id}/reference-photo` | Save WatchBase's photo of the watch as a reference photo; optional body `{"watchbase_id": 123}` (from Look up), otherwise the watch's reference number is used. 201 with `image` when saved; 200 with `status`, `message` and `image: null` otherwise (no reference number, not found, several matches, no photo, source down, already has one). Without a WatchBase key the photo is found through WatchBase's public search and the watch page's `og:image`. Upload rate limit applies |
 | `GET /api/v1/atomic-time` | Reference time for accuracy readings |
 | `POST`, `GET /api/v1/watches/{watch_id}/accuracy-readings` | Record a movement accuracy reading; list readings with drift |
 | `GET`, `PUT`, `DELETE /api/v1/watches/{watch_id}/accuracy-readings/{reading_id}` | One reading |

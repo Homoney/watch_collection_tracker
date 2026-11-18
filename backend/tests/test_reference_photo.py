@@ -12,7 +12,7 @@ import pytest
 
 from app.config import settings
 from app.models.watch_image import ImageSourceEnum, WatchImage
-from app.spec_lookup import http, photos
+from app.spec_lookup import http, photos, public
 from app.utils import pdf_export, safe_fetch
 
 FIX = Path(__file__).parent / "fixtures" / "spec_lookup"
@@ -134,7 +134,6 @@ class TestReferencePhoto:
     @pytest.mark.parametrize(
         "setup, status",
         [
-            ("no_key", "no_key"),
             ("no_reference", "no_reference"),
             ("choices", "choices"),
             ("not_found", "none"),
@@ -149,9 +148,7 @@ class TestReferencePhoto:
     ):
         test_watch.reference_number = "126610LN"
         body = None
-        if setup == "no_key":
-            monkeypatch.setattr(settings, "WATCHBASE_API_KEY", "")
-        elif setup == "no_reference":
+        if setup == "no_reference":
             test_watch.reference_number = None
         elif setup == "choices":
             wb["state"]["search"] = fx("wb_search_SBGE.json")
@@ -209,6 +206,131 @@ class TestReferencePhoto:
             f"/api/v1/watches/{test_watch.id}/fetch-images", headers=auth_headers
         )
         assert r.status_code in (404, 405)
+
+
+OG = "https://cdn.watchbase.com/watch/rolex/submariner/126610ln-0001-78.jpg"
+PAGE = "https://watchbase.com/rolex/submariner/126610ln-0001"
+
+
+@pytest.fixture
+def site(monkeypatch, tmp_path, mock_upload_dir):
+    """No key: WatchBase's public search and watch page from saved copies."""
+    state = {"search": fx("site_search_126610LN.json"), "page_status": 200, "calls": []}
+    images = {OG: ("image/jpeg", (FIX / "wb_photo_126610ln.png").read_bytes())}
+    fetched = []
+
+    def site_answer(request):
+        state["calls"].append(request)
+        assert request.url.host == "watchbase.com"
+        assert request.headers["User-Agent"].startswith("WatchCollectionTracker/")
+        if request.url.path == "/filter/results":
+            return httpx.Response(200, text=state["search"])
+        if state["page_status"] != 200:
+            return httpx.Response(state["page_status"])
+        return httpx.Response(200, text=fx("site_page_126610ln.html"))
+
+    def fetch_bytes(url, headers=None, **kw):
+        fetched.append(url)
+        if url not in images:
+            raise ValueError("HTTP 404")
+        return images[url]
+
+    monkeypatch.setattr(http, "TRANSPORT", httpx.MockTransport(site_answer))
+    monkeypatch.setattr(safe_fetch, "fetch_bytes", fetch_bytes)
+    monkeypatch.setattr(photos, "throttle", http.Throttle(0))
+    monkeypatch.setattr(settings, "DATA_DIR", str(tmp_path))
+    monkeypatch.setattr(settings, "WATCHBASE_API_KEY", "")
+    return {"state": state, "images": images, "fetched": fetched}
+
+
+class TestReferencePhotoWithoutKey:
+    def test_saved_from_the_public_page(
+        self, client, auth_headers, test_watch, test_db, site
+    ):
+        test_watch.reference_number = "126610LN"
+        test_db.commit()
+        r = post(client, auth_headers, test_watch)
+        assert r.status_code == 201, r.text
+        img = r.json()["image"]
+        assert img["source"] == "reference_photo"
+        assert img["source_url"] == PAGE
+        assert site["fetched"] == [OG]  # the page's og:image
+        paths = [c.url.path for c in site["state"]["calls"]]
+        assert paths == ["/filter/results", "/rolex/submariner/126610ln-0001"]
+        assert site["state"]["calls"][0].url.params["q"] == "126610LN"
+
+    def test_search_is_cached(self, client, auth_headers, test_watch, test_db, site):
+        test_watch.reference_number = "126610LN"
+        test_db.commit()
+        post(client, auth_headers, test_watch)
+        test_db.query(WatchImage).delete()
+        test_db.commit()
+        site["state"]["calls"].clear()
+        assert post(client, auth_headers, test_watch).status_code == 201
+        assert [c.url.path for c in site["state"]["calls"]] == [
+            "/rolex/submariner/126610ln-0001"
+        ]
+
+    def test_falls_back_to_search_thumbnail(
+        self, client, auth_headers, test_watch, test_db, site
+    ):
+        test_watch.reference_number = "126610LN"
+        test_db.commit()
+        site["images"].clear()
+        thumb = "https://cdn.watchbase.com/watch/md/rolex/submariner/126610ln-0001-78.jpg"
+        site["images"][thumb] = ("image/jpeg", (FIX / "wb_photo_126610ln.png").read_bytes())
+        r = post(client, auth_headers, test_watch)
+        assert r.status_code == 201
+        assert site["fetched"] == [OG, thumb.replace("/md/", "/lg/"), thumb]
+
+    @pytest.mark.parametrize(
+        "reference, setup, status",
+        [
+            ("5711/1A", None, "choices"),
+            ("ZZQ99999X", "none", "none"),
+            ("126610LN", "page_down", "unavailable"),
+            ("126610LN", "bad_answer", "unavailable"),
+            (None, None, "no_reference"),
+        ],
+    )
+    def test_plain_message(
+        self, client, auth_headers, test_watch, test_db, site, reference, setup, status
+    ):
+        test_watch.reference_number = reference
+        test_db.commit()
+        if reference == "5711/1A":
+            site["state"]["search"] = fx("site_search_5711-1A.json")
+        if setup == "none":
+            site["state"]["search"] = fx("site_search_none.json")
+        elif setup == "page_down":
+            site["state"]["page_status"] = 503
+        elif setup == "bad_answer":
+            site["state"]["search"] = "<html>not json</html>"
+        r = post(client, auth_headers, test_watch)
+        assert r.status_code == 200, r.text
+        assert r.json()["status"] == status
+        assert r.json()["message"]
+        assert refs(test_db, test_watch) == []
+
+    def test_exact_reference_picks_one_of_several(self):
+        found = public.parse_search(fx("site_search_5711-1A.json"))
+        assert len(found) == 5
+        assert public.pick(found, "5711/1A") is None
+        chosen = public.pick(found, "5711/1A-014")
+        assert chosen["url"] == "https://watchbase.com/patek-philippe/nautilus/5711-1a-014"
+
+    def test_only_watchbase_pages_and_image_server(self):
+        bad = (
+            '{"numWatches":2,"watchesHtml":"'
+            '<a href=\\"https://evil.example/x\\" class=\\"item-block watch-block\\">'
+            "</a>"
+            '<a href=\\"http://watchbase.com/x\\" class=\\"item-block watch-block\\">'
+            '</a>"}'
+        )
+        assert public.parse_search(bad) == []
+        page = '<meta property="og:image" content="https://evil.example/a.jpg" />'
+        assert public.og_image(page) is None
+        assert public.og_image(fx("site_page_126610ln.html")) == OG
 
 
 def test_pdf_leaves_out_reference_photos(monkeypatch, tmp_path):
