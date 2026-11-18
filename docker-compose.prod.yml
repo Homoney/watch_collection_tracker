@@ -66,6 +66,8 @@ services:
       UPLOAD_DIR: /app/storage/uploads
       BACKUP_DIR: /app/storage/backups
       MAX_UPLOAD_SIZE: ${MAX_UPLOAD_SIZE}
+      ALLOW_REGISTRATION: ${ALLOW_REGISTRATION:-false}
+      INITIAL_ADMIN_EMAIL: ${INITIAL_ADMIN_EMAIL:-}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
       - ./storage/uploads:/app/storage/uploads

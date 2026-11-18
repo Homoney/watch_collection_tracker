@@ -1,12 +1,16 @@
+import asyncio
 import re
 import uuid
 from io import BytesIO
 from pathlib import Path
 from typing import List, Optional
+from urllib.parse import quote_plus
 
 import httpx
 from bs4 import BeautifulSoup
 from PIL import Image
+
+from app.utils.safe_fetch import fetch_bytes
 
 
 def fetch_watch_images(
@@ -103,7 +107,7 @@ def _scrape_google_images(query: str, limit: int) -> List[str]:
         List of image URLs
     """
     # URL encode the query
-    search_url = f"https://www.google.com/search?q={query.replace(' ', '+')}&tbm=isch"
+    search_url = f"https://www.google.com/search?q={quote_plus(query)}&tbm=isch"
 
     # Headers to mimic a browser
     headers = {
@@ -190,59 +194,56 @@ def _download_and_process_image(
         Image metadata dict or None if failed
     """
     try:
-        # Download image with timeout
-        with httpx.Client(timeout=30.0, follow_redirects=True) as client:
-            response = client.get(url)
-            response.raise_for_status()
+        # Download image: public hosts only, size-capped (see safe_fetch)
+        content_type, body = fetch_bytes(url)
 
-            # Check content type
-            content_type = response.headers.get("content-type", "")
-            if "image" not in content_type:
-                print(f"URL does not point to an image: {content_type}")
+        # Check content type
+        if "image" not in content_type:
+            print(f"URL does not point to an image: {content_type}")
+            return None
+
+        # Load image
+        img_data = BytesIO(body)
+
+        with Image.open(img_data) as img:
+            # Skip very small images (likely icons or logos)
+            if img.width < 200 or img.height < 200:
+                print(f"Image too small: {img.width}x{img.height}")
                 return None
 
-            # Load image
-            img_data = BytesIO(response.content)
+            # Generate unique filename
+            file_name = f"google_{idx + 1}_{uuid.uuid4().hex[:8]}.jpg"
+            dest_path = upload_dir / file_name
 
-            with Image.open(img_data) as img:
-                # Skip very small images (likely icons or logos)
-                if img.width < 200 or img.height < 200:
-                    print(f"Image too small: {img.width}x{img.height}")
-                    return None
+            # Convert RGBA to RGB if necessary
+            if img.mode in ("RGBA", "LA", "P"):
+                background = Image.new("RGB", img.size, (255, 255, 255))
+                if img.mode == "P":
+                    img = img.convert("RGBA")
+                background.paste(
+                    img, mask=img.split()[-1] if img.mode == "RGBA" else None
+                )
+                img = background
 
-                # Generate unique filename
-                file_name = f"google_{idx + 1}_{uuid.uuid4().hex[:8]}.jpg"
-                dest_path = upload_dir / file_name
+            # Save to final location
+            img.save(dest_path, "JPEG", quality=85, optimize=True)
 
-                # Convert RGBA to RGB if necessary
-                if img.mode in ("RGBA", "LA", "P"):
-                    background = Image.new("RGB", img.size, (255, 255, 255))
-                    if img.mode == "P":
-                        img = img.convert("RGBA")
-                    background.paste(
-                        img, mask=img.split()[-1] if img.mode == "RGBA" else None
-                    )
-                    img = background
+            # Get image dimensions and file size
+            width, height = img.size
+            file_size = dest_path.stat().st_size
 
-                # Save to final location
-                img.save(dest_path, "JPEG", quality=85, optimize=True)
-
-                # Get image dimensions and file size
-                width, height = img.size
-                file_size = dest_path.stat().st_size
-
-            # Create metadata
-            return {
-                "file_path": f"{watch_id}/{file_name}",
-                "file_name": file_name,
-                "file_size": file_size,
-                "mime_type": "image/jpeg",
-                "width": width,
-                "height": height,
-                "source": "google_images",
-                "is_primary": idx == 0,  # First image is primary
-                "sort_order": idx,
-            }
+        # Create metadata
+        return {
+            "file_path": f"{watch_id}/{file_name}",
+            "file_name": file_name,
+            "file_size": file_size,
+            "mime_type": "image/jpeg",
+            "width": width,
+            "height": height,
+            "source": "google_images",
+            "is_primary": idx == 0,  # First image is primary
+            "sort_order": idx,
+        }
 
     except Exception as e:
         print(f"Error downloading image from {url}: {e}")
@@ -268,55 +269,53 @@ async def fetch_watch_images_from_urls(
 
     image_metadata = []
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        for idx, url in enumerate(urls):
-            try:
-                # Download image
-                response = await client.get(url, follow_redirects=True)
-                response.raise_for_status()
+    for idx, url in enumerate(urls):
+        try:
+            # Download image: public hosts only, size-capped (see safe_fetch)
+            _, body = await asyncio.to_thread(fetch_bytes, url)
 
-                # Load image
-                img_data = BytesIO(response.content)
+            # Load image
+            img_data = BytesIO(body)
 
-                with Image.open(img_data) as img:
-                    # Generate filename
-                    file_name = f"url_{idx + 1}_{uuid.uuid4().hex[:8]}.jpg"
-                    dest_path = upload_dir / file_name
+            with Image.open(img_data) as img:
+                # Generate filename
+                file_name = f"url_{idx + 1}_{uuid.uuid4().hex[:8]}.jpg"
+                dest_path = upload_dir / file_name
 
-                    # Convert RGBA to RGB if necessary
-                    if img.mode in ("RGBA", "LA", "P"):
-                        background = Image.new("RGB", img.size, (255, 255, 255))
-                        if img.mode == "P":
-                            img = img.convert("RGBA")
-                        background.paste(
-                            img, mask=img.split()[-1] if img.mode == "RGBA" else None
-                        )
-                        img = background
+                # Convert RGBA to RGB if necessary
+                if img.mode in ("RGBA", "LA", "P"):
+                    background = Image.new("RGB", img.size, (255, 255, 255))
+                    if img.mode == "P":
+                        img = img.convert("RGBA")
+                    background.paste(
+                        img, mask=img.split()[-1] if img.mode == "RGBA" else None
+                    )
+                    img = background
 
-                    # Save image
-                    img.save(dest_path, "JPEG", quality=85)
+                # Save image
+                img.save(dest_path, "JPEG", quality=85)
 
-                    # Get metadata
-                    width, height = img.size
-                    file_size = dest_path.stat().st_size
+                # Get metadata
+                width, height = img.size
+                file_size = dest_path.stat().st_size
 
-                # Create metadata
-                image_metadata.append(
-                    {
-                        "file_path": f"{watch_id}/{file_name}",
-                        "file_name": file_name,
-                        "file_size": file_size,
-                        "mime_type": "image/jpeg",
-                        "width": width,
-                        "height": height,
-                        "source": "url_import",
-                        "is_primary": idx == 0,
-                        "sort_order": idx,
-                    }
-                )
+            # Create metadata
+            image_metadata.append(
+                {
+                    "file_path": f"{watch_id}/{file_name}",
+                    "file_name": file_name,
+                    "file_size": file_size,
+                    "mime_type": "image/jpeg",
+                    "width": width,
+                    "height": height,
+                    "source": "url_import",
+                    "is_primary": idx == 0,
+                    "sort_order": idx,
+                }
+            )
 
-            except Exception as e:
-                print(f"Failed to download image from {url}: {e}")
-                continue
+        except Exception as e:
+            print(f"Failed to download image from {url}: {e}")
+            continue
 
     return image_metadata

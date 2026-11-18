@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.core.deps import get_current_user
 from app.core.security import (
     create_access_token,
@@ -24,12 +26,42 @@ from app.utils.logging import log_security_event
 
 router = APIRouter()
 
+# Arbitrary constant identifying the registration advisory lock
+REGISTER_LOCK_KEY = 7_141_901
+
 
 @router.post(
     "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
 )
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
-    """Register a new user"""
+    """Register a new user.
+
+    Registration is closed unless ALLOW_REGISTRATION is on. On an empty
+    database, the account whose email equals INITIAL_ADMIN_EMAIL may always
+    register and becomes the admin. Nobody else is ever made admin here.
+    """
+    # Serialise registrations so the "empty database" check and the insert
+    # cannot race (two simultaneous first sign-ups).
+    if db.get_bind().dialect.name == "postgresql":
+        db.execute(text("SELECT pg_advisory_xact_lock(:k)"), {"k": REGISTER_LOCK_KEY})
+
+    is_bootstrap_admin = (
+        bool(settings.INITIAL_ADMIN_EMAIL)
+        and user_data.email.lower() == settings.INITIAL_ADMIN_EMAIL.strip().lower()
+        and db.query(User).count() == 0
+    )
+
+    if not is_bootstrap_admin and not settings.ALLOW_REGISTRATION:
+        log_security_event(
+            "registration_refused",
+            email=user_data.email,
+            details={"reason": "registration_closed"},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Registration is closed. Ask the administrator for an account.",
+        )
+
     # Check if user already exists
     existing_user = db.query(User).filter(User.email == user_data.email).first()
     if existing_user:
@@ -37,17 +69,13 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
         )
 
-    # Check if this is the first user (should be admin)
-    user_count = db.query(User).count()
-    is_first_user = user_count == 0
-
     # Create new user
     hashed_password = get_password_hash(user_data.password)
     new_user = User(
         email=user_data.email,
         full_name=user_data.full_name,
         hashed_password=hashed_password,
-        role=UserRole.admin if is_first_user else UserRole.user,
+        role=UserRole.admin if is_bootstrap_admin else UserRole.user,
     )
 
     db.add(new_user)

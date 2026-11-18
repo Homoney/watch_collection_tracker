@@ -26,11 +26,9 @@ class CacheMiddleware(BaseHTTPMiddleware):
             # Cache reference data for 1 hour
             if "/reference/" in str(request.url.path):
                 response.headers["Cache-Control"] = "public, max-age=3600"
-            # Cache static uploads forever (immutable)
+            # Uploads are private, signed URLs
             elif "/uploads/" in str(request.url.path):
-                response.headers["Cache-Control"] = (
-                    "public, max-age=31536000, immutable"
-                )
+                response.headers["Cache-Control"] = "private, max-age=3600"
             # No cache for other API endpoints (default)
             elif "/api/" in str(request.url.path):
                 response.headers["Cache-Control"] = (

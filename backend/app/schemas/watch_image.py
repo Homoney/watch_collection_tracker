@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
+from app.core.file_urls import sign_upload_url
+
 
 class WatchImageResponse(BaseModel):
     """Response schema for watch images"""
@@ -25,7 +27,7 @@ class WatchImageResponse(BaseModel):
     @property
     def url(self) -> str:
         """Generate the public URL for the image"""
-        return f"/uploads/{self.file_path}"
+        return sign_upload_url(self.file_path)
 
     model_config = ConfigDict(from_attributes=True)
 

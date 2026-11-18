@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import (
     auth,
     collections,
+    files,
     images,
     market_values,
     movement_accuracy,
@@ -51,7 +52,7 @@ Authorization: Bearer <your_access_token>
 ## Caching
 
 * Reference data endpoints: Cached for 1 hour
-* Static uploads: Cached with immutable headers
+* Uploads: served by nginx only with a signed, expiring URL
 * API responses: No-cache by default
     """,
     version="1.0.0",
@@ -122,6 +123,7 @@ app.include_router(
     saved_searches.router, prefix="/api/v1/saved-searches", tags=["Saved Searches"]
 )
 app.include_router(users.router, prefix="/api/v1/users", tags=["User Management"])
+app.include_router(files.router, prefix="/api/v1/files", tags=["Files"])
 # Movement accuracy - atomic-time is public (no auth), watch-specific routes require auth
 app.include_router(
     movement_accuracy.atomic_time_router, prefix="/api/v1", tags=["Movement Accuracy"]

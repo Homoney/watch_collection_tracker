@@ -69,8 +69,9 @@ This guide explains how to deploy the Watch Collection Tracker using pre-built i
 ### First Time Setup
 
 1. Open http://localhost:8080
-2. Click "Register" to create your account
-3. The first user to register automatically becomes an admin
+2. Set `INITIAL_ADMIN_EMAIL` in `.env`, then click "Register" and sign up with that email; it becomes the admin account
+   (or run `docker compose exec backend python -m app.cli create-user you@example.com --admin`)
+3. Registration is closed for everyone else unless you set `ALLOW_REGISTRATION=true`
 
 ## Available Images
 
