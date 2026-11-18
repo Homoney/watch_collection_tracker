@@ -30,6 +30,8 @@ A modern web application for watch collectors to track their collections with mu
 
 ## Install
 
+The [deployment guide](docs/DEPLOYMENT.md) covers HTTPS, backups, upgrades and moving from 1.x in more detail.
+
 You need Docker. Run:
 
 ```sh
@@ -109,6 +111,8 @@ docker rm -f watch-tracker
 
 With Compose, run `docker compose pull && docker compose up -d`. Migrations run on start, after an automatic backup.
 
+**Coming from 1.x (PostgreSQL)?** 2.x is a new install and does not migrate 1.x data. Read [Upgrading from 1.x](docs/DEPLOYMENT.md#9-upgrading-from-1x-postgresql) before you switch.
+
 ### HTTPS and reverse proxies
 
 The container speaks plain HTTP on port 8000. For HTTPS, put a reverse proxy in front of it, for example Caddy, Traefik or nginx. Set `TRUSTED_PROXIES` to the proxy's address so that rate limits and the secure login cookie work correctly.
@@ -142,7 +146,7 @@ New migration: `cd backend && alembic revision --autogenerate -m "describe chang
 
 ## API Documentation
 
-Once the application is running, visit http://localhost:8080/api/docs for interactive API documentation powered by Swagger UI.
+Once the application is running, visit http://localhost:8080/docs for interactive API documentation powered by Swagger UI (ReDoc at `/redoc`).
 
 ### Key Endpoints
 

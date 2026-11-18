@@ -1,7 +1,7 @@
 """Time-limited signed URLs for files under /uploads/.
 
-nginx serves the files, but only after asking the backend (auth_request) to
-check the signature. Browsers load images with plain <img> tags that cannot
+The app serves the files itself (api/v1/uploads.py) after checking the
+signature. Browsers load images with plain <img> tags that cannot
 send a Bearer token, so the API hands out URLs that carry their own proof.
 
 Expiry is rounded up to a window boundary so a URL stays identical for a

@@ -2,7 +2,7 @@
 
 **Version**: 1.0.0
 **Base URL**: `http://localhost:8080/api/v1`
-**Interactive Docs**: `http://localhost:8080/api/docs`
+**Interactive Docs**: `http://localhost:8080/docs`
 
 ---
 
@@ -639,19 +639,20 @@ All errors follow a consistent format:
 
 ## Rate Limiting
 
-Rate limits are enforced by Nginx:
+The app enforces rate limits per client address (`backend/app/middleware/rate_limit.py`). The first matching rule applies:
 
 | Endpoint Pattern | Limit | Burst |
 |-----------------|-------|-------|
-| `/api/v1/auth/login` | 5 req/min | 3 |
-| `/api/v1/auth/register` | 5 req/min | 3 |
+| `/api/v1/auth/login`, `/api/v1/auth/register` | 5 req/min | 3 |
+| `/api/v1/auth/change-password`, `/api/v1/auth/refresh` | 10 req/min | 5 |
+| `POST` uploads (`/images`, `/fetch-images`, service documents) | 10 req/min | 10 |
 | `/api/*` (general) | 10 req/sec | 20 |
 
-When rate limit is exceeded, you'll receive:
+When a limit is exceeded, you'll receive `429 Too Many Requests` with a `Retry-After` header.
 
-```http
-HTTP/1.1 429 Too Many Requests
-```
+Behind a reverse proxy, set `TRUSTED_PROXIES` to the proxy's address so limits apply to each client and not to the proxy (see [DEPLOYMENT.md](DEPLOYMENT.md#6-https-with-a-reverse-proxy)).
+
+Separately, an account is locked for 15 minutes after 5 wrong passwords.
 
 ---
 
@@ -659,8 +660,8 @@ HTTP/1.1 429 Too Many Requests
 
 For interactive API exploration, visit:
 
-- **Swagger UI**: http://localhost:8080/api/docs
-- **ReDoc**: http://localhost:8080/api/redoc
+- **Swagger UI**: http://localhost:8080/docs
+- **ReDoc**: http://localhost:8080/redoc
 
 These provide:
 - Complete endpoint documentation
