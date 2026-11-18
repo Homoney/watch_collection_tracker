@@ -24,6 +24,7 @@ services:
       # TRUSTED_PROXIES: 172.16.0.0/12     # your reverse proxy's address
       # BACKUP_KEEP_DAYS: 30
       # UPLOAD_URL_TTL_SECONDS: 3600
+      # WATCHBASE_API_KEY: ${WATCHBASE_API_KEY}  # or set it on the Admin page
 
 volumes:
   watch-data:

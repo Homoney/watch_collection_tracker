@@ -108,6 +108,8 @@ All settings are optional environment variables.
 | `RATE_LIMIT_ENABLED` | `true` | Per-address request limits (keep on unless your proxy does this) |
 | `DATA_DIR` | `/data` | Folder for the database, uploads, backups and the generated key |
 | `TZ` | `UTC` | Time zone for log times |
+| `WATCHBASE_API_KEY` | (none) | Key for automatic reference look-up; an admin can also set it on the Admin page (see the [user guide](docs/USER_GUIDE.md#reference-look-up-key-watchbase)) |
+| `SPEC_LOOKUP_CACHE_DAYS` | `90` | Days a reference look-up answer is reused |
 
 With Compose, `.env` also sets `HTTP_PORT` (host port, default `8080`) and `VERSION` (image tag, default `latest`).
 
@@ -178,6 +180,7 @@ Once the application is running, visit http://localhost:8080/docs for interactiv
 - `POST /api/v1/auth/refresh` - Refresh access token
 - `GET /api/v1/auth/me` - Get current user
 - `GET /api/v1/auth/setup-status` - `setup_required` is true until the first account exists
+- `GET /api/v1/spec-lookup?reference=...` - Specs for a reference number (see API.md)
 - `PUT /api/v1/auth/me` - Update user profile
 - `POST /api/v1/auth/change-password` - Change password
 - `POST /api/v1/auth/logout` - Logout

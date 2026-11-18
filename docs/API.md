@@ -19,6 +19,7 @@
 9. [Error Handling](#error-handling)
 10. [Rate Limiting](#rate-limiting)
 11. [Other Endpoints](#other-endpoints)
+12. [Reference Look-up](#reference-look-up)
 
 ---
 
@@ -264,6 +265,10 @@ Content-Type: application/json
   "retailer": "Authorized dealer",
   "case_diameter": 40.0,
   "water_resistance": 300,
+  "caliber": "3135",
+  "crystal": "Sapphire",
+  "case_material": "Stainless steel",
+  "complications": ["Date", "Dive Bezel"],
   "purchase_date": "2020-01-15T00:00:00",
   "purchase_price": 9000.00,
   "purchase_currency": "USD",
@@ -678,6 +683,7 @@ The app enforces rate limits per client address (`backend/app/middleware/rate_li
 | `/api/v1/auth/login`, `/api/v1/auth/register` | 5 req/min | 3 |
 | `/api/v1/auth/change-password`, `/api/v1/auth/refresh` | 10 req/min | 5 |
 | `POST` uploads (`/images`, `/fetch-images`, service documents) | 10 req/min | 10 |
+| `/api/v1/spec-lookup` | 20 req/min | 10 |
 | `/api/*` (general) | 10 req/sec | 20 |
 
 When a limit is exceeded, you'll receive `429 Too Many Requests` with a `Retry-After` header.
@@ -735,6 +741,74 @@ These provide:
 - Request/response schemas
 - Try-it-out functionality
 - Authentication support
+
+---
+
+## Reference Look-up
+
+### Look up a reference number
+
+```http
+GET /api/v1/spec-lookup?reference=126610LN&brand_id=<uuid>&caliber=3235
+Authorization: Bearer <access_token>
+```
+
+`reference` is required (2-100 characters). `brand_id` and `caliber` are optional hints. After the user picks from `choices`, call again with `watchbase_id=<id>`.
+
+Always answers **200**; `status` says what happened:
+
+| `status` | Meaning |
+|---|---|
+| `ok` | `fields` holds values to fill, `sources` says where each came from |
+| `choices` | Several watches match; `choices` lists them (no paid call made yet) |
+| `not_found` | WatchBase has no watch for this reference |
+| `links_only` | No WatchBase key is set; only `links` (and Caliber Corner facts when `caliber` and the brand are given) |
+| `bad_key` | WatchBase refused the key (wrong key or no credits) |
+| `unavailable` | A source is down or answered something unexpected |
+
+```json
+{
+  "status": "ok",
+  "message": "Filled the empty fields we found. Check them before saving.",
+  "reference": "126610LN",
+  "fields": {
+    "brand_name": "Rolex",
+    "model": "Submariner Date 41 Steel / Black / Black",
+    "movement_type_name": "Automatic",
+    "case_diameter": 41.0,
+    "lug_width": 21.0,
+    "water_resistance": 300,
+    "power_reserve": 70,
+    "caliber": "3235",
+    "crystal": "Sapphire",
+    "case_material": "Stainless Steel",
+    "complications": ["Dive Bezel", "Date"]
+  },
+  "sources": {
+    "caliber": {"name": "WatchBase", "url": "https://watchbase.com/rolex/submariner/126610ln-0001"}
+  },
+  "choices": [],
+  "movement": {
+    "caliber": "3235", "jewels": 31, "frequency": "28,800 bph (4Hz)", "power_reserve": 70,
+    "source": {"name": "Caliber Corner", "url": "https://calibercorner.com/rolex-caliber-3235/"}
+  },
+  "links": [
+    {"label": "WatchBase", "url": "https://duckduckgo.com/?q=site%3Awatchbase.com+Rolex+126610LN"},
+    {"label": "Caliber Corner", "url": "https://calibercorner.com/rolex-caliber-3235/"},
+    {"label": "Rolex website", "url": "https://duckduckgo.com/?q=site%3Arolex.com+126610LN"}
+  ]
+}
+```
+
+`fields` uses names (`brand_name`, `movement_type_name`, complication names) rather than IDs; the web app matches them to the reference data. Answers are cached on the server for `SPEC_LOOKUP_CACHE_DAYS` (default 90).
+
+### WatchBase key (admin only)
+
+| Method and path | What it does |
+|---|---|
+| `GET /api/v1/settings/watchbase-key` | `{"configured": bool, "from_environment": bool}`; never the key |
+| `PUT /api/v1/settings/watchbase-key` | Body `{"api_key": "..."}` (8-200 characters, no spaces); saves it |
+| `DELETE /api/v1/settings/watchbase-key` | Removes the saved key |
 
 ---
 
