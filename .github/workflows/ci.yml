@@ -318,6 +318,48 @@ jobs:
         if: always()
         run: docker compose down -v
 
+  single-image:
+    name: Single Image Smoke Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build the image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: watch-tracker:test
+          cache-from: type=gha,scope=single-image
+          cache-to: type=gha,mode=max,scope=single-image
+
+      - name: Start the container
+        run: |
+          docker run -d --name wt -p 8080:8000 \
+            -e SECRET_KEY=test-secret-key-for-smoke-0123456789abcdef \
+            watch-tracker:test
+          curl --retry 30 --retry-delay 2 --retry-connrefused -fsS http://localhost:8080/health
+
+      - name: Check the web app, API and headers
+        run: |
+          set -e
+          curl -fsS http://localhost:8080/ | grep -q '<div id="root">'
+          curl -fsS http://localhost:8080/watches/any-page | grep -q '<div id="root">'
+          curl -fsS http://localhost:8080/api/v1/reference/brands | grep -q 'Rolex'
+          curl -fsSI http://localhost:8080/ | grep -qi '^content-security-policy:'
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8080/api/v1/nope)
+          test "$code" = "404"
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker logs wt
+
   lint-and-format:
     name: Lint and Format Check
     runs-on: ubuntu-latest
