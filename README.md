@@ -257,7 +257,7 @@ Every merge to `main` publishes `dhomoney/watch-tracker:latest` (and `:main`); a
 
 ## Security scanning
 
-Every pull request and push to `main`, and a weekly scheduled run, scan the code, dependencies and the built image (Trivy, Gitleaks, plus CodeQL and Dependabot alerts). Results go to the repository's Security tab and are triaged weekly. Found a security problem? Please do not post the details in a public issue; open an issue asking for a private contact instead.
+Every pull request and push to `main`, and a weekly scheduled run, scan the code, dependencies and the built image (Trivy, Gitleaks, plus CodeQL and Dependabot alerts). Results go to the repository's Security tab and are triaged weekly. Found a security problem? Please report it privately through the repository's Security tab (**Report a vulnerability**), not in a public issue. See [SECURITY.md](SECURITY.md) for supported versions and what to expect.
 
 ## Development History
 
@@ -440,7 +440,7 @@ This is a personal project, but suggestions and feedback are welcome!
 
 ## License
 
-MIT License - feel free to use this for your own watch collection tracking needs.
+MIT License, see [LICENSE](LICENSE). Feel free to use this for your own watch collection tracking needs.
 
 ## Support
 
