@@ -542,7 +542,7 @@ The application is responsive and works on mobile devices:
 **Support Options**:
 - GitHub Issues: https://github.com/Homoney/watch_collection_tracker/issues
 - Email: support@example.com (if configured)
-- Check API documentation: http://localhost:8080/api/docs
+- Check API documentation: http://localhost:8080/docs
 
 **Reporting Bugs**:
 - Include browser and version

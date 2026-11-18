@@ -1,6 +1,7 @@
-# Watch Collection Tracker - Architecture Documentation
+# Watch Collection Tracker - Architecture
 
-This document describes the system architecture, design decisions, and technical implementation of the Watch Collection Tracker.
+How the application is built and how the parts fit together. For installing
+and running it, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ---
 
@@ -8,179 +9,162 @@ This document describes the system architecture, design decisions, and technical
 
 1. [System Overview](#system-overview)
 2. [Technology Stack](#technology-stack)
-3. [Architecture Layers](#architecture-layers)
+3. [Backend Layout](#backend-layout)
 4. [Database Design](#database-design)
 5. [API Architecture](#api-architecture)
 6. [Frontend Architecture](#frontend-architecture)
 7. [File Storage](#file-storage)
 8. [Security Architecture](#security-architecture)
-9. [Performance Optimizations](#performance-optimizations)
-10. [Scalability Considerations](#scalability-considerations)
+9. [Performance](#performance)
+10. [Scaling Limits](#scaling-limits)
+11. [Monitoring](#monitoring)
+12. [Build and Deployment](#build-and-deployment)
 
 ---
 
 ## System Overview
 
-The Watch Collection Tracker is a full-stack web application built with modern technologies, following a client-server architecture with clear separation of concerns.
-
-### High-Level Architecture
+Since 2.0 the whole application is **one Docker image** running **one
+process**: FastAPI under Uvicorn. That process serves the REST API, the built
+React web app and the uploaded files. All state lives in **one volume,
+`/data`**: a SQLite database, the uploads, the backups and the signing key.
 
 ```
 ┌─────────────┐
-│   Browser   │
-│  (React)    │
+│   Browser   │  React single-page app
 └──────┬──────┘
-       │ HTTP/HTTPS
-       ↓
-┌─────────────┐
-│    Nginx    │ ← Reverse Proxy + Static Files
-└──────┬──────┘
-       │
-    ┌──┴───┬────────────┐
-    ↓      ↓            ↓
-┌────────┐ ┌──────────┐ ┌──────────┐
-│Frontend│ │ Backend  │ │  Uploads │
-│ (SPA)  │ │  (API)   │ │ (Static) │
-└────────┘ └────┬─────┘ └──────────┘
-                │
-          ┌─────┴──────┬────────┐
-          ↓            ↓        ↓
-     ┌──────────┐ ┌──────┐ ┌──────┐
-     │PostgreSQL│ │Redis │ │ File │
-     │          │ │Cache │ │System│
-     └──────────┘ └──────┘ └──────┘
+       │ HTTP (HTTPS via your own reverse proxy)
+       ↓ host port 8080 → container port 8000
+┌──────────────────────────────────────────────┐
+│  watch-tracker container (user 1000)         │
+│                                              │
+│  Uvicorn → FastAPI                           │
+│   ├─ middleware: gzip, security headers,     │
+│   │   rate limits, cache headers             │
+│   ├─ /api/v1/...   REST API                  │
+│   ├─ /uploads/...  files, signed links only  │
+│   ├─ /docs /redoc  API documentation         │
+│   ├─ /health       health check              │
+│   └─ everything else → web app (dist/)       │
+│                                              │
+│  /data (volume)                              │
+│   ├─ watch.db     SQLite database            │
+│   ├─ uploads/     images, service documents  │
+│   ├─ backups/     database copies            │
+│   └─ secret_key   generated signing key      │
+└──────────────────────────────────────────────┘
 ```
+
+There is no separate database server, cache or web server. Versions 1.x used
+PostgreSQL, Redis and nginx; 2.0 removed them (see
+[DEPLOYMENT.md](DEPLOYMENT.md#9-upgrading-from-1x-postgresql)).
 
 ### Request Flow
 
-1. **User Request** → Browser sends HTTP request
-2. **Nginx** → Routes request to appropriate service
-3. **API Processing**:
-   - Backend validates authentication (JWT)
-   - Checks cache (Redis) if applicable
-   - Queries database (PostgreSQL)
-   - Processes business logic
-   - Returns JSON response
-4. **Response** → Nginx adds cache headers and returns to browser
-5. **Frontend** → React renders UI with data
+1. The browser sends a request to the container.
+2. Middleware runs in this order: gzip, security headers, rate limits, cache headers.
+3. FastAPI routes the request:
+   - `/api/v1/...`: checks the JWT access token, validates input with
+     Pydantic, reads and writes SQLite through SQLAlchemy, returns JSON.
+   - `/uploads/...`: checks the link's signature and expiry, then sends the file.
+   - `/assets/...`: content-hashed web app files, cached for a year.
+   - any other path: a file from the web app build, or `index.html` so the
+     React router can handle the address.
+4. React renders the page with the data.
+
+### Start-up
+
+`python -m app.entrypoint` is the container's command. It:
+
+1. checks that `/data` is writable and creates its folders,
+2. reads `SECRET_KEY`, or generates `/data/secret_key` on first start,
+3. backs up the database, then runs Alembic migrations,
+4. replaces itself with Uvicorn (one process; proxy headers trusted only from
+   `TRUSTED_PROXIES`).
+
+A background task in the app takes the daily backup.
 
 ---
 
 ## Technology Stack
 
+Exact versions are pinned in `backend/requirements.txt` and
+`frontend/package-lock.json`.
+
 ### Backend
 
-| Component | Technology | Version | Purpose |
-|-----------|-----------|---------|---------|
-| Framework | FastAPI | 0.109.0 | Web framework |
-| Language | Python | 3.11 | Programming language |
-| ASGI Server | Uvicorn | 0.27.0 | Production server |
-| ORM | SQLAlchemy | 2.0.25 | Database abstraction |
-| Migrations | Alembic | 1.13.1 | Database migrations |
-| Validation | Pydantic | 2.5.3 | Data validation |
-| Authentication | python-jose | 3.3.0 | JWT tokens |
-| Password Hashing | bcrypt | 4.1.2 | Secure hashing |
-| Image Processing | Pillow | 10.2.0 | Image manipulation |
-| Web Scraping | BeautifulSoup4 | 4.12.3 | HTML parsing |
-| HTTP Client | httpx | 0.26.0 | Async HTTP |
-| Caching | redis | 5.0.1 | Cache layer |
+| Component | Technology |
+|-----------|-----------|
+| Framework | FastAPI (Starlette) |
+| Language | Python 3.11 |
+| ASGI server | Uvicorn |
+| ORM | SQLAlchemy 2 |
+| Database | SQLite (file in `/data`) |
+| Migrations | Alembic (batch mode, so `ALTER TABLE` works on SQLite) |
+| Validation | Pydantic 2 |
+| Authentication | PyJWT (HS256), bcrypt |
+| Images | Pillow |
+| HTML parsing | BeautifulSoup4 (image search) |
+| HTTP client | httpx |
 
 ### Frontend
 
-| Component | Technology | Version | Purpose |
-|-----------|-----------|---------|---------|
-| Framework | React | 18.2.0 | UI library |
-| Language | TypeScript | 5.3.3 | Type-safe JavaScript |
-| Build Tool | Vite | 5.0.11 | Fast build system |
-| Routing | React Router | 6.21.1 | Client-side routing |
-| State Management | TanStack Query | 5.17.9 | Server state |
-| State Management | Zustand | 4.4.7 | Client state |
-| Forms | React Hook Form | 7.49.3 | Form handling |
-| HTTP Client | Axios | 1.7.7 | API requests |
-| Styling | Tailwind CSS | 3.4.1 | Utility-first CSS |
-| Icons | Lucide React | 0.309.0 | Icon library |
-| Charts | Recharts | 2.10.3 | Data visualization |
-| Date Handling | date-fns | 2.30.0 | Date utilities |
+| Component | Technology |
+|-----------|-----------|
+| Framework | React 18, TypeScript |
+| Build tool | Vite |
+| Routing | React Router 6 |
+| Server state | TanStack Query |
+| Forms | React Hook Form |
+| HTTP client | Axios |
+| Styling | Tailwind CSS |
+| Icons | Lucide React |
+| Charts | Recharts |
+| Dates | date-fns |
 
-### Infrastructure
+### Packaging
 
-| Component | Technology | Version | Purpose |
-|-----------|-----------|---------|---------|
-| Database | PostgreSQL | 16 | Relational database |
-| Cache | Redis | 7 | In-memory cache |
-| Reverse Proxy | Nginx | Latest | Load balancing |
-| Container Runtime | Docker | Latest | Containerization |
-| Orchestration | Docker Compose | Latest | Multi-container apps |
+| Component | Technology |
+|-----------|-----------|
+| Image | multi-stage `Dockerfile` at the repository root: Node builds the web app, a slim Python image runs it |
+| Platforms | linux/amd64, linux/arm64 |
+| Compose | `docker-compose.yml`: one service, one volume |
+| CI | GitHub Actions (`.github/workflows/ci.yml`), including a smoke test that starts the built image |
 
 ---
 
-## Architecture Layers
+## Backend Layout
 
-### 1. Presentation Layer (Frontend)
-
-**Responsibility**: User interface and user experience
-
-**Components**:
-- **Pages**: Top-level route components (Login, Dashboard, WatchList, etc.)
-- **Components**: Reusable UI components (WatchCard, ImageGallery, etc.)
-- **Hooks**: Custom React hooks (useWatches, useAuth, etc.)
-- **Contexts**: Global state providers (AuthContext, ComparisonContext)
-- **Services**: API client (axios wrapper)
-
-**Key Patterns**:
-- **Component Composition**: Small, reusable components
-- **Custom Hooks**: Encapsulate business logic
-- **React Query**: Server state caching and synchronization
-- **Code Splitting**: Lazy loading for better performance
-
-### 2. API Layer (Backend)
-
-**Responsibility**: Business logic and data access
-
-**Structure**:
 ```
 backend/app/
-├── api/v1/           # API endpoints
-│   ├── auth.py       # Authentication
-│   ├── watches.py    # Watch CRUD
-│   └── ...
-├── core/             # Core functionality
-│   ├── security.py   # JWT, password hashing
-│   └── deps.py       # Dependencies
-├── models/           # SQLAlchemy models
-├── schemas/          # Pydantic schemas
-├── utils/            # Utilities
-│   ├── file_upload.py
-│   ├── cache.py
-│   └── logging.py
-└── middleware/       # Middleware
-    └── cache.py
+├── main.py            # FastAPI app, middleware, routers, health check
+├── entrypoint.py      # container start-up (data dir, secret, migrate, uvicorn)
+├── web.py             # serves the built web app
+├── backup.py          # SQLite backups and retention
+├── cli.py             # create-user, backup
+├── config.py          # settings from environment variables
+├── database.py        # SQLAlchemy engine and sessions (SQLite)
+├── db_types.py        # portable column types (UUID, JSON)
+├── api/v1/            # API routes, plus uploads.py for /uploads/
+├── core/              # security (JWT, bcrypt), deps, passwords, signed file URLs
+├── middleware/        # cache headers, rate limits, security headers
+├── models/            # SQLAlchemy models
+├── schemas/           # Pydantic schemas
+├── services/          # business logic shared by routes
+└── utils/             # file upload, image search, PDF export, QR codes, logging
 ```
 
-**Key Patterns**:
-- **Dependency Injection**: FastAPI's Depends system
-- **Repository Pattern**: Database access through ORM
-- **DTO Pattern**: Pydantic schemas for validation
-- **Middleware**: Cross-cutting concerns (caching, logging)
-
-### 3. Data Layer
-
-**Responsibility**: Data persistence and retrieval
-
-**Components**:
-- **PostgreSQL**: Relational data storage
-- **Redis**: Caching layer
-- **File System**: Static file storage (images, documents)
-
-**Key Patterns**:
-- **ORM**: SQLAlchemy for database abstraction
-- **Migrations**: Alembic for schema versioning
-- **Indexes**: Optimized query performance
-- **Connection Pooling**: Efficient database connections
+**Patterns**: FastAPI dependency injection (`Depends`) for the database
+session and the current user; Pydantic schemas at the API boundary; ownership
+checks on every watch-scoped route.
 
 ---
 
 ## Database Design
+
+SQLite, in `/data/watch.db`. The schema is created by one baseline migration,
+`backend/alembic/versions/0001_baseline.py`; later changes are new Alembic
+revisions. Foreign keys are switched on for every connection.
 
 ### Entity Relationship Diagram
 
@@ -267,31 +251,28 @@ backend/app/
 - Source tracking (manual, Chrono24, API)
 - Used for analytics and ROI calculations
 
-### Indexes for Performance
+### Indexes
+
+The baseline creates indexes on every foreign key and on the common filter
+and sort fields, for example:
 
 ```sql
--- Watch indexes
+CREATE INDEX ix_watches_user_id ON watches(user_id);
 CREATE INDEX ix_watches_brand_id ON watches(brand_id);
 CREATE INDEX ix_watches_collection_id ON watches(collection_id);
-CREATE INDEX ix_watches_condition ON watches(condition);
 CREATE INDEX ix_watches_purchase_date ON watches(purchase_date);
-
--- Full-text search
-CREATE INDEX ix_watches_model_search
-  ON watches USING gin(to_tsvector('english', model));
-
--- Service history indexes
 CREATE INDEX ix_service_history_watch_id ON service_history(watch_id);
-CREATE INDEX ix_service_history_service_date ON service_history(service_date);
-
--- Market value indexes
 CREATE INDEX ix_market_values_watch_id ON market_values(watch_id);
 CREATE INDEX ix_market_values_recorded_at ON market_values(recorded_at);
-
--- Image indexes
 CREATE INDEX ix_watch_images_watch_id ON watch_images(watch_id);
-CREATE INDEX ix_watch_images_is_primary ON watch_images(is_primary);
 ```
+
+### Search
+
+Watch search is a case-insensitive substring match (`LIKE`) on the model
+name, brand name and reference number. 1.x used PostgreSQL full-text search;
+for one person's collection a substring match is fast enough and finds
+partial words.
 
 ---
 
@@ -326,46 +307,34 @@ CREATE INDEX ix_watch_images_is_primary ON watch_images(is_primary);
 ### Authentication Flow
 
 ```
-┌────────┐                  ┌────────┐
-│ Client │                  │  API   │
-└───┬────┘                  └───┬────┘
-    │                           │
-    │  POST /auth/register      │
-    │  (email, password)        │
-    ├──────────────────────────>│
-    │                           │
-    │  201 Created              │
-    │  (access_token,           │
-    │   refresh_token)          │
-    │<──────────────────────────┤
-    │                           │
-    │  GET /watches             │
-    │  (Bearer access_token)    │
-    ├──────────────────────────>│
-    │                           │
-    │  200 OK                   │
-    │  (watches data)           │
-    │<──────────────────────────┤
-    │                           │
-    │  (access_token expires)   │
-    │                           │
-    │  POST /auth/refresh       │
-    │  (refresh_token)          │
-    ├──────────────────────────>│
-    │                           │
-    │  200 OK                   │
-    │  (new access_token)       │
-    │<──────────────────────────┤
+┌────────┐                          ┌────────┐
+│ Client │                          │  API   │
+└───┬────┘                          └───┬────┘
+    │  POST /api/v1/auth/login          │
+    ├──────────────────────────────────>│
+    │  200: access_token (JSON)         │
+    │       refresh token (HttpOnly     │
+    │       cookie)                     │
+    │<──────────────────────────────────┤
+    │                                   │
+    │  GET /api/v1/watches/             │
+    │  Authorization: Bearer <access>   │
+    ├──────────────────────────────────>│
+    │  200 OK                           │
+    │<──────────────────────────────────┤
+    │                                   │
+    │  (access token expires)           │
+    │  POST /api/v1/auth/refresh        │
+    │  (cookie sent by the browser)     │
+    ├──────────────────────────────────>│
+    │  200: new access_token            │
+    │<──────────────────────────────────┤
 ```
 
-**Token Expiry**:
-- Access token: 30 minutes
-- Refresh token: 7 days
-
-**Security**:
-- Passwords hashed with bcrypt (cost factor 12)
-- JWT tokens signed with HS256
-- Secret key from environment variable
+- Access token: 30 minutes, kept only in the web app's memory.
+- Refresh token: 7 days, in an HttpOnly cookie that page scripts cannot read.
+- Every token carries the user's token version. Logging out or changing the
+  password raises it, which ends all of that user's sessions.
 
 ### Data Validation
 
@@ -390,28 +359,21 @@ class WatchCreate(BaseModel):
 
 ### State Management
 
-**Server State** (TanStack Query):
-- API data caching
-- Automatic refetching
-- Optimistic updates
-- Loading/error states
+**Server state** (TanStack Query): API data caching, refetching, optimistic
+updates, loading and error states.
 
 ```typescript
 const { data: watches, isLoading } = useQuery({
   queryKey: ['watches', filters],
   queryFn: () => fetchWatches(filters),
-  staleTime: 5 * 60 * 1000, // 5 minutes
 });
 ```
 
-**Client State** (Zustand):
-- UI state (modals, sidebars)
-- User preferences
-- Temporary selections
+**Context**: authentication (`AuthContext`) and the comparison selection
+(`ComparisonContext`).
 
-**Context API**:
-- Authentication state (AuthContext)
-- Comparison selections (ComparisonContext)
+**Tokens**: `src/lib/tokenStore.ts` keeps the access token in memory. On a
+reload the app gets a new one with the refresh cookie.
 
 ### Component Architecture
 
@@ -453,19 +415,20 @@ components/
 ### Directory Structure
 
 ```
-storage/
-├── uploads/
-│   ├── {watch_id}/
-│   │   ├── image1.jpg
-│   │   └── image2.png
-│   └── service-docs/
-│       └── {watch_id}/
-│           └── {service_id}/
-│               ├── receipt.pdf
-│               └── certificate.jpg
-└── backups/
-    └── {date}/
-        └── backup.sql
+/data/
+├── watch.db
+├── secret_key
+├── backups/
+│   └── watch-<timestamp>.db
+└── uploads/
+    ├── {watch_id}/
+    │   ├── <uuid>.jpg
+    │   └── <uuid>.png
+    └── service-docs/
+        └── {watch_id}/
+            └── {service_id}/
+                ├── <uuid>.pdf
+                └── <uuid>.jpg
 ```
 
 ### Upload Flow
@@ -496,178 +459,90 @@ Client                Backend              FileSystem
   │<──────────────────────┤                     │
 ```
 
-### Security
+### Serving Files
 
-**File Validation**:
-- MIME type checking
-- File extension whitelist
-- Size limits (images: 20MB, documents: 10MB)
-- Filename sanitization (prevent path traversal)
+Browsers load images with plain `<img>` tags, which cannot send a Bearer
+token. So the API returns **signed links**: `/uploads/<path>?expires=...&sig=...`.
+The signature is an HMAC over the path and expiry, with a key derived from
+`SECRET_KEY`. `GET /uploads/...` checks the signature and expiry, refuses any
+path outside the uploads folder, and sends the file with `nosniff` and
+`private` cache headers. Links last `UPLOAD_URL_TTL_SECONDS` (default one hour);
+the expiry is rounded so a link stays the same for a while and browsers can
+cache it.
 
-**Storage Security**:
-- Isolated directories per watch
-- Nginx serves with read-only mount
-- UUID-based paths (non-guessable)
+### Upload Checks
+
+- File type checked by content and by extension (images: JPG, PNG, GIF, WebP;
+  documents: PDF, JPG, PNG)
+- Size limits: images 20 MB, documents 10 MB (`MAX_UPLOAD_SIZE`, `MAX_DOCUMENT_SIZE`)
+- Count limits: 50 photos per watch, 20 documents per service record
+- Stored under a generated UUID name; the original name is only kept as data
 
 ---
 
 ## Security Architecture
 
-### Defense in Depth
+**Network edge** (your reverse proxy, if you use one)
+- HTTPS
+- `TRUSTED_PROXIES` tells the app which proxy may set `X-Forwarded-For`
 
-**Layer 1: Network**
-- Nginx reverse proxy
-- Rate limiting (5 req/min auth, 10 req/sec API)
-- HTTPS support (production)
+**Application**
+- JWT authentication on every protected route; admin routes require the admin role
+- Rate limits per client address, in the app (`middleware/rate_limit.py`):
+  sign-in and sign-up 5 per minute, password change and refresh 10 per minute,
+  uploads 10 per minute, other API calls 10 per second (each with a burst allowance)
+- Account lockout after 5 wrong passwords for 15 minutes
+  (`LOGIN_MAX_FAILURES`, `LOGIN_LOCKOUT_MINUTES`)
+- Security headers on every response (`middleware/security_headers.py`):
+  Content-Security-Policy, X-Frame-Options, X-Content-Type-Options,
+  Referrer-Policy, Permissions-Policy
+- Input validation with Pydantic; SQL through the SQLAlchemy ORM; React escapes output
+- Outgoing fetches (image search, image import) go through `utils/safe_fetch.py`,
+  which refuses private and local addresses
 
-**Layer 2: Application**
-- JWT authentication
-- CORS configuration
-- Security headers (CSP, X-Frame-Options, etc.)
-- Input validation (Pydantic)
-- SQL injection prevention (SQLAlchemy ORM)
-- XSS prevention (React escaping)
+**Data**
+- Passwords hashed with bcrypt; minimum 8 characters; common passwords refused
+- `SECRET_KEY` must be 32+ characters, or is generated (64 hex characters)
+  into `/data/secret_key` with owner-only permissions
+- Ownership checked on every watch, collection and file
+- The container runs as an unprivileged user (UID 1000)
 
-**Layer 3: Data**
-- Password hashing (bcrypt)
-- Database connection pooling
-- Entity ownership verification
-- File path validation
-
-**Layer 4: Monitoring**
-- Security event logging
-- Failed login tracking
-- Audit trails
-
-### Authentication Security
-
-**Password Requirements**:
-- Minimum 8 characters
-- Hashed with bcrypt (cost 12)
-- Never stored in plain text
-- Never logged
-
-**Token Security**:
-- Short-lived access tokens (30 min)
-- Longer-lived refresh tokens (7 days)
-- Signed with HMAC-SHA256
-- Stored client-side (localStorage)
-
-**Session Management**:
-- Stateless (JWT)
-- No server-side session storage
-- Token revocation via expiry
+**Monitoring**
+- Security events (sign-ins, failures, lockouts, admin actions) are logged
 
 ---
 
-## Performance Optimizations
+## Performance
 
-### Database
-
-**Query Optimization**:
-- SQL aggregation instead of Python loops (10-50x faster)
-- Strategic indexes on foreign keys and filter fields
-- PostgreSQL full-text search with GIN indexes
-- Connection pooling (pool_size=20, max_overflow=10)
-
-**Example**:
-```python
-# Before: O(n) in Python
-total = sum(watch.current_market_value for watch in watches)
-
-# After: O(1) in SQL
-total = db.query(func.sum(Watch.current_market_value)).scalar()
-```
-
-### Caching
-
-**HTTP Caching**:
-- Reference data: 1 hour (`Cache-Control: public, max-age=3600`)
-- Static uploads: Forever (`Cache-Control: public, max-age=31536000, immutable`)
-- API responses: No-cache (dynamic data)
-
-**Redis Caching**:
-- Application-level cache
-- Graceful fallback if unavailable
-- TTL-based expiration
-
-### Frontend
-
-**Code Splitting**:
-```typescript
-const AnalyticsPage = lazy(() => import('@/pages/AnalyticsPage'));
-// Result: ~40-60% smaller initial bundle
-```
-
-**React Optimizations**:
-- `React.memo()` for expensive components
-- `useCallback()` for stable function references
-- Image lazy loading (`loading="lazy"`)
-
-**Bundle Optimization**:
-- Manual chunks for vendor libraries
-- Tree shaking (Vite)
-- Minification (production builds)
-
-### Nginx
-
-**Static File Serving**:
-- Gzip compression (level 6)
-- Browser caching headers
-- Direct file serving (bypass backend)
-
-**Load Balancing** (future):
-- Multiple backend instances
-- Health checks
-- Failover support
+- **SQL aggregation** for collection analytics instead of Python loops
+- **Indexes** on foreign keys and filter fields (see above)
+- **HTTP caching**: web app assets cached for a year (content-hashed names);
+  `index.html` is `no-cache`; reference data `public, max-age=3600`; other API
+  responses are not cached; uploads are `private, max-age=3600`
+- **Gzip** for responses over 1 KB
+- **Frontend**: route-level code splitting (`React.lazy`), `React.memo`,
+  lazy-loaded images, vendor chunks
 
 ---
 
-## Scalability Considerations
+## Scaling Limits
 
-### Horizontal Scaling
+The 2.x design is for one household or one collector, on one machine.
 
-**Stateless Design**:
-- JWT tokens (no session state)
-- Redis for shared cache
-- Database connection pooling
+- **One process per data volume.** Rate limit counters and login lockouts live
+  in the process's memory, and SQLite allows one writer at a time. Do not run
+  two containers on the same `/data`.
+- SQLite handles thousands of watches and many reads per second without
+  trouble. Writes are short and rare in this app.
+- `/data` must be on a local disk; SQLite file locking is unreliable on
+  network file systems.
 
-**Containerization**:
-- Docker for easy deployment
-- Docker Compose for orchestration
-- Kubernetes-ready architecture
-
-### Vertical Scaling
-
-**Database**:
-- PostgreSQL supports large datasets
-- Indexes optimize query performance
-- Read replicas (future)
-
-**Caching**:
-- Redis reduces database load
-- Can scale to Redis Cluster
-
-### Future Enhancements
-
-**CDN Integration**:
-- Static assets (images, JS, CSS)
-- Reduced latency
-- Lower bandwidth costs
-
-**Message Queue**:
-- Background jobs (image processing, emails)
-- Asynchronous processing
-- Better resource utilization
-
-**Microservices** (if needed):
-- Image service (upload, resize, optimize)
-- Analytics service (calculations, reports)
-- Notification service (emails, alerts)
+If the app ever needs several servers, the database and the rate limit store
+would have to move to shared services again.
 
 ---
 
-## Monitoring & Observability
+## Monitoring
 
 ### Logging
 
@@ -686,75 +561,26 @@ log_security_event(
 - INFO: Security events, significant actions
 - DEBUG: Detailed diagnostics (development only)
 
-### Health Checks
+### Health Check
 
-**Endpoints**:
-- `/health` - Overall health
-- `/api/health` - API health
-
-**Checks**:
-- Database connectivity
-- Redis availability (optional)
-- Disk space (upload directory)
-
-### Metrics (Future)
-
-**Application Metrics**:
-- Request rate
-- Response time (p50, p95, p99)
-- Error rate
-- Active users
-
-**Infrastructure Metrics**:
-- CPU usage
-- Memory usage
-- Disk I/O
-- Network traffic
+`GET /health` returns `{"status": "healthy"}`. The image's Docker
+`HEALTHCHECK` calls it every 30 seconds.
 
 ---
 
-## Deployment Architecture
+## Build and Deployment
 
-### Development
-
-```
-┌─────────────────────┐
-│   docker-compose    │
-├─────────────────────┤
-│ - postgres          │
-│ - redis             │
-│ - backend (dev)     │
-│ - frontend (dev)    │
-│ - nginx             │
-└─────────────────────┘
-```
-
-### Production
-
-```
-┌──────────────────────┐
-│     Cloud Provider   │
-├──────────────────────┤
-│  ┌────────────────┐  │
-│  │ Load Balancer  │  │
-│  └───────┬────────┘  │
-│          │           │
-│  ┌───────┴────────┐  │
-│  │  nginx (HTTPS) │  │
-│  └───┬────────┬───┘  │
-│      │        │      │
-│  ┌───┴───┐ ┌─┴────┐ │
-│  │Backend│ │Redis │ │
-│  └───┬───┘ └──────┘ │
-│      │              │
-│  ┌───┴───────────┐  │
-│  │  PostgreSQL   │  │
-│  │  (with backup)│  │
-│  └───────────────┘  │
-└──────────────────────┘
-```
+- **Image**: `docker build -t watch-tracker .` from the repository root.
+  Stage 1 runs `npm ci` and `npm run build`; stage 2 installs the Python
+  requirements and copies the backend and the built `dist/`.
+- **CI** (`.github/workflows/ci.yml`): backend tests (pytest on SQLite),
+  frontend tests and lint, security scans, and a smoke test that builds the
+  image, starts it and waits for `/health`.
+- **Publishing** (`.github/workflows/docker-publish.yml`): on pushes to `main`
+  and on `v*.*.*` tags, builds amd64 and arm64 and pushes `dhomoney/watch-tracker`.
+- **Running it**: see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ---
 
-**Last Updated**: 2026-01-28
-**Version**: 1.0.0
+**Last Updated**: 2026-11-18
+**Applies to**: 2.x (single image)
