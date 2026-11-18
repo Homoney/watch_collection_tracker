@@ -4,6 +4,7 @@ from app.models.movement_accuracy import MovementAccuracyReading
 from app.models.reference import Brand, Complication, MovementType
 from app.models.saved_search import SavedSearch
 from app.models.service_history import ServiceDocument, ServiceHistory
+from app.models.spec_lookup import SpecLookupCache
 from app.models.user import User
 from app.models.watch import Watch
 from app.models.watch_image import WatchImage
@@ -21,4 +22,5 @@ __all__ = [
     "MarketValue",
     "SavedSearch",
     "MovementAccuracyReading",
+    "SpecLookupCache",
 ]

@@ -1,0 +1,10 @@
+{"watch": {
+  "wb": {"id": 31034},
+  "reference_number": "SBGE201",
+  "name": "Spring Drive GMT",
+  "waterresistance": "10 bar",
+  "brand": {"id": 120, "name": "Grand Seiko", "slug": "grand-seiko"},
+  "family": {"id": 801, "name": "Spring Drive", "slug": "spring-drive"},
+  "caliber": {"reference_number": "9R66", "jewels": 30, "powerreserve": "72 h", "brand": "Grand Seiko", "type": "Spring Drive", "hands": "Hours, Minutes, Seconds, Additional 24 Hour Hand, Power Reserve Indicator, Date"},
+  "case": {"materials": {"material": "Titanium"}, "glass": "Sapphire", "diameter": "44.00 mm", "height": "14.70 mm"}
+}}

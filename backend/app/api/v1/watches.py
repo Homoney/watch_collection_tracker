@@ -113,6 +113,9 @@ def list_watches(
                 Brand.name.ilike(pattern, escape="\\"),
                 Watch.reference_number.ilike(pattern, escape="\\"),
                 Watch.serial_number.ilike(pattern, escape="\\"),
+                Watch.caliber.ilike(pattern, escape="\\"),
+                Watch.crystal.ilike(pattern, escape="\\"),
+                Watch.case_material.ilike(pattern, escape="\\"),
                 Watch.notes.ilike(pattern, escape="\\"),
             )
         )

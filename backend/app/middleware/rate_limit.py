@@ -46,6 +46,8 @@ RULES = (
         10,
         methods=("POST",),
     ),
+    # Look-ups reach outside services (one of them paid): keep them slow
+    Rule("lookup", re.compile(r"^/api/v1/spec-lookup$"), 20 / 60, 10),
     Rule("api", re.compile(r"^/api/"), 10.0, 20),
 )
 

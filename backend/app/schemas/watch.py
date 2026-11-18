@@ -29,6 +29,9 @@ class WatchBase(BaseModel):
     lug_width: Optional[Decimal] = Field(None, ge=0, le=999.99)
     water_resistance: Optional[int] = Field(None, ge=0)
     power_reserve: Optional[int] = Field(None, ge=0)
+    caliber: Optional[str] = Field(None, max_length=100)
+    crystal: Optional[str] = Field(None, max_length=100)
+    case_material: Optional[str] = Field(None, max_length=200)
 
     # Complications
     complications: List[str] = Field(default_factory=list)
@@ -69,6 +72,9 @@ class WatchUpdate(BaseModel):
     lug_width: Optional[Decimal] = Field(None, ge=0, le=999.99)
     water_resistance: Optional[int] = Field(None, ge=0)
     power_reserve: Optional[int] = Field(None, ge=0)
+    caliber: Optional[str] = Field(None, max_length=100)
+    crystal: Optional[str] = Field(None, max_length=100)
+    case_material: Optional[str] = Field(None, max_length=200)
 
     # Complications
     complications: Optional[List[str]] = None

@@ -156,6 +156,9 @@ def generate_watch_pdf(watch_data: dict, upload_dir: Optional[str] = None) -> By
             watch_data.get("lug_width"),
             watch_data.get("water_resistance"),
             watch_data.get("power_reserve"),
+            watch_data.get("caliber"),
+            watch_data.get("crystal"),
+            watch_data.get("case_material"),
         ]
     ):
 
@@ -174,6 +177,12 @@ def generate_watch_pdf(watch_data: dict, upload_dir: Optional[str] = None) -> By
             )
         if watch_data.get("power_reserve"):
             spec_data.append(["Power Reserve:", f"{watch_data['power_reserve']} hours"])
+        if watch_data.get("caliber"):
+            spec_data.append(["Caliber:", watch_data["caliber"]])
+        if watch_data.get("crystal"):
+            spec_data.append(["Crystal:", watch_data["crystal"]])
+        if watch_data.get("case_material"):
+            spec_data.append(["Case Material:", watch_data["case_material"]])
 
         spec_table = Table(spec_data, colWidths=[2 * inch, 4 * inch])
         spec_table.setStyle(

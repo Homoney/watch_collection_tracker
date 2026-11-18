@@ -1,0 +1,13 @@
+{"watch": {
+  "wb": {"id": 31501, "added": "2020-09-01", "modified": "2021-02-10", "published": "2020-09-01"},
+  "reference_number": "126610LN-0001",
+  "name": "Submariner Date 41 Steel / Black / Black",
+  "gender": "M",
+  "released": "2020",
+  "waterresistance": "300.00 m",
+  "brand": {"id": 54, "name": "Rolex", "slug": "rolex"},
+  "family": {"id": 300, "name": "Submariner", "slug": "submariner"},
+  "caliber": {"id": 2001, "reference_number": "3235", "diameter": "28.50 mm", "jewels": 31, "frequency": "28800 bph", "powerreserve": "70 h", "brand": "Rolex", "type": "Automatic", "display": "Analog", "additional": "Chronometer", "hands": "Hours, Minutes, Seconds, Date"},
+  "case": {"materials": ["Stainless Steel"], "bezel": "Unidirectional, 0-60 (Dive)", "glass": "Sapphire", "back": "Closed", "shape": "Round", "diameter": "41.00 mm", "lugwidth": "21.00 mm"},
+  "dial": {"color": "Black", "indextype": "Mixed"}
+}}
