@@ -273,7 +273,6 @@ jobs:
           docker pull python:3.11-slim
           docker pull node:20-alpine
           docker pull postgres:16-alpine
-          docker pull redis:7-alpine
           docker pull nginx:alpine
 
           echo "Building application images..."

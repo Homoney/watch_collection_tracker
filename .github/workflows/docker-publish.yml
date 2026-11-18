@@ -104,27 +104,13 @@ jobs:
                 retries: 5
               restart: unless-stopped
 
-            redis:
-              image: redis:7-alpine
-              volumes:
-                - redis_data:/data
-              healthcheck:
-                test: ["CMD", "redis-cli", "ping"]
-                interval: 10s
-                timeout: 3s
-                retries: 5
-              restart: unless-stopped
-
             backend:
               image: ${{ env.DOCKER_USERNAME }}/watch-tracker-backend:${VERSION:-latest}
               depends_on:
                 postgres:
                   condition: service_healthy
-                redis:
-                  condition: service_healthy
               environment:
                 DATABASE_URL: postgresql://${POSTGRES_USER:-watchuser}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-watch_tracker}
-                REDIS_URL: redis://redis:6379/0
                 SECRET_KEY: ${SECRET_KEY}
                 ALGORITHM: ${ALGORITHM:-HS256}
                 ACCESS_TOKEN_EXPIRE_MINUTES: ${ACCESS_TOKEN_EXPIRE_MINUTES:-30}
@@ -166,7 +152,6 @@ jobs:
 
           volumes:
             postgres_data:
-            redis_data:
           EOF
 
       - name: Create Release

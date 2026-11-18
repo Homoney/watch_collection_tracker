@@ -11,7 +11,7 @@
 Full-stack watch collection management with multi-user support. FastAPI backend, React/TypeScript frontend.
 
 **Tech Stack**:
-- Backend: FastAPI, PostgreSQL, SQLAlchemy, Alembic, Pillow, Redis
+- Backend: FastAPI, PostgreSQL, SQLAlchemy, Alembic, Pillow
 - Frontend: React 18, TypeScript, TanStack Query, React Hook Form, Tailwind CSS, Recharts
 - Infrastructure: Docker Compose, Nginx
 - Icons: Lucide React
@@ -71,7 +71,7 @@ Reference data, Collections CRUD, Watches CRUD, filtering/sorting/pagination
 - 12 performance indexes
 - Full-text search with GIN indexes (10-100x faster)
 - Code splitting (40-60% smaller bundles)
-- Redis caching (95% hit rate on reference data)
+- HTTP cache headers on reference data
 - API p95 < 200ms
 **Documentation**: 60+ pages (API.md, USER_GUIDE.md, ARCHITECTURE.md)
 **CI/CD**: 8-job pipeline (tests, security scanning, builds, integration tests)
@@ -430,7 +430,6 @@ HTTP_PORT=8080
 - Frontend code splitting (React.lazy)
 - React.memo and useCallback
 - Image lazy loading
-- Redis caching with graceful fallback
 - HTTP caching middleware (Cache-Control headers)
 
 ---
