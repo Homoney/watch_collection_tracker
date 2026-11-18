@@ -43,6 +43,9 @@ def _answer(status, reference, brand, **extra) -> dict:
         "choices": [],
         "movement": None,
         "links": links.build(reference, brand, caliber_page),
+        # The matched WatchBase watch, and whether it has a photo to save
+        "watchbase_id": None,
+        "has_photo": False,
     }
     answer.update(extra)
     return answer
@@ -147,6 +150,8 @@ def lookup(
         fields=fields,
         sources={name: source for name in fields},
         movement=dict(movement, source=source) if movement else None,
+        watchbase_id=watchbase_id,
+        has_photo=watchbase.has_photo(w),
     )
     _add_movement_facts(
         db,

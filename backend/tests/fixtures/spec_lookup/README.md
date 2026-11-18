@@ -8,3 +8,6 @@ Saved responses for the reference look-up tests (no live calls in CI).
   format.
 - `cc_rolex_3235.html`: Caliber Corner's caliber spec table (facts only,
   same markup as the live page), wrapped in a minimal page.
+- `wb_photo_*.png`: stand-in images for WatchBase's photo server (a drawn
+  placeholder, not a real WatchBase photo); `wb_photo_small.png` is below the
+  200 px minimum.

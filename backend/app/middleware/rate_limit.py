@@ -40,7 +40,7 @@ RULES = (
         "upload",
         re.compile(
             r"^/api/v1/watches/[^/]+/"
-            r"(images|fetch-images|service-history/[^/]+/documents)$"
+            r"(images|reference-photo|service-history/[^/]+/documents)$"
         ),
         10 / 60,
         10,

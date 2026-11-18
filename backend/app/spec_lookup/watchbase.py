@@ -8,6 +8,7 @@ up in a log line.
 
 import logging
 from typing import Dict, List, Tuple
+from urllib.parse import urlsplit
 
 import httpx
 
@@ -18,6 +19,8 @@ logger = logging.getLogger(__name__)
 API = "https://api.watchbase.com/v1"
 SITE = "https://watchbase.com"
 SOURCE_NAME = "WatchBase"
+# Photos are only taken from WatchBase's own image server
+PHOTO_HOSTS = {"cdn.watchbase.com"}
 
 
 class BadKey(Exception):
@@ -146,3 +149,26 @@ def to_fields(w: dict) -> Tuple[dict, dict]:
         "power_reserve": fields.get("power_reserve"),
     }
     return fields, {k: v for k, v in movement.items() if v}
+
+
+def photo_urls(w: dict) -> list:
+    """Candidate URLs for the main photo, large size first, WatchBase CDN only."""
+    images = w.get("images") or []
+    if isinstance(images, dict):
+        images = images.get("image") or []
+    if isinstance(images, str):
+        images = [images]
+    urls = []
+    for url in images[:1]:
+        if not isinstance(url, str) or urlsplit(url).hostname not in PHOTO_HOSTS:
+            continue
+        if urlsplit(url).scheme != "https":
+            continue
+        if "/watch/md/" in url:
+            urls.append(url.replace("/watch/md/", "/watch/lg/", 1))
+        urls.append(url)
+    return urls
+
+
+def has_photo(w: dict) -> bool:
+    return bool(photo_urls(w))

@@ -21,6 +21,7 @@ class WatchImageResponse(BaseModel):
     is_primary: bool
     sort_order: int
     source: str
+    source_url: Optional[str] = None
     created_at: datetime
 
     @computed_field

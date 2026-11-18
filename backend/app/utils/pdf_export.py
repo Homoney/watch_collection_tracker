@@ -88,7 +88,10 @@ def generate_watch_pdf(watch_data: dict, upload_dir: Optional[str] = None) -> By
     elements.append(Spacer(1, 0.2 * inch))
 
     # Primary Image
-    images = watch_data.get("images", [])
+    # Reference photos (catalogue copies) stay out of exports, which may be shared
+    images = [
+        i for i in watch_data.get("images", []) if i.get("source") != "reference_photo"
+    ]
     if images:
         primary_image = next(
             (img for img in images if img.get("is_primary")), images[0]
@@ -460,7 +463,9 @@ def generate_collection_pdf(
         elements.append(watch_title)
 
         # Add watch image if available
-        images = watch.get("images", [])
+        images = [
+            i for i in watch.get("images", []) if i.get("source") != "reference_photo"
+        ]
         if images:
             primary_image = next(
                 (img for img in images if img.get("is_primary")), images[0]

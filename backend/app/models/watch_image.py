@@ -13,6 +13,7 @@ class ImageSourceEnum(str, enum.Enum):
     USER_UPLOAD = "user_upload"
     GOOGLE_IMAGES = "google_images"
     URL_IMPORT = "url_import"
+    REFERENCE_PHOTO = "reference_photo"  # catalogue photo (WatchBase), private copy
 
 
 class WatchImage(Base):
@@ -46,6 +47,8 @@ class WatchImage(Base):
         default=ImageSourceEnum.USER_UPLOAD,
         nullable=False,
     )
+    # Page the photo came from, for photos not taken by the owner
+    source_url = Column(String(500))
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

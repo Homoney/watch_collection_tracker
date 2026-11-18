@@ -9,5 +9,6 @@
   "family": {"id": 300, "name": "Submariner", "slug": "submariner"},
   "caliber": {"id": 2001, "reference_number": "3235", "diameter": "28.50 mm", "jewels": 31, "frequency": "28800 bph", "powerreserve": "70 h", "brand": "Rolex", "type": "Automatic", "display": "Analog", "additional": "Chronometer", "hands": "Hours, Minutes, Seconds, Date"},
   "case": {"materials": ["Stainless Steel"], "bezel": "Unidirectional, 0-60 (Dive)", "glass": "Sapphire", "back": "Closed", "shape": "Round", "diameter": "41.00 mm", "lugwidth": "21.00 mm"},
-  "dial": {"color": "Black", "indextype": "Mixed"}
+  "dial": {"color": "Black", "indextype": "Mixed"},
+  "images": ["https://cdn.watchbase.com/watch/md/rolex/submariner/126610ln-0001-3f.png"]
 }}

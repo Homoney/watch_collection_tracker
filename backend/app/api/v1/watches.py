@@ -5,7 +5,8 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from fastapi.responses import StreamingResponse
-from sqlalchemy import asc, desc, func, or_
+from pydantic import BaseModel, Field
+from sqlalchemy import asc, desc, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.deps import get_current_user
@@ -14,7 +15,6 @@ from app.models.collection import Collection
 from app.models.reference import Brand, MovementType
 from app.models.user import User
 from app.models.watch import ConditionEnum, Watch
-from app.models.watch_image import ImageSourceEnum, WatchImage
 from app.schemas.watch import (
     PaginatedWatchResponse,
     WatchCreate,
@@ -22,13 +22,12 @@ from app.schemas.watch import (
     WatchResponse,
     WatchUpdate,
 )
-from app.utils.google_images import fetch_watch_images
+from app.spec_lookup import photos
 from app.utils.pdf_export import generate_collection_pdf, generate_watch_pdf
 from app.utils.qr_code import generate_watch_qr_code
 
 logger = logging.getLogger(__name__)
 
-NO_IMAGES_FOUND = "No images found; you can upload your own"
 
 router = APIRouter()
 
@@ -499,104 +498,47 @@ def export_all_watches_pdf(
     )
 
 
-@router.post("/{watch_id}/fetch-images", status_code=status.HTTP_201_CREATED)
-def fetch_google_images(
+class ReferencePhotoRequest(BaseModel):
+    # The WatchBase watch picked in Look up; without it, the watch's
+    # reference number is looked up (one clear match needed)
+    watchbase_id: Optional[int] = Field(None, ge=1)
+
+
+@router.post("/{watch_id}/reference-photo")
+def save_reference_photo(
     watch_id: UUID,
     response: Response,
-    limit: int = Query(default=3, ge=1, le=5, description="Number of images to fetch"),
-    offset: int = Query(
-        default=0, ge=0, description="Number of images to skip (for pagination)"
-    ),
+    body: Optional[ReferencePhotoRequest] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Fetch watch images from Google Images.
-    Supports fetching multiple batches via offset parameter.
-    Uses brand + reference number for more accurate search.
+    """Save WatchBase's main photo of this watch as a private reference photo.
 
-    201 with the new images; 200 with an empty list and a plain message when
-    the search finds nothing or the image source fails (never a 500 for that).
+    201 with the image when saved. 200 with `image: null` and a plain message
+    otherwise (no key, nothing found, several matches, source down, already
+    has one); never a 500 for a source problem.
     """
-    # Verify watch exists and belongs to user
     watch = (
         db.query(Watch)
-        .options(joinedload(Watch.brand), joinedload(Watch.images))
         .filter(Watch.id == watch_id, Watch.user_id == current_user.id)
         .first()
     )
-
     if not watch:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Watch not found"
         )
 
-    # Get brand, model, and reference number
-    brand_name = watch.brand.name if watch.brand else "watch"
-    model = watch.model
-    reference_number = watch.reference_number
-
-    # Get current max sort_order for this watch to append new images
-    max_sort_order = (
-        db.query(func.max(WatchImage.sort_order))
-        .filter(WatchImage.watch_id == watch_id)
-        .scalar()
-        or -1
+    result, image = photos.save_reference_photo(
+        db, watch, body.watchbase_id if body else None
     )
+    if image is None:
+        return {"status": result, "message": photos.MESSAGES[result], "image": None}
 
-    try:
-        # Fetch images from Google
-        image_metadata_list = fetch_watch_images(
-            brand=brand_name,
-            model=model,
-            watch_id=str(watch_id),
-            limit=limit,
-            reference_number=reference_number,
-            offset=offset,
-        )
-    except Exception:
-        # The image source failing is not our server's error: answer like
-        # "nothing found" so the user can upload their own instead.
-        logger.warning("Image search failed for watch %s", watch_id, exc_info=True)
-        image_metadata_list = []
-
-    if not image_metadata_list:
-        response.status_code = status.HTTP_200_OK
-        return {"message": NO_IMAGES_FOUND, "images": []}
-
-    # Create database records for each image
-    created_images = []
-    for idx, metadata in enumerate(image_metadata_list):
-        # Adjust sort_order to append after existing images
-        # Only set first image as primary if watch has no images yet
-        image = WatchImage(
-            watch_id=watch_id,
-            file_path=metadata["file_path"],
-            file_name=metadata["file_name"],
-            file_size=metadata["file_size"],
-            mime_type=metadata["mime_type"],
-            width=metadata.get("width"),
-            height=metadata.get("height"),
-            is_primary=(max_sort_order == -1 and idx == 0),  # Only first if none yet
-            sort_order=max_sort_order + 1 + idx,
-            source=ImageSourceEnum.GOOGLE_IMAGES,
-        )
-        db.add(image)
-        created_images.append(image)
-
-    db.commit()
-
-    # Refresh to get IDs
-    for image in created_images:
-        db.refresh(image)
-
-    # Return image schemas
     from app.schemas.watch_image import WatchImageResponse
 
+    response.status_code = status.HTTP_201_CREATED
     return {
-        "message": f"Successfully fetched {len(created_images)} images",
-        "images": [
-            WatchImageResponse.model_validate(img).model_dump()
-            for img in created_images
-        ],
+        "status": result,
+        "message": photos.MESSAGES[result],
+        "image": WatchImageResponse.model_validate(image).model_dump(),
     }
