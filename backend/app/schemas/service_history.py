@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
+from app.core.file_urls import sign_upload_url
+
 
 class ServiceHistoryBase(BaseModel):
     """Base schema for service history"""
@@ -51,7 +53,7 @@ class ServiceDocumentResponse(BaseModel):
     @property
     def url(self) -> str:
         """Generate URL for accessing the document"""
-        return f"/uploads/service-docs/{self.file_path}"
+        return sign_upload_url(f"service-docs/{self.file_path}")
 
     model_config = ConfigDict(from_attributes=True)
 
