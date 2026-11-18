@@ -24,7 +24,7 @@
 
 ## Authentication
 
-All endpoints except `/auth/register`, `/auth/login`, `/auth/refresh` and the reference data require a JWT access token in the `Authorization: Bearer <access_token>` header.
+All endpoints except `/auth/register`, `/auth/login`, `/auth/refresh`, `/auth/setup-status` and the reference data require a JWT access token in the `Authorization: Bearer <access_token>` header.
 
 Registration is closed unless `ALLOW_REGISTRATION=true`. On an empty database the address in `INITIAL_ADMIN_EMAIL` may always register and becomes the admin; any other refused registration returns `403`.
 
@@ -94,6 +94,21 @@ The body is optional: without it the refresh token is read from the cookie.
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "token_type": "bearer"
+}
+```
+
+### Setup Status
+
+```http
+GET /api/v1/auth/setup-status
+```
+
+Public. `setup_required` is `true` only while the database has no accounts; the web app then shows "Create the admin account" on the sign-in page.
+
+**Response** (200 OK):
+```json
+{
+  "setup_required": false
 }
 ```
 

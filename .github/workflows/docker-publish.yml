@@ -72,6 +72,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Image version (tag without the v)
+        id: ver
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -81,17 +85,21 @@ jobs:
           body: |
             ## Docker image
 
-            `${{ env.DOCKER_USERNAME }}/${{ env.IMAGE }}:${{ github.ref_name }}` (amd64 and arm64)
+            `${{ env.DOCKER_USERNAME }}/${{ env.IMAGE }}:${{ steps.ver.outputs.version }}` (amd64 and arm64)
 
             ## Quick start
 
-            ```sh
-            docker run -d --name watch-tracker --restart unless-stopped \
-              -p 8080:8000 -v watch-data:/data \
-              -e INITIAL_ADMIN_EMAIL=you@example.com \
-              ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE }}:${{ github.ref_name }}
-            ```
+            1. Start it, with your own email address:
 
-            Or download `docker-compose.yml` (and optionally `.env.example` as `.env`) and run `docker compose up -d`.
+               ```sh
+               docker run -d --name watch-tracker --restart unless-stopped \
+                 -p 8080:8000 -v watch-data:/data \
+                 -e INITIAL_ADMIN_EMAIL=you@example.com \
+                 ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE }}:${{ steps.ver.outputs.version }}
+               ```
+
+               Or download `docker-compose.yml` and `.env.example` (saved as `.env`), set `INITIAL_ADMIN_EMAIL` in `.env` and run `docker compose up -d`. After changing `.env`, run `docker compose up -d --force-recreate`.
+
+            2. Create your admin account: open http://localhost:8080, click **Create the admin account**, enter the `INITIAL_ADMIN_EMAIL` address and choose a password. No password is set in advance: the one you choose there is the admin password.
 
             See the [README](https://github.com/${{ github.repository }}) for settings, backups and upgrades.

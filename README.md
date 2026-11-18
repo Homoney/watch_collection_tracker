@@ -32,18 +32,27 @@ A modern web application for watch collectors to track their collections with mu
 
 The [deployment guide](docs/DEPLOYMENT.md) covers HTTPS, backups, upgrades and moving from 1.x in more detail.
 
-You need Docker. Run:
+You need Docker.
 
-```sh
-docker run -d --name watch-tracker --restart unless-stopped \
-  -p 8080:8000 -v watch-data:/data \
-  -e INITIAL_ADMIN_EMAIL=you@example.com \
-  dhomoney/watch-tracker:latest
-```
+### With `docker run`
 
-Open http://localhost:8080 and register with the email you set in `INITIAL_ADMIN_EMAIL`. That first account becomes the admin. Public sign-up is off: create other accounts with the command below, or set `ALLOW_REGISTRATION=true`.
+1. Start the container, with your own email address:
 
-You can also create an account from the command line:
+   ```sh
+   docker run -d --name watch-tracker --restart unless-stopped \
+     -p 8080:8000 -v watch-data:/data \
+     -e INITIAL_ADMIN_EMAIL=you@example.com \
+     dhomoney/watch-tracker:latest
+   ```
+
+2. Create your admin account:
+   1. Open http://localhost:8080. On a fresh install the sign-in page says **Create the admin account**; click it.
+   2. Enter the email address you set in `INITIAL_ADMIN_EMAIL` and choose a password. No password is set in advance: the one you choose here is the admin password.
+   3. Click **Create admin account**. You are signed in, and this first account is the admin.
+
+To change `INITIAL_ADMIN_EMAIL` later, remove the container (`docker rm -f watch-tracker`) and run the command again; your data stays in the `watch-data` volume.
+
+Public sign-up is off: create other accounts with the command below, or set `ALLOW_REGISTRATION=true`. You can also create any account, the admin included, from the command line:
 
 ```sh
 docker exec -it watch-tracker python -m app.cli create-user you@example.com --admin
@@ -51,11 +60,20 @@ docker exec -it watch-tracker python -m app.cli create-user you@example.com --ad
 
 ### With Docker Compose
 
-Download [`docker-compose.yml`](docker-compose.yml) and, optionally, [`.env.example`](.env.example) as `.env`. Then run:
+1. Download [`docker-compose.yml`](docker-compose.yml), and [`.env.example`](.env.example) saved as `.env` in the same folder.
+2. In `.env`, set your email address: `INITIAL_ADMIN_EMAIL=you@example.com`.
+3. Start it:
 
-```sh
-docker compose up -d
-```
+   ```sh
+   docker compose up -d
+   ```
+
+4. Create your admin account:
+   1. Open http://localhost:8080. On a fresh install the sign-in page says **Create the admin account**; click it.
+   2. Enter the email address you set in `INITIAL_ADMIN_EMAIL` and choose a password. No password is set in advance: the one you choose here is the admin password.
+   3. Click **Create admin account**. You are signed in, and this first account is the admin.
+
+Changed `.env` after the container started (for example `INITIAL_ADMIN_EMAIL` was empty the first time)? Run `docker compose up -d --force-recreate` so the container picks up the new values.
 
 ### What is in `/data`
 
@@ -76,7 +94,7 @@ All settings are optional environment variables.
 
 | Variable | Default | What it does |
 |---|---|---|
-| `INITIAL_ADMIN_EMAIL` | (none) | Registering with this email on an empty database creates the admin |
+| `INITIAL_ADMIN_EMAIL` | (none) | Signing up with this email on an empty database creates the admin; you choose the password when you sign up |
 | `ALLOW_REGISTRATION` | `false` | Let anyone with the address create an account |
 | `SECRET_KEY` | generated | Signs logins and file links. If you set it: 32+ random characters, never change it |
 | `TRUSTED_PROXIES` | `127.0.0.1` | Address of your reverse proxy, so rate limits see real client addresses |
@@ -159,6 +177,7 @@ Once the application is running, visit http://localhost:8080/docs for interactiv
 - `POST /api/v1/auth/login` - Login
 - `POST /api/v1/auth/refresh` - Refresh access token
 - `GET /api/v1/auth/me` - Get current user
+- `GET /api/v1/auth/setup-status` - `setup_required` is true until the first account exists
 - `PUT /api/v1/auth/me` - Update user profile
 - `POST /api/v1/auth/change-password` - Change password
 - `POST /api/v1/auth/logout` - Logout
