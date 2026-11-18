@@ -2,6 +2,14 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [2.0.4] - 2026-11-18
+
+Fixes and maintenance only. No upgrade steps.
+
+### Fixed
+- Dark mode readability: text, chart labels, disabled buttons and placeholders are now readable (#210).
+- Fetch images shows a message instead of an error when the search finds nothing (part of #205).
+
 ## [2.0.3] - 2026-11-18
 
 Fixes and maintenance only. No upgrade steps.
