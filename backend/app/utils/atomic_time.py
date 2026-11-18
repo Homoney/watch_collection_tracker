@@ -3,66 +3,71 @@ Utilities for atomic clock synchronization and drift calculations.
 """
 
 import logging
-from datetime import datetime, timezone
+import time
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import httpx
 
 logger = logging.getLogger(__name__)
 
-# WorldTimeAPI endpoint
-WORLD_TIME_API_URL = "https://worldtimeapi.org/api/timezone"
+# WorldTimeAPI endpoint (UTC only; other zones are converted locally)
+WORLD_TIME_API_URL = "https://worldtimeapi.org/api/timezone/Etc/UTC"
 API_TIMEOUT = 3.0  # seconds
+
+# The offset between the reference clock and the server clock barely moves,
+# so it is fetched at most once per window instead of on every request.
+OFFSET_TTL_SECONDS = 60
+FAILURE_TTL_SECONDS = 10
+
+# (monotonic expiry, offset from server clock, came from the reference clock)
+_offset_cache: Optional[Tuple[float, timedelta, bool]] = None
+
+
+def resolve_timezone(tz: str) -> ZoneInfo:
+    """Return the zone for an IANA name, or raise ValueError."""
+    try:
+        return ZoneInfo(tz or "UTC")
+    except (ZoneInfoNotFoundError, ValueError, TypeError) as exc:
+        raise ValueError(f"Unknown timezone: {tz}") from exc
+
+
+async def _fetch_offset() -> Tuple[timedelta, bool]:
+    try:
+        async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:
+            response = await client.get(WORLD_TIME_API_URL)
+            response.raise_for_status()
+            reference = datetime.fromisoformat(response.json()["datetime"])
+        return reference - datetime.now(timezone.utc), True
+    except httpx.TimeoutException:
+        logger.warning("WorldTimeAPI timeout after %ss, using server time", API_TIMEOUT)
+    except httpx.HTTPError as e:
+        logger.warning("WorldTimeAPI HTTP error: %s, using server time", e)
+    except (KeyError, ValueError) as e:
+        logger.error("Failed to parse WorldTimeAPI response: %s, using server time", e)
+    except Exception as e:
+        logger.error("Unexpected error fetching atomic time: %s, using server time", e)
+    return timedelta(0), False
 
 
 async def get_atomic_time(tz: str = "UTC") -> Tuple[datetime, bool]:
     """
-    Get current time from WorldTimeAPI with fallback to server time.
+    Current reference time in the given IANA timezone.
 
-    Args:
-        tz: Timezone string (e.g., "UTC", "America/New_York")
-
-    Returns:
-        Tuple of (datetime object, is_atomic_source flag)
-        is_atomic_source is False if API failed and server time was used
+    Returns (datetime, is_atomic_source). is_atomic_source is False when the
+    reference clock could not be reached and server time was used.
+    Raises ValueError for an unknown timezone.
     """
-    try:
-        async with httpx.AsyncClient(timeout=API_TIMEOUT) as client:
-            # Normalize timezone for API
-            api_tz = tz if tz else "UTC"
-            url = f"{WORLD_TIME_API_URL}/{api_tz}"
-
-            response = await client.get(url)
-            response.raise_for_status()
-
-            data = response.json()
-            # WorldTimeAPI returns ISO 8601 datetime with timezone
-            atomic_time = datetime.fromisoformat(data["datetime"])
-
-            logger.info(
-                f"Successfully fetched atomic time from WorldTimeAPI: {atomic_time}"
-            )
-            return atomic_time, True
-
-    except httpx.TimeoutException:
-        logger.warning(
-            f"WorldTimeAPI timeout after {API_TIMEOUT}s, falling back to server time"
-        )
-    except httpx.HTTPError as e:
-        logger.warning(f"WorldTimeAPI HTTP error: {e}, falling back to server time")
-    except (KeyError, ValueError) as e:
-        logger.error(
-            f"Failed to parse WorldTimeAPI response: {e}, falling back to server time"
-        )
-    except Exception as e:
-        logger.error(
-            f"Unexpected error fetching atomic time: {e}, falling back to server time"
-        )
-
-    # Fallback to server time with UTC timezone
-    server_time = datetime.now(timezone.utc)
-    logger.info(f"Using server time as fallback: {server_time}")
-    return server_time, False
+    global _offset_cache
+    zone = resolve_timezone(tz)
+    now = time.monotonic()
+    if _offset_cache is None or _offset_cache[0] <= now:
+        offset, is_atomic = await _fetch_offset()
+        ttl = OFFSET_TTL_SECONDS if is_atomic else FAILURE_TTL_SECONDS
+        _offset_cache = (now + ttl, offset, is_atomic)
+    _, offset, is_atomic = _offset_cache
+    return (datetime.now(timezone.utc) + offset).astimezone(zone), is_atomic
 
 
 def calculate_drift_spd(

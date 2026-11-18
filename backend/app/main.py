@@ -124,7 +124,7 @@ app.include_router(
 )
 app.include_router(users.router, prefix="/api/v1/users", tags=["User Management"])
 app.include_router(files.router, prefix="/api/v1/files", tags=["Files"])
-# Movement accuracy - atomic-time is public (no auth), watch-specific routes require auth
+# Movement accuracy (all routes require auth)
 app.include_router(
     movement_accuracy.atomic_time_router, prefix="/api/v1", tags=["Movement Accuracy"]
 )
