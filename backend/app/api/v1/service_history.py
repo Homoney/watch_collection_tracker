@@ -16,6 +16,7 @@ from app.schemas.service_history import (
     ServiceHistoryUpdate,
 )
 from app.utils.file_upload import (
+    InvalidUploadError,
     delete_file,
     save_service_document,
     validate_document_file,
@@ -233,7 +234,7 @@ async def upload_service_document(
     """
     Upload a document (receipt, certificate, etc.) for a service record.
     Allowed formats: PDF, JPG, PNG
-    Max size: 10MB
+    Max size: MAX_DOCUMENT_SIZE (10MB by default)
     """
     # Verify ownership
     _, service = verify_service_ownership(watch_id, service_id, current_user, db)
@@ -250,19 +251,33 @@ async def upload_service_document(
     file_size = file.file.tell()
     file.file.seek(0)  # Reset to beginning
 
-    if file_size > 10 * 1024 * 1024:  # 10MB
+    if file_size > settings.MAX_DOCUMENT_SIZE:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File size exceeds 10MB limit",
+            detail=f"File size exceeds {settings.MAX_DOCUMENT_SIZE // (1024 * 1024)}MB limit",
+        )
+
+    doc_count = (
+        db.query(ServiceDocument)
+        .filter(ServiceDocument.service_history_id == service.id)
+        .count()
+    )
+    if doc_count >= settings.MAX_DOCUMENTS_PER_SERVICE:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"A service record can have at most {settings.MAX_DOCUMENTS_PER_SERVICE} documents",
         )
 
     # Save file to storage
-    file_metadata = save_service_document(
-        file=file,
-        watch_id=watch_id,
-        service_id=service_id,
-        upload_dir=settings.UPLOAD_DIR,
-    )
+    try:
+        file_metadata = save_service_document(
+            file=file,
+            watch_id=watch_id,
+            service_id=service_id,
+            upload_dir=settings.UPLOAD_DIR,
+        )
+    except InvalidUploadError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     # Create database record
     document = ServiceDocument(
