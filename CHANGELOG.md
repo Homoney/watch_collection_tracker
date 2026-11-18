@@ -2,6 +2,17 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [2.0.1] - 2026-11-18
+
+Fixes and maintenance only. No upgrade steps.
+
+### Fixed
+- Saved searches list no longer returns 404 (API paths work with or without a trailing slash).
+
+### Changed
+- Updated backend and frontend dependencies to current security releases.
+- Slimmer runtime image with current security fixes.
+
 ## [2.0.0] - 2026-11-18
 
 Single-image release: the whole app now ships as one container. **Breaking.** Read "Upgrade notes" before deploying.
