@@ -435,7 +435,10 @@ export default function WatchDetailPage() {
               watch.case_thickness ||
               watch.lug_width ||
               watch.water_resistance ||
-              watch.power_reserve) && (
+              watch.power_reserve ||
+              watch.caliber ||
+              watch.crystal ||
+              watch.case_material) && (
               <Card className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Specifications</h2>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -467,6 +470,24 @@ export default function WatchDetailPage() {
                     <div>
                       <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Power Reserve</dt>
                       <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.power_reserve} hours</dd>
+                    </div>
+                  )}
+                  {watch.caliber && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Caliber</dt>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.caliber}</dd>
+                    </div>
+                  )}
+                  {watch.crystal && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Crystal</dt>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.crystal}</dd>
+                    </div>
+                  )}
+                  {watch.case_material && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Case Material</dt>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.case_material}</dd>
                     </div>
                   )}
                 </dl>

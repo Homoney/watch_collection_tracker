@@ -195,6 +195,8 @@ export default function ComparisonTable({ watches, onRemoveWatch }: ComparisonTa
             label="Power Reserve"
             values={watches.map((w) => (w.power_reserve ? `${w.power_reserve} hours` : null))}
           />
+          <ComparisonRow label="Caliber" values={watches.map((w) => w.caliber)} />
+          <ComparisonRow label="Crystal" values={watches.map((w) => w.crystal)} />
           <ComparisonRow label="Case Material" values={watches.map((w) => w.case_material)} />
           <ComparisonRow label="Dial Color" values={watches.map((w) => w.dial_color)} />
           <ComparisonRow label="Strap Material" values={watches.map((w) => w.strap_material)} />

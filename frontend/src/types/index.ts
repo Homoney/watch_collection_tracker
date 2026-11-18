@@ -233,6 +233,8 @@ export interface Watch {
   case_diameter: number | null
   case_thickness: number | null
   case_material: string | null
+  caliber: string | null
+  crystal: string | null
   dial_color: string | null
   strap_material: string | null
   lug_width: number | null
@@ -268,6 +270,8 @@ export interface WatchCreate {
   case_diameter?: number | null
   case_thickness?: number | null
   case_material?: string | null
+  caliber?: string | null
+  crystal?: string | null
   dial_color?: string | null
   strap_material?: string | null
   lug_width?: number | null
@@ -295,6 +299,8 @@ export interface WatchUpdate {
   case_diameter?: number | null
   case_thickness?: number | null
   case_material?: string | null
+  caliber?: string | null
+  crystal?: string | null
   dial_color?: string | null
   strap_material?: string | null
   lug_width?: number | null
@@ -433,4 +439,55 @@ export interface AtomicTimeResponse {
   is_atomic_source: boolean
   timezone: string
   unix_timestamp: number
+}
+
+// Reference look-up (GET /api/v1/spec-lookup)
+export type SpecLookupStatus =
+  | 'ok'
+  | 'choices'
+  | 'not_found'
+  | 'links_only'
+  | 'bad_key'
+  | 'unavailable'
+
+export interface SpecSource {
+  name: string
+  url: string
+}
+
+export interface SpecLookupFields {
+  brand_name?: string
+  model?: string
+  movement_type_name?: string
+  case_diameter?: number
+  case_thickness?: number
+  lug_width?: number
+  water_resistance?: number
+  power_reserve?: number
+  caliber?: string
+  crystal?: string
+  case_material?: string
+  complications?: string[]
+}
+
+export interface SpecLookupResult {
+  status: SpecLookupStatus
+  message: string
+  reference: string
+  fields: SpecLookupFields
+  sources: Partial<Record<keyof SpecLookupFields, SpecSource>>
+  choices: { id: number; reference: string; name: string; brand: string; family: string }[]
+  movement: {
+    caliber?: string
+    jewels?: number
+    frequency?: string
+    power_reserve?: number
+    source?: SpecSource
+  } | null
+  links: { label: string; url: string }[]
+}
+
+export interface WatchBaseKeyStatus {
+  configured: boolean
+  from_environment: boolean
 }
