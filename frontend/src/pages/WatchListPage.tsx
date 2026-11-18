@@ -148,7 +148,7 @@ export default function WatchListPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Watches</h1>
             {data && (
@@ -157,7 +157,7 @@ export default function WatchListPage() {
               </p>
             )}
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
             <Button onClick={handleExportAllPDF} variant="secondary" disabled={!data || data.total === 0}>
               <FileDown className="h-4 w-4 mr-2" />
               Export All PDF

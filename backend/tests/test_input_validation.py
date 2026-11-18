@@ -107,7 +107,7 @@ class TestDocumentUploads:
         assert r.status_code == 400
 
 
-BASE = dict(POSTGRES_USER="u", POSTGRES_PASSWORD="p", POSTGRES_DB="d")
+BASE = dict(_env_file=None)
 
 
 class TestSecretKeyRules:

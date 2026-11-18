@@ -11,9 +11,9 @@
 Full-stack watch collection management with multi-user support. FastAPI backend, React/TypeScript frontend.
 
 **Tech Stack**:
-- Backend: FastAPI, PostgreSQL, SQLAlchemy, Alembic, Pillow
+- Backend: FastAPI, SQLite, SQLAlchemy, Alembic, Pillow
 - Frontend: React 18, TypeScript, TanStack Query, React Hook Form, Tailwind CSS, Recharts
-- Infrastructure: Docker Compose, Nginx
+- Infrastructure: one Docker image (FastAPI serves API, web app and uploads), one `/data` volume
 - Icons: Lucide React
 
 **Access**:
@@ -36,7 +36,7 @@ Reference data, Collections CRUD, Watches CRUD, filtering/sorting/pagination
 - Primary image management with auto-promotion
 - Full-screen lightbox with keyboard navigation
 - Secure storage: `/app/storage/uploads/{watch_id}/`
-- Nginx serves from `/uploads/` with caching
+- The app serves `/uploads/` only with signed, expiring URLs
 
 ### ✅ Phase 4: Service History
 - Service records with date, provider, type, cost, next service due
@@ -259,33 +259,19 @@ source = Column(
 ## Docker Commands
 
 ```bash
-# Start/stop
-docker-compose up -d
-docker-compose down
+# Build and run from a checkout
+docker build -t watch-tracker .
+docker run -d --name watch-tracker -p 8080:8000 -v watch-data:/data watch-tracker
+# or: docker compose up -d --build
 
-# Rebuild
-docker-compose build backend|frontend --no-cache
-docker-compose up -d backend|frontend
+docker logs -f watch-tracker
+docker exec watch-tracker alembic current
+docker exec watch-tracker python -m app.cli backup
+docker exec -it watch-tracker python -m app.cli create-user EMAIL --admin
 
-# Logs
-docker-compose logs -f backend|frontend|nginx
-
-# Database
-docker-compose exec postgres psql -U watchuser -d watch_tracker
-docker-compose exec backend alembic upgrade head
-docker-compose exec backend alembic revision --autogenerate -m "description"
-
-# Backend shell
-docker-compose exec backend bash
-
-# Health check
-curl http://localhost:8080/health
-
-# Fix 502 errors (when container IPs change)
-docker-compose restart nginx
+# Local development without Docker: see README "Development"
+cd backend && pytest   # temporary SQLite database
 ```
-
----
 
 ## Common Tasks
 
@@ -326,64 +312,21 @@ curl -X GET "http://localhost:8080/api/v1/watches/$WATCH_ID/analytics" \
 
 ## Environment Variables
 
-Required in `.env`:
-```bash
-# Database
-POSTGRES_DB=watch_tracker
-POSTGRES_USER=watchuser
-POSTGRES_PASSWORD=your_password
-
-# Security
-SECRET_KEY=your_secret_key_here
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-REFRESH_TOKEN_EXPIRE_DAYS=7
-
-# CORS
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost
-
-# Storage
-MAX_UPLOAD_SIZE=20971520  # 20MB
-
-# Frontend
-VITE_API_URL=/api
-
-# Server
-HTTP_PORT=8080
-```
+All optional (see README "Settings"): `INITIAL_ADMIN_EMAIL`, `ALLOW_REGISTRATION`,
+`SECRET_KEY` (default: generated into `/data/secret_key`), `DATA_DIR` (default `/data`),
+`DATABASE_URL` (default `sqlite:///$DATA_DIR/watch.db`), `TRUSTED_PROXIES`,
+`BACKUP_KEEP_DAYS`, `BACKUP_INTERVAL_HOURS`, `UPLOAD_URL_TTL_SECONDS`, `MAX_UPLOAD_SIZE`,
+`MAX_DOCUMENT_SIZE`, `LOGIN_MAX_FAILURES`, `LOGIN_LOCKOUT_MINUTES`, `COOKIE_SECURE`,
+`RATE_LIMIT_ENABLED`.
 
 ---
 
 ## Troubleshooting
 
-### Backend Won't Start
-1. Check logs: `docker-compose logs backend`
-2. Verify DB: `docker-compose ps`
-3. Run migrations: `docker-compose exec backend alembic upgrade head`
-
-### Frontend Build Errors
-1. Rebuild: `docker-compose build --no-cache frontend`
-2. Check package.json dependencies
-3. Test build: `docker-compose exec frontend npm run build`
-
-### 502 Bad Gateway
-- Container IPs changed after restart
-- Fix: `docker-compose restart nginx`
-
-### Images Not Accessible
-1. Verify file: `ls storage/uploads/{watch_id}/`
-2. Check nginx config: `docker-compose exec nginx cat /etc/nginx/conf.d/default.conf`
-3. Test URL: `curl http://localhost:8080/uploads/{watch_id}/{filename}`
-
-### Database Migration Issues
-1. Current revision: `docker-compose exec backend alembic current`
-2. History: `docker-compose exec backend alembic history`
-3. Downgrade: `docker-compose exec backend alembic downgrade -1`
-
-### Token Expired
-- Access tokens expire after 30 min
-- Frontend auto-refreshes with refresh token (7 days)
-- Re-login if refresh fails
+- Container stops with "is not writable": bind-mounted `/data` must belong to UID 1000.
+- Logs: `docker logs watch-tracker`; health: `curl http://localhost:8080/health`.
+- Migrations: `docker exec watch-tracker alembic current`. A backup is taken before each migration.
+- Access tokens expire after 30 min; the web app refreshes them with the HttpOnly refresh cookie.
 
 ---
 
@@ -399,7 +342,7 @@ HTTP_PORT=8080
 - CORS configured
 - Password hashing (bcrypt)
 - Security headers (CSP, Permissions Policy)
-- Rate limiting (Nginx + per-user)
+- Rate limiting (in-app, per address) and per-account lockout
 - Connection pooling with health checks
 - Security event logging
 
@@ -478,8 +421,9 @@ HTTP_PORT=8080
 - Pages: `frontend/src/pages/`
 
 ### Infrastructure
-- Docker: `docker-compose.yml`, `docker-compose.prod.yml`
-- Nginx: `nginx/nginx.conf`
+- Docker: `Dockerfile` (root), `docker-compose.yml`
+- Start-up and backups: `backend/app/entrypoint.py`, `backend/app/backup.py`
+- Web app serving: `backend/app/web.py`; uploads: `backend/app/api/v1/uploads.py`
 - Migrations: `backend/alembic/versions/`
 - Tests: `backend/tests/`, `frontend/src/__tests__/`
 - CI/CD: `.github/workflows/ci.yml`

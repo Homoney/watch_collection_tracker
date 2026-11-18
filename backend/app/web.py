@@ -47,7 +47,9 @@ def mount_web_app(app: FastAPI, dist_dir: str) -> bool:
         if f.is_file() and not f.is_symlink()
     }
 
-    @app.get("/{full_path:path}", include_in_schema=False)
+    @app.api_route(
+        "/{full_path:path}", methods=["GET", "HEAD"], include_in_schema=False
+    )
     async def web_app(full_path: str):
         if _is_reserved(full_path):
             raise HTTPException(status_code=404, detail="Not Found")

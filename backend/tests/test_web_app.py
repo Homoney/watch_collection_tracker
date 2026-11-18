@@ -92,3 +92,21 @@ def test_main_app_has_headers(client):
     assert r.json() == {"status": "healthy"}
     assert r.headers["content-security-policy"] == CSP
     assert client.get("/api").json()["message"] == "Watch Collection Tracker API"
+
+
+def test_head_on_web_app_routes(web_client):
+    # Uptime monitors and `curl -I` probe with HEAD
+    for path in ("/", "/watches/123", "/favicon.svg", "/assets/main-abc123.js"):
+        r = web_client.head(path)
+        assert r.status_code == 200, path
+        assert r.content == b""
+
+
+def test_head_on_health(client):
+    assert client.head("/health").status_code == 200
+
+
+def test_csp_allows_blob_images():
+    # Upload previews and the QR code are blob: URLs
+    img_src = next(d for d in CSP.split(";") if d.strip().startswith("img-src"))
+    assert "blob:" in img_src.split()

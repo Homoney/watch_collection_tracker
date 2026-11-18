@@ -71,7 +71,7 @@ This will create images tagged as:
 - `v1`
 - `latest`
 
-And automatically create a GitHub release with the docker-compose.hub.yml file.
+And automatically create a GitHub release with `docker-compose.yml` and `.env.example` attached.
 
 ### Option C: Manual Trigger
 1. Go to **Actions** tab in GitHub
@@ -83,19 +83,12 @@ And automatically create a GitHub release with the docker-compose.hub.yml file.
 
 After the workflow completes (takes 10-15 minutes):
 
-1. Check Docker Hub:
-   - Backend: `https://hub.docker.com/r/dhomoney/watch-tracker-backend`
-   - Frontend: `https://hub.docker.com/r/dhomoney/watch-tracker-frontend`
+1. Check Docker Hub: `https://hub.docker.com/r/dhomoney/watch-tracker`
 
-2. Test pulling the images:
+2. Test pulling and running the image:
    ```bash
-   docker pull dhomoney/watch-tracker-backend:latest
-   docker pull dhomoney/watch-tracker-frontend:latest
-   ```
-
-3. Test running with docker-compose:
-   ```bash
-   docker-compose -f docker-compose.hub.yml up -d
+   docker pull dhomoney/watch-tracker:latest
+   docker run --rm -p 8080:8000 -v watch-test:/data dhomoney/watch-tracker:latest
    ```
 
 ## Workflow Details
@@ -110,10 +103,10 @@ The workflow builds for:
 - `linux/amd64` (Intel/AMD processors)
 - `linux/arm64` (ARM processors, Apple Silicon)
 
-### Images Created
-The workflow creates two images:
-1. `dhomoney/watch-tracker-backend` - FastAPI backend
-2. `dhomoney/watch-tracker-frontend` - React frontend (served by nginx)
+### Image Created
+One image, `dhomoney/watch-tracker`, built from the root `Dockerfile`: the web app is built with Node, then served by the FastAPI app with the API and uploaded files.
+
+The old `dhomoney/watch-tracker-backend` and `dhomoney/watch-tracker-frontend` images are no longer built. Mark them deprecated on Docker Hub (repository description) and point to `dhomoney/watch-tracker`.
 
 ### Build Time
 - First build: ~10-15 minutes (no cache)
