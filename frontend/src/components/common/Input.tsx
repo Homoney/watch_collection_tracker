@@ -20,7 +20,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           className={`
             appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md
             placeholder-gray-400 text-gray-900
-            dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-500
+            dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400
             focus:outline-none focus:ring-blue-500 focus:border-blue-500
             disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400
             sm:text-sm

@@ -66,10 +66,11 @@ body {
 /*
  * Dark mode for components that only have light classes.
  *
- * Outside any @layer on purpose: these must come after Tailwind's utilities,
- * or `.bg-white` etc. win (the old mapping in @layer base never applied).
- * The :not([class*="dark:..."]) guard leaves elements with their own dark:
- * classes alone, so explicit dark styles still decide. Light mode is untouched.
+ * The old mapping sat in @layer base and lost to the utilities (same
+ * specificity, emitted later), so it never applied. Here the
+ * :not([class*="dark:..."]) guard both raises specificity above the utility
+ * it remaps and leaves elements with their own dark: classes alone, so
+ * explicit dark styles still decide. Light mode is untouched.
  * Text colours are chosen for at least WCAG AA contrast on gray-800/900.
  */
 @media (prefers-color-scheme: dark) {
@@ -83,6 +84,7 @@ body {
   .bg-gray-50:not([class*="dark:bg-"]) { background-color: theme('colors.gray.900'); }
   .bg-gray-100:not([class*="dark:bg-"]) { background-color: theme('colors.gray.700'); }
   .bg-gray-200:not([class*="dark:bg-"]) { background-color: theme('colors.gray.700'); }
+  .disabled\:bg-gray-100:disabled:not([class*="dark:disabled:bg-"]) { background-color: theme('colors.gray.700'); }
   .hover\:bg-white:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.700'); }
   .hover\:bg-gray-50:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.700'); }
   .hover\:bg-gray-100:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.700'); }
