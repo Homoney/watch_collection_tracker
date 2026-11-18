@@ -55,7 +55,7 @@ Authorization: Bearer <your_access_token>
 * Uploads: served by nginx only with a signed, expiring URL
 * API responses: No-cache by default
     """,
-    version="1.1.0",
+    version="1.2.0",
     contact={
         "name": "Watch Collection Tracker Support",
         "url": "https://github.com/Homoney/watch_collection_tracker",
@@ -135,7 +135,7 @@ app.include_router(
 
 @app.get("/")
 async def root():
-    return {"message": "Watch Collection Tracker API", "version": "1.1.0"}
+    return {"message": "Watch Collection Tracker API", "version": "1.2.0"}
 
 
 @app.get("/health")
