@@ -11,7 +11,12 @@ from app.models.user import User
 from app.models.watch import Watch
 from app.models.watch_image import ImageSourceEnum, WatchImage
 from app.schemas.watch_image import UpdateImageRequest, WatchImageResponse
-from app.utils.file_upload import delete_file, save_uploaded_file, validate_image_file
+from app.utils.file_upload import (
+    InvalidUploadError,
+    delete_file,
+    save_uploaded_file,
+    validate_image_file,
+)
 
 router = APIRouter()
 
@@ -84,9 +89,18 @@ async def upload_image(
             detail=f"File size exceeds maximum allowed size of {max_size_mb}MB",
         )
 
+    image_count = db.query(WatchImage).filter(WatchImage.watch_id == watch_id).count()
+    if image_count >= settings.MAX_IMAGES_PER_WATCH:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"A watch can have at most {settings.MAX_IMAGES_PER_WATCH} images",
+        )
+
     # Save file to disk
     try:
         file_metadata = save_uploaded_file(file, watch_id)
+    except InvalidUploadError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

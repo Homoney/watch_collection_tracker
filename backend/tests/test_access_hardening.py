@@ -217,14 +217,14 @@ REG = "/api/v1/auth/register"
 class TestRegistration:
     def test_closed_by_default(self, client, test_db: Session, monkeypatch):
         monkeypatch.setattr(settings, "ALLOW_REGISTRATION", False)
-        r = client.post(REG, json={"email": "a@example.com", "password": "password123"})
+        r = client.post(REG, json={"email": "a@example.com", "password": "watch-pass-123"})
         assert r.status_code == 403
         assert test_db.query(User).count() == 0
 
     def test_initial_admin_can_bootstrap(self, client, test_db, monkeypatch):
         monkeypatch.setattr(settings, "ALLOW_REGISTRATION", False)
         monkeypatch.setattr(settings, "INITIAL_ADMIN_EMAIL", "Owner@Example.com")
-        r = client.post(REG, json={"email": "owner@example.com", "password": "password123"})
+        r = client.post(REG, json={"email": "owner@example.com", "password": "watch-pass-123"})
         assert r.status_code == 201
         user = test_db.query(User).filter(User.email == "owner@example.com").one()
         assert user.role == UserRole.admin
@@ -234,17 +234,17 @@ class TestRegistration:
     ):
         monkeypatch.setattr(settings, "ALLOW_REGISTRATION", False)
         monkeypatch.setattr(settings, "INITIAL_ADMIN_EMAIL", "owner@example.com")
-        r = client.post(REG, json={"email": "owner@example.com", "password": "password123"})
+        r = client.post(REG, json={"email": "owner@example.com", "password": "watch-pass-123"})
         assert r.status_code == 403
 
     def test_other_email_cannot_bootstrap(self, client, test_db, monkeypatch):
         monkeypatch.setattr(settings, "ALLOW_REGISTRATION", False)
         monkeypatch.setattr(settings, "INITIAL_ADMIN_EMAIL", "owner@example.com")
-        r = client.post(REG, json={"email": "x@example.com", "password": "password123"})
+        r = client.post(REG, json={"email": "x@example.com", "password": "watch-pass-123"})
         assert r.status_code == 403
 
     def test_open_registration_never_grants_admin(self, client, test_db):
-        r = client.post(REG, json={"email": "a@example.com", "password": "password123"})
+        r = client.post(REG, json={"email": "a@example.com", "password": "watch-pass-123"})
         assert r.status_code == 201
         assert test_db.query(User).one().role == UserRole.user
 
@@ -254,11 +254,11 @@ class TestRegistration:
 
 class TestCreateUserCommand:
     def test_create_admin(self, test_db):
-        user, created = create_user(test_db, "boss@example.com", "password123", admin=True)
+        user, created = create_user(test_db, "boss@example.com", "watch-pass-123", admin=True)
         assert created and user.role == UserRole.admin
 
     def test_create_plain_user(self, test_db):
-        user, created = create_user(test_db, "u@example.com", "password123")
+        user, created = create_user(test_db, "u@example.com", "watch-pass-123")
         assert created and user.role == UserRole.user
 
     def test_promote_existing(self, test_db, test_user):
@@ -267,7 +267,7 @@ class TestCreateUserCommand:
 
     def test_duplicate_without_admin_flag(self, test_db, test_user):
         with pytest.raises(ValueError):
-            create_user(test_db, test_user.email, "password123")
+            create_user(test_db, test_user.email, "watch-pass-123")
 
     def test_short_password(self, test_db):
         with pytest.raises(ValueError):

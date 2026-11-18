@@ -2,7 +2,7 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Enum, String
+from sqlalchemy import Column, DateTime, Enum, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -46,6 +46,11 @@ class User(Base):
     theme = Column(
         Enum(ThemeEnum, name="themeenum"), default=ThemeEnum.light, nullable=False
     )
+    # Bumped to invalidate every issued token (password change, logout, reset)
+    token_version = Column(Integer, default=0, server_default="0", nullable=False)
+    # Login throttling
+    failed_login_count = Column(Integer, default=0, server_default="0", nullable=False)
+    locked_until = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False

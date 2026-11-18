@@ -17,10 +17,9 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
+from app.core.passwords import password_problem
 from app.core.security import get_password_hash
 from app.models.user import User, UserRole
-
-MIN_PASSWORD_LENGTH = 8
 
 
 def _read_password() -> str:
@@ -53,8 +52,9 @@ def create_user(
         db.commit()
         db.refresh(existing)
         return existing, False
-    if not password or len(password) < MIN_PASSWORD_LENGTH:
-        raise ValueError(f"Password must be at least {MIN_PASSWORD_LENGTH} characters")
+    problem = password_problem(password or "")
+    if problem:
+        raise ValueError(problem)
     user = User(
         email=email,
         full_name=full_name,

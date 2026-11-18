@@ -1,14 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from datetime import datetime, timedelta
+from typing import Optional
+
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Request, Response, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.deps import get_current_user
 from app.core.security import (
-    create_access_token,
-    create_refresh_token,
     decode_token,
     get_password_hash,
+    issue_tokens,
+    token_version_matches,
     verify_password,
 )
 from app.database import get_db
@@ -29,11 +32,74 @@ router = APIRouter()
 # Arbitrary constant identifying the registration advisory lock
 REGISTER_LOCK_KEY = 7_141_901
 
+REFRESH_COOKIE = "refresh_token"
+REFRESH_COOKIE_PATH = "/api/v1/auth"
+
+
+def _cookie_secure(request: Request) -> bool:
+    if settings.COOKIE_SECURE is not None:
+        return settings.COOKIE_SECURE
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    return proto.split(",")[0].strip() == "https"
+
+
+def _set_refresh_cookie(response: Response, request: Request, token: str) -> None:
+    response.set_cookie(
+        REFRESH_COOKIE,
+        token,
+        max_age=settings.REFRESH_TOKEN_EXPIRE_DAYS * 86400,
+        path=REFRESH_COOKIE_PATH,
+        httponly=True,
+        secure=_cookie_secure(request),
+        samesite="strict",
+    )
+
+
+def _clear_refresh_cookie(response: Response, request: Request) -> None:
+    response.delete_cookie(
+        REFRESH_COOKIE,
+        path=REFRESH_COOKIE_PATH,
+        httponly=True,
+        secure=_cookie_secure(request),
+        samesite="strict",
+    )
+
+
+def _ensure_not_locked(user: User) -> None:
+    if user.locked_until and user.locked_until > datetime.utcnow():
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many failed attempts. Try again later.",
+        )
+
+
+def _record_failure(db: Session, user: User) -> None:
+    user.failed_login_count = (user.failed_login_count or 0) + 1
+    if user.failed_login_count >= settings.LOGIN_MAX_FAILURES:
+        user.locked_until = datetime.utcnow() + timedelta(
+            minutes=settings.LOGIN_LOCKOUT_MINUTES
+        )
+        user.failed_login_count = 0
+        log_security_event("account_locked", user_id=str(user.id), email=user.email)
+    db.commit()
+
+
+def _record_success(db: Session, user: User) -> None:
+    if user.failed_login_count or user.locked_until:
+        user.failed_login_count = 0
+        user.locked_until = None
+        db.commit()
+
 
 @router.post(
     "/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED
 )
-def register(user_data: UserCreate, db: Session = Depends(get_db)):
+def register(
+    user_data: UserCreate,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
     """Register a new user.
 
     Registration is closed unless ALLOW_REGISTRATION is on. On an empty
@@ -87,15 +153,18 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
         "user_registered", user_id=str(new_user.id), email=new_user.email
     )
 
-    # Generate tokens
-    access_token = create_access_token(data={"sub": str(new_user.id)})
-    refresh_token = create_refresh_token(data={"sub": str(new_user.id)})
-
+    access_token, refresh_token = issue_tokens(new_user)
+    _set_refresh_cookie(response, request, refresh_token)
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(user_data: UserLogin, db: Session = Depends(get_db)):
+def login(
+    user_data: UserLogin,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
     """Login with email and password"""
     # Find user by email
     user = db.query(User).filter(User.email == user_data.email).first()
@@ -108,8 +177,11 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
             detail="Incorrect email or password",
         )
 
+    _ensure_not_locked(user)
+
     # Verify password
     if not verify_password(user_data.password, user.hashed_password):
+        _record_failure(db, user)
         log_security_event(
             "login_failed",
             user_id=str(user.id),
@@ -121,50 +193,73 @@ def login(user_data: UserLogin, db: Session = Depends(get_db)):
             detail="Incorrect email or password",
         )
 
+    _record_success(db, user)
+
     # Log successful login
     log_security_event("login_success", user_id=str(user.id), email=user.email)
 
-    # Generate tokens
-    access_token = create_access_token(data={"sub": str(user.id)})
-    refresh_token = create_refresh_token(data={"sub": str(user.id)})
-
+    access_token, refresh_token = issue_tokens(user)
+    _set_refresh_cookie(response, request, refresh_token)
     return TokenResponse(access_token=access_token, refresh_token=refresh_token)
 
 
 @router.post("/refresh", response_model=TokenResponse)
-def refresh(token_data: TokenRefresh):
-    """Refresh access token using refresh token"""
-    payload = decode_token(token_data.refresh_token)
+def refresh(
+    request: Request,
+    response: Response,
+    token_data: Optional[TokenRefresh] = None,
+    refresh_cookie: Optional[str] = Cookie(default=None, alias=REFRESH_COOKIE),
+    db: Session = Depends(get_db),
+):
+    """Issue new tokens from a refresh token (HttpOnly cookie, or JSON body)."""
+    from_body = token_data is not None and bool(token_data.refresh_token)
+    token = token_data.refresh_token if from_body else refresh_cookie
+    invalid = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
+    )
+    if not token:
+        raise invalid
 
+    payload = decode_token(token)
     if payload is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
-        )
-
+        raise invalid
     if payload.get("type") != "refresh":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token type"
         )
-
     user_id = payload.get("sub")
     if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
-        )
+        raise invalid
 
-    # Generate new tokens
-    access_token = create_access_token(data={"sub": user_id})
-    new_refresh_token = create_refresh_token(data={"sub": user_id})
+    user = db.query(User).filter(User.id == user_id).first()
+    if user is None or not token_version_matches(payload, user):
+        _clear_refresh_cookie(response, request)
+        raise invalid
 
-    return TokenResponse(access_token=access_token, refresh_token=new_refresh_token)
+    access_token, new_refresh_token = issue_tokens(user)
+    _set_refresh_cookie(response, request, new_refresh_token)
+    # Only hand the refresh token back to callers that sent one in the body;
+    # browser sessions keep it in the HttpOnly cookie only.
+    return TokenResponse(
+        access_token=access_token,
+        refresh_token=new_refresh_token if from_body else None,
+    )
 
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(current_user: User = Depends(get_current_user)):
-    """Logout current user (client should discard tokens)"""
-    # In a stateless JWT system, logout is handled client-side
-    # This endpoint exists for consistency and future enhancements
-    return None
+def logout(
+    request: Request,
+    response: Response,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Log out: ends every session of this user and clears the cookie."""
+    current_user.token_version = (current_user.token_version or 0) + 1
+    db.commit()
+    log_security_event("logout", user_id=str(current_user.id))
+    _clear_refresh_cookie(response, request)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response
 
 
 @router.get("/me", response_model=UserResponse)
@@ -196,20 +291,31 @@ def update_me(
 @router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
 def change_password(
     password_data: UserChangePassword,
+    request: Request,
+    response: Response,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Change current user password"""
+    _ensure_not_locked(current_user)
+
     # Verify current password
     if not verify_password(
         password_data.current_password, current_user.hashed_password
     ):
+        _record_failure(db, current_user)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Incorrect current password"
         )
 
-    # Update password
+    # Update password and end all other sessions
     current_user.hashed_password = get_password_hash(password_data.new_password)
+    current_user.token_version = (current_user.token_version or 0) + 1
     db.commit()
+    log_security_event("password_changed", user_id=str(current_user.id))
 
-    return None
+    # Keep this browser signed in: the next refresh uses the new cookie.
+    _, refresh_token = issue_tokens(current_user)
+    _set_refresh_cookie(response, request, refresh_token)
+    response.status_code = status.HTTP_204_NO_CONTENT
+    return response

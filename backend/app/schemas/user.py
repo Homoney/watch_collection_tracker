@@ -2,7 +2,9 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+
+from app.core.passwords import password_problem
 
 
 class UserBase(BaseModel):
@@ -12,6 +14,14 @@ class UserBase(BaseModel):
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8, max_length=100)
+
+    @field_validator("password")
+    @classmethod
+    def _check_password(cls, value: str) -> str:
+        problem = password_problem(value)
+        if problem:
+            raise ValueError(problem)
+        return value
 
 
 class UserLogin(BaseModel):
@@ -29,6 +39,14 @@ class UserChangePassword(BaseModel):
     current_password: str
     new_password: str = Field(..., min_length=8, max_length=100)
 
+    @field_validator("new_password")
+    @classmethod
+    def _check_new_password(cls, value: str) -> str:
+        problem = password_problem(value)
+        if problem:
+            raise ValueError(problem)
+        return value
+
 
 class UserResponse(UserBase):
     id: UUID
@@ -43,7 +61,8 @@ class UserResponse(UserBase):
 
 class TokenResponse(BaseModel):
     access_token: str
-    refresh_token: str
+    # Omitted when the refresh token travels only in the HttpOnly cookie
+    refresh_token: Optional[str] = None
     token_type: str = "bearer"
 
 
@@ -61,3 +80,11 @@ class UserAdminPasswordReset(BaseModel):
     """Admin-only password reset schema"""
 
     new_password: str = Field(..., min_length=8, max_length=100)
+
+    @field_validator("new_password")
+    @classmethod
+    def _check_new_password(cls, value: str) -> str:
+        problem = password_problem(value)
+        if problem:
+            raise ValueError(problem)
+        return value

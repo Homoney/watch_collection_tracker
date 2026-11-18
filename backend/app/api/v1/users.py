@@ -103,6 +103,9 @@ def reset_user_password(
         )
 
     user.hashed_password = get_password_hash(password_data.new_password)
+    user.token_version = (user.token_version or 0) + 1  # end the user's sessions
+    user.failed_login_count = 0
+    user.locked_until = None
     db.commit()
 
     log_security_event(

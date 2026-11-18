@@ -48,6 +48,17 @@ def create_refresh_token(data: dict) -> str:
     return encoded_jwt
 
 
+def issue_tokens(user) -> tuple:
+    """Return (access_token, refresh_token) bound to the user's token_version."""
+    data = {"sub": str(user.id), "ver": user.token_version or 0}
+    return create_access_token(data=data), create_refresh_token(data=data)
+
+
+def token_version_matches(payload: dict, user) -> bool:
+    """Tokens issued before token_version existed carry no claim: treat as 0."""
+    return payload.get("ver", 0) == (user.token_version or 0)
+
+
 def decode_token(token: str) -> Optional[dict]:
     """Decode and verify a JWT token"""
     try:

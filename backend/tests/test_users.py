@@ -449,7 +449,7 @@ class TestAdminAccessControl:
             "/api/v1/auth/register",
             json={
                 "email": "first@example.com",
-                "password": "password123"
+                "password": "watch-pass-123"
             }
         )
 

@@ -29,6 +29,76 @@ ALLOWED_DOCUMENT_MIME_TYPES = [
 # Allowed document extensions
 ALLOWED_DOCUMENT_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png"]
 
+# Formats Pillow must detect in the bytes (not just the declared type)
+IMAGE_FORMAT_MIME = {
+    "JPEG": "image/jpeg",
+    "PNG": "image/png",
+    "GIF": "image/gif",
+    "WEBP": "image/webp",
+}
+DOCUMENT_IMAGE_FORMATS = {"JPEG", "PNG"}
+
+# Refuse images that decode to more pixels than this (decompression bombs).
+MAX_IMAGE_PIXELS = 100_000_000
+PILImage.MAX_IMAGE_PIXELS = MAX_IMAGE_PIXELS
+
+CHUNK_SIZE = 1024 * 1024
+
+
+class InvalidUploadError(ValueError):
+    """The uploaded bytes are not an allowed file, or are too large."""
+
+
+def _write_limited(file: UploadFile, dest: Path, max_bytes: int) -> int:
+    """Copy the upload to dest in chunks, stopping once it passes max_bytes."""
+    file.file.seek(0)
+    written = 0
+    try:
+        with open(dest, "wb") as buffer:
+            while True:
+                chunk = file.file.read(CHUNK_SIZE)
+                if not chunk:
+                    break
+                written += len(chunk)
+                if written > max_bytes:
+                    raise InvalidUploadError(
+                        f"File size exceeds maximum allowed size of "
+                        f"{max_bytes / (1024 * 1024):g}MB"
+                    )
+                buffer.write(chunk)
+    except BaseException:
+        dest.unlink(missing_ok=True)
+        raise
+    return written
+
+
+def inspect_image(path: Path, allowed_formats=IMAGE_FORMAT_MIME.keys()) -> tuple:
+    """Check the file really is an allowed image. Returns (mime, width, height)."""
+    try:
+        with PILImage.open(path) as img:
+            fmt = img.format
+            width, height = img.size
+            img.verify()
+    except (PILImage.DecompressionBombError, PILImage.DecompressionBombWarning):
+        raise InvalidUploadError("Image dimensions are too large")
+    except Exception:
+        raise InvalidUploadError("File is not a valid image")
+    if fmt not in allowed_formats:
+        raise InvalidUploadError("File is not an allowed image type")
+    if width * height > MAX_IMAGE_PIXELS:
+        raise InvalidUploadError("Image dimensions are too large")
+    return IMAGE_FORMAT_MIME[fmt], width, height
+
+
+def inspect_document(path: Path) -> str:
+    """Check a service document is a real PDF or JPEG/PNG. Returns its MIME type."""
+    with open(path, "rb") as fh:
+        head = fh.read(5)
+    if head == b"%PDF-":
+        return "application/pdf"
+    mime, _, _ = inspect_image(path, DOCUMENT_IMAGE_FORMATS)
+    return mime
+
 
 def validate_image_file(file: UploadFile) -> Tuple[bool, str]:
     """
@@ -149,16 +219,13 @@ def save_uploaded_file(
         file_path = watch_dir / sanitized_name
         counter += 1
 
-    # Save file to disk
-    with open(file_path, "wb") as buffer:
-        content = file.file.read()
-        buffer.write(content)
-
-    # Get file size
-    file_size = file_path.stat().st_size
-
-    # Extract image dimensions
-    width, height = get_image_dimensions(str(file_path))
+    # Save file to disk (size-capped), then check the bytes are an image
+    file_size = _write_limited(file, file_path, settings.MAX_UPLOAD_SIZE)
+    try:
+        mime_type, width, height = inspect_image(file_path)
+    except InvalidUploadError:
+        file_path.unlink(missing_ok=True)
+        raise
 
     # Build relative path (watch_id/filename)
     relative_path = f"{watch_id}/{sanitized_name}"
@@ -167,7 +234,7 @@ def save_uploaded_file(
         "file_path": relative_path,
         "file_name": sanitized_name,
         "file_size": file_size,
-        "mime_type": file.content_type or "image/jpeg",
+        "mime_type": mime_type,
         "width": width,
         "height": height,
     }
@@ -242,13 +309,13 @@ def save_service_document(
         file_path = service_dir / sanitized_name
         counter += 1
 
-    # Save file to disk
-    with open(file_path, "wb") as buffer:
-        content = file.file.read()
-        buffer.write(content)
-
-    # Get file size
-    file_size = file_path.stat().st_size
+    # Save file to disk (size-capped), then check the bytes match the type
+    file_size = _write_limited(file, file_path, settings.MAX_DOCUMENT_SIZE)
+    try:
+        mime_type = inspect_document(file_path)
+    except InvalidUploadError:
+        file_path.unlink(missing_ok=True)
+        raise
 
     # Build relative path (watch_id/service_id/filename)
     relative_path = f"{watch_id}/{service_id}/{sanitized_name}"
@@ -257,7 +324,7 @@ def save_service_document(
         "file_path": relative_path,
         "file_name": sanitized_name,
         "file_size": file_size,
-        "mime_type": file.content_type or "application/pdf",
+        "mime_type": mime_type,
     }
 
 
