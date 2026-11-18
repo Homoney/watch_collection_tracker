@@ -432,12 +432,12 @@ export const marketValuesApi = {
 // Saved Searches API
 export const savedSearchesApi = {
   list: async (): Promise<SavedSearch[]> => {
-    const response = await api.get<SavedSearch[]>('/v1/saved-searches')
+    const response = await api.get<SavedSearch[]>('/v1/saved-searches/')
     return response.data
   },
 
   create: async (data: SavedSearchCreate): Promise<SavedSearch> => {
-    const response = await api.post<SavedSearch>('/v1/saved-searches', data)
+    const response = await api.post<SavedSearch>('/v1/saved-searches/', data)
     return response.data
   },
 

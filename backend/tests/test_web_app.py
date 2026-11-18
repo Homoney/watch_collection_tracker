@@ -27,6 +27,14 @@ def web_client(dist):
     async def ping():
         return {"ok": True}
 
+    @app.get("/api/v1/items/")
+    async def list_items():
+        return []
+
+    @app.post("/api/v1/items/", status_code=201)
+    async def create_item():
+        return {"created": True}
+
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(GZipMiddleware, minimum_size=1024)
     assert mount_web_app(app, str(dist)) is True
@@ -64,6 +72,21 @@ def test_api_and_uploads_never_fall_back_to_index(web_client):
     assert web_client.get("/api/v1/ping").json() == {"ok": True}
     for path in ("/api/v1/nope", "/api", "/uploads/x/y.jpg", "/health"):
         assert web_client.get(path).status_code == 404, path
+
+
+def test_api_path_without_trailing_slash_redirects(web_client):
+    # Issue: the web app swallowed /api/v1/saved-searches (no slash) with a
+    # 404 instead of FastAPI's usual redirect to /api/v1/saved-searches/
+    for method in ("GET", "POST"):
+        r = web_client.request(method, "/api/v1/items", follow_redirects=False)
+        assert r.status_code == 307, method
+        assert r.headers["location"].endswith("/api/v1/items/"), method
+    assert web_client.get("/api/v1/items").json() == []
+    assert web_client.post("/api/v1/items").status_code == 201
+
+
+def test_other_methods_on_app_routes_are_not_found(web_client):
+    assert web_client.post("/watches/123").status_code == 404
 
 
 def test_no_escape_from_dist(web_client):
