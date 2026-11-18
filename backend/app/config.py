@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     # CORS
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost"
 
+    # Built web app (index.html and assets/); not served when missing
+    WEB_DIR: str = "/app/web"
+
     # Storage
     UPLOAD_DIR: str = "/app/storage/uploads"
     BACKUP_DIR: str = "/app/storage/backups"

@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from app.api.v1 import (
     auth,
@@ -16,6 +17,8 @@ from app.api.v1 import (
 )
 from app.config import settings
 from app.middleware.cache import CacheMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.web import mount_web_app
 
 app = FastAPI(
     title="Watch Collection Tracker API",
@@ -52,7 +55,7 @@ Authorization: Bearer <your_access_token>
 ## Caching
 
 * Reference data endpoints: Cached for 1 hour
-* Uploads: served by nginx only with a signed, expiring URL
+* Uploads: served only with a signed, expiring URL
 * API responses: No-cache by default
     """,
     version="1.2.0",
@@ -99,6 +102,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Security headers and compression (outermost, so they cover every response)
+app.add_middleware(SecurityHeadersMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=1024)
+
 # Include routers
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Authentication"])
 app.include_router(
@@ -133,11 +140,15 @@ app.include_router(
 )
 
 
-@app.get("/")
-async def root():
-    return {"message": "Watch Collection Tracker API", "version": "1.2.0"}
+@app.get("/api")
+async def api_root():
+    return {"message": "Watch Collection Tracker API", "version": app.version}
 
 
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
+
+# The web app's catch-all route must be registered last
+mount_web_app(app, settings.WEB_DIR)
