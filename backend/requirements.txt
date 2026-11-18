@@ -1,7 +1,7 @@
 # FastAPI and ASGI server
-fastapi>=0.128.0
+fastapi==0.128.0
 uvicorn[standard]==0.27.0
-python-multipart==0.0.22
+python-multipart==0.0.31
 
 # Database
 sqlalchemy==2.0.25
@@ -9,12 +9,12 @@ alembic==1.13.1
 psycopg2-binary==2.9.9
 
 # Authentication and security
-python-jose[cryptography]>=3.3.0
+python-jose[cryptography]==3.5.0
 bcrypt==4.1.2
-python-dotenv==1.0.0
+python-dotenv==1.2.2
 
 # Image processing
-Pillow==11.1.0
+Pillow==13.0.0
 qrcode[pil]==7.4.2
 
 # PDF generation
@@ -25,9 +25,9 @@ beautifulsoup4==4.12.3
 lxml==5.1.0
 
 # Validation
-pydantic>=2.7.0
-pydantic-settings>=2.1.0
-email-validator==2.1.0
+pydantic==2.10.6
+pydantic-settings==2.7.1
+email-validator==2.2.0
 
 # HTTP requests
 httpx==0.26.0
