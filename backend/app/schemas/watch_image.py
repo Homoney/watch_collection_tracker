@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 
 class WatchImageResponse(BaseModel):
@@ -27,8 +27,7 @@ class WatchImageResponse(BaseModel):
         """Generate the public URL for the image"""
         return f"/uploads/{self.file_path}"
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UpdateImageRequest(BaseModel):

@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class BrandResponse(BaseModel):
@@ -8,8 +8,7 @@ class BrandResponse(BaseModel):
     name: str
     sort_order: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MovementTypeResponse(BaseModel):
@@ -17,8 +16,7 @@ class MovementTypeResponse(BaseModel):
     name: str
     sort_order: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ComplicationResponse(BaseModel):
@@ -26,5 +24,4 @@ class ComplicationResponse(BaseModel):
     name: str
     sort_order: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -3,7 +3,7 @@ from decimal import Decimal
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 
 class ServiceHistoryBase(BaseModel):
@@ -53,8 +53,7 @@ class ServiceDocumentResponse(BaseModel):
         """Generate URL for accessing the document"""
         return f"/uploads/service-docs/{self.file_path}"
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ServiceHistoryResponse(ServiceHistoryBase):
@@ -66,5 +65,4 @@ class ServiceHistoryResponse(ServiceHistoryBase):
     updated_at: datetime
     documents: List[ServiceDocumentResponse] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
