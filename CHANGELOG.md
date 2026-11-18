@@ -2,6 +2,19 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [2.0.2] - 2026-11-18
+
+Fixes and maintenance only. No upgrade steps.
+
+### Fixed
+- Fixes #201 and #202.
+
+### Added
+- LICENSE and SECURITY.md. Private vulnerability reporting is turned on for the repository.
+
+### Removed
+- `github-sync.sh` and `mcp.json` (unused housekeeping files).
+
 ## [2.0.1] - 2026-11-18
 
 Fixes and maintenance only. No upgrade steps.
