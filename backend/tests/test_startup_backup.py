@@ -130,3 +130,31 @@ class TestBackup:
         assert cli.main(["backup"]) == 0
         assert "Backup written to" in capsys.readouterr().out
         assert len(backup.list_backups()) == 1
+
+
+def test_trusted_proxies_accepts_a_network_range():
+    """docker-compose.yml suggests TRUSTED_PROXIES=172.16.0.0/12 for a proxy
+    on a Docker network; uvicorn must honour X-Forwarded-For from that range."""
+    import asyncio
+
+    from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
+
+    seen = {}
+
+    async def app(scope, receive, send):
+        seen["client"] = scope["client"][0]
+
+    mw = ProxyHeadersMiddleware(app, trusted_hosts="172.16.0.0/12")
+
+    def call(peer):
+        scope = {
+            "type": "http",
+            "client": (peer, 1234),
+            "scheme": "http",
+            "headers": [(b"x-forwarded-for", b"203.0.113.9")],
+        }
+        asyncio.run(mw(scope, None, None))
+        return seen["client"]
+
+    assert call("172.18.0.5") == "203.0.113.9"
+    assert call("10.0.0.7") == "10.0.0.7"
