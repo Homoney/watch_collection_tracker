@@ -170,7 +170,6 @@ services:
 volumes:
   postgres-data:
     driver: local
-    driver: local
 
 networks:
   watch-tracker-network:
