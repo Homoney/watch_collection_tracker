@@ -123,7 +123,7 @@ The container speaks plain HTTP on port 8000. For HTTPS, put a reverse proxy in 
 # Backend (http://localhost:8000)
 cd backend
 python -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements-dev.txt   # app + test tools
 export DATA_DIR=$PWD/../.data SECRET_KEY=$(openssl rand -hex 32)
 python -m app.entrypoint     # creates .data, migrates, starts uvicorn
 

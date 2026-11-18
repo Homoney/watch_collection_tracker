@@ -15,9 +15,18 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     DATA_DIR=/data \
     WEB_DIR=/app/web
 
+# Pick up Debian security fixes released since the base image was built;
+# no new packages are added
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
+# Runtime packages only (tests use requirements-dev.txt); pip and setuptools
+# from the base image are upgraded for their own security fixes
 COPY backend/requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools \
+    && pip install --no-cache-dir -r requirements.txt
 
 COPY backend/ ./
 COPY --from=web /web/dist /app/web

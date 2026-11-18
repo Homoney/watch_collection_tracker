@@ -28,13 +28,15 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
-          cache-dependency-path: backend/requirements.txt
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
 
       - name: Install dependencies
         run: |
           cd backend
           pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
 
       - name: Run tests with coverage
         # Tests use a temporary SQLite database (see tests/conftest.py)
@@ -140,7 +142,7 @@ jobs:
         run: |
           cd backend
           pip install pip-audit
-          pip-audit -r requirements.txt --desc
+          pip-audit -r requirements-dev.txt --desc
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
