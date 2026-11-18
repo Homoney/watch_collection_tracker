@@ -140,7 +140,7 @@ class TestCreateMarketValue:
             json={"value": "15000", "currency": "USD", "source": "manual"}
         )
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
     def test_create_market_value_wrong_owner(
         self,
@@ -766,7 +766,7 @@ class TestWatchAnalytics:
             f"/api/v1/watches/{test_watch.id}/analytics"
         )
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
 
 class TestCollectionAnalytics:

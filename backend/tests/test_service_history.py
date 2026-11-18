@@ -143,7 +143,7 @@ class TestCreateServiceHistory:
             }
         )
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
     def test_create_service_history_wrong_owner(
         self,
@@ -272,7 +272,7 @@ class TestListServiceHistory:
             f"/api/v1/watches/{test_watch.id}/service-history"
         )
 
-        assert response.status_code == 403
+        assert response.status_code == 401
 
 
 class TestGetServiceHistory:

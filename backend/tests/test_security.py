@@ -44,7 +44,7 @@ class TestTokenValidation:
     def test_missing_token(self, client: TestClient):
         """Test that missing token is rejected"""
         response = client.get("/api/v1/auth/me")
-        assert response.status_code == 403
+        assert response.status_code == 401
 
 
 class TestAuthorizationChecks:
