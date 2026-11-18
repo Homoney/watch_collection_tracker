@@ -1,0 +1,35 @@
+{
+ "num_results": 2,
+ "watches": [
+  {
+   "id": 42294,
+   "refnr": "126610LN-0001",
+   "name": "Submariner Date 41 Stainless Steel / Black / Cerachrom",
+   "brand": {
+    "id": 54,
+    "name": "Rolex"
+   },
+   "family": {
+    "id": 281,
+    "name": "Submariner"
+   },
+   "thumb": "https://cdn.watchbase.com/watch/md/rolex/submariner/126610ln-0001-78.jpg",
+   "updated": "2024-01-02"
+  },
+  {
+   "id": 42295,
+   "refnr": "126610LV-0002",
+   "name": "Submariner Date 41 Stainless Steel / Black / Green Cerachrom",
+   "brand": {
+    "id": 54,
+    "name": "Rolex"
+   },
+   "family": {
+    "id": 281,
+    "name": "Submariner"
+   },
+   "thumb": "https://cdn.watchbase.com/watch/md/rolex/submariner/126610lv-0002-aa.jpg",
+   "updated": "2024-01-02"
+  }
+ ]
+}

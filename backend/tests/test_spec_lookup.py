@@ -83,8 +83,9 @@ def use_handler(monkeypatch, handler):
 
 
 def caliber_corner(net, with_page=True):
-    net.add("GET", calibercorner.SITEMAPS[0], text=fixture("cc_sitemap.xml"))
-    net.add("GET", calibercorner.SITEMAPS[1], text=fixture("cc_sitemap2.xml"))
+    # Live sitemap format: every URL wrapped in CDATA
+    net.add("GET", calibercorner.SITEMAPS[0], text=fixture("cc_live_sitemap.xml"))
+    net.add("GET", calibercorner.SITEMAPS[1], text=fixture("cc_live_sitemap2.xml"))
     if with_page:
         net.add(
             "GET",
@@ -319,6 +320,15 @@ class TestParsing:
         assert find(index, "Grand Seiko", "9R66") is None
         assert find(index, "Rolex", "") is None
 
+    def test_index_from_live_sitemap_format(self):
+        index = calibercorner.build_index(
+            [fixture("cc_live_sitemap.xml"), fixture("cc_live_sitemap2.xml")]
+        )
+        # CDATA-wrapped <loc> read; /movements/ and <image:loc> photo URLs skipped
+        assert sorted(index) == ["eta|28242", "rolex|3235", "seiko|6n52"]
+        assert index["rolex|3235"] == "https://calibercorner.com/rolex-caliber-3235/"
+        assert all(not u.endswith(".jpg") for u in index.values())
+
     def test_units(self):
         assert parse.millimetres("41.00 mm") == Decimal("41.00")
         assert parse.millimetres("28,5mm") == Decimal("28.50")
@@ -349,6 +359,39 @@ class TestParsing:
 
 
 # ------------------------------------------------------------------ key setting
+
+
+class TestIndexRetry:
+    def test_failed_index_not_refetched_each_lookup(
+        self, client, auth_headers, test_brand, net, monkeypatch
+    ):
+        net.add("GET", calibercorner.SITEMAPS[0], status=503)
+        net.add("GET", calibercorner.SITEMAPS[1], status=503)
+        params = {"reference": "126610LN", "brand_id": str(test_brand.id), "caliber": "3235"}
+        for _ in range(3):
+            r = client.get(URL, params=params, headers=auth_headers)
+            assert r.status_code == 200 and r.json()["status"] == "links_only"
+        assert len(net.calls) == 2  # one try (two sitemaps), then wait
+
+        # An hour later it tries again and builds the index
+        later = calibercorner.time.time() + calibercorner.INDEX_RETRY_AFTER + 1
+        monkeypatch.setattr(calibercorner.time, "time", lambda: later)
+        net.calls.clear()
+        caliber_corner(net)
+        body = client.get(URL, params=params, headers=auth_headers).json()
+        assert body["movement"]["jewels"] == 31
+        assert body["movement"]["source"]["name"] == "Caliber Corner"
+
+    def test_empty_index_not_refetched_each_lookup(
+        self, client, auth_headers, test_brand, net
+    ):
+        empty = '<?xml version="1.0"?><urlset></urlset>'
+        net.add("GET", calibercorner.SITEMAPS[0], text=empty)
+        net.add("GET", calibercorner.SITEMAPS[1], text=empty)
+        params = {"reference": "126610LN", "brand_id": str(test_brand.id), "caliber": "3235"}
+        for _ in range(2):
+            assert client.get(URL, params=params, headers=auth_headers).status_code == 200
+        assert len(net.calls) == 2
 
 
 class TestRecordedLiveAnswers:
@@ -406,6 +449,34 @@ class TestRecordedLiveAnswers:
         )
         assert "GMT" in f["complications"]
         assert body["movement"]["jewels"] == 30
+
+    def test_several_matches_then_pick(
+        self, client, auth_headers, with_key, monkeypatch
+    ):
+        # Search in the live answer format with two watches; the user picks one
+        caliber_corner(with_key)
+        handler = with_key.wb_answers(
+            fixture("wb_search_126610L_two.json"),
+            {"42294": fixture("wb_live_watch_42294.json")},
+        )
+        use_handler(monkeypatch, handler)
+        body = client.get(URL, params={"reference": "126610L"}, headers=auth_headers).json()
+        assert body["status"] == "choices"
+        assert [(c["id"], c["reference"]) for c in body["choices"]] == [
+            (42294, "126610LN-0001"),
+            (42295, "126610LV-0002"),
+        ]
+        assert body["fields"] == {}
+        assert not [c for c in with_key.calls if str(c.url).endswith("/watch")]
+
+        body = client.get(
+            URL, params={"reference": "126610L", "watchbase_id": 42294}, headers=auth_headers
+        ).json()
+        assert body["status"] == "ok"
+        assert body["watchbase_id"] == 42294
+        assert body["fields"]["model"].startswith("Submariner Date 41")
+        watch_calls = [c for c in with_key.calls if str(c.url).endswith("/watch")]
+        assert [with_key.wb_body(c)["id"] for c in watch_calls] == ["42294"]
 
     def test_not_found(self, client, auth_headers, with_key, monkeypatch):
         body = self.lookup(

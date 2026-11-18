@@ -21,3 +21,9 @@ Saved responses for the reference look-up tests (no live calls in CI).
   42294 (126610LN-0001) and 31034 (SBGE201). Long `description` texts are
   trimmed; the key is not in them. The hand-made `wb_*.json` files above are
   kept for the error and choice cases.
+- `cc_live_sitemap*.xml`: Caliber Corner's real sitemap format (saved
+  2026-11-18), cut to a few `<url>` entries: each URL is wrapped in
+  `<![CDATA[...]]>` and entries carry `<image:loc>` photo URLs, which the
+  index must skip. `cc_sitemap*.xml` are the older plain-`<loc>` form.
+- `wb_search_126610L_two.json`: the live search answer for 126610LN with a
+  second (made-up) 126610LV entry added, for the choice-then-pick test.

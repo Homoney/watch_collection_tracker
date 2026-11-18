@@ -27,9 +27,12 @@ SITE = "https://calibercorner.com"
 SITEMAPS = (f"{SITE}/post-sitemap.xml", f"{SITE}/post-sitemap2.xml")
 SOURCE_NAME = "Caliber Corner"
 INDEX_MAX_AGE = 7 * 24 * 3600
+INDEX_RETRY_AFTER = 3600  # after a failed or empty fetch, wait before trying again
 
 throttle = http.Throttle(1.0)
 
+# The live sitemaps wrap each URL in CDATA: <loc><![CDATA[https://...]]></loc>
+_LOC = re.compile(r"<loc>\s*(?:<!\[CDATA\[)?\s*([^<\s\]]+)\s*(?:\]\]>)?\s*</loc>")
 _PAGE = re.compile(r"^https://calibercorner\.com/([a-z0-9-]+?)-caliber-([a-z0-9-]+)/?$")
 # Brand slugs Caliber Corner uses for a brand under another name
 _BRAND_ALIASES = {
@@ -60,35 +63,48 @@ def build_index(sitemaps) -> Dict[str, str]:
     """{"<brand-slug>|<caliber>": page URL} from sitemap XML texts."""
     index = {}
     for xml in sitemaps:
-        for loc in re.findall(r"<loc>\s*([^<\s]+)\s*</loc>", xml or ""):
+        for loc in _LOC.findall(xml or ""):
             m = _PAGE.match(loc)
             if m:
                 index[f"{m.group(1)}|{parse.norm_reference(m.group(2))}"] = loc
     return index
 
 
-def load_index() -> Dict[str, str]:
-    path = _index_file()
-    stale: Dict[str, str] = {}
-    try:
-        with open(path) as fh:
-            stored = json.load(fh)
-        stale = stored.get("index", {})
-        if time.time() - stored.get("fetched_at", 0) < INDEX_MAX_AGE and stale:
-            return stale
-    except (OSError, ValueError):
-        pass
-    texts = [_get(u) for u in SITEMAPS]
-    if not any(texts):
-        return stale  # source down: keep using the old index
-    index = build_index(texts)
+def _save_index(path: str, data: dict) -> None:
     try:
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w") as fh:
-            json.dump({"fetched_at": time.time(), "index": index}, fh)
+            json.dump(data, fh)
     except OSError:
         logger.warning("Could not save the Caliber Corner index", exc_info=True)
-    return index
+
+
+def load_index() -> Dict[str, str]:
+    """The sitemap index, refreshed weekly. A failed or empty fetch is not
+    retried for an hour, so look-ups do not refetch the sitemaps each time."""
+    path = _index_file()
+    stored: dict = {}
+    try:
+        with open(path) as fh:
+            stored = json.load(fh)
+    except (OSError, ValueError):
+        pass
+    index = stored.get("index") or {}
+    now = time.time()
+    if index and now - stored.get("fetched_at", 0) < INDEX_MAX_AGE:
+        return index
+    if now - stored.get("failed_at", 0) < INDEX_RETRY_AFTER:
+        return index  # tried recently: keep what we have (maybe nothing)
+    texts = [_get(u) for u in SITEMAPS]
+    fresh = build_index(texts) if any(texts) else {}
+    if not fresh:
+        # Source down or format not understood: keep the old index, retry later
+        if any(texts):
+            logger.warning("Caliber Corner sitemaps had no caliber pages")
+        _save_index(path, {**stored, "index": index, "failed_at": now})
+        return index
+    _save_index(path, {"fetched_at": now, "index": fresh})
+    return fresh
 
 
 def find_page(index: Dict[str, str], brand: str, caliber: str) -> Optional[str]:
@@ -156,7 +172,10 @@ def caliber_facts(db, brand: str, caliber: str) -> Optional[dict]:
     hit = cache.get(db, "calibercorner", cache_key)
     if hit is not None:
         return hit or None
-    url = find_page(load_index(), brand, caliber)
+    index = load_index()
+    if not index:
+        return None  # no index yet (source down): do not remember "no page"
+    url = find_page(index, brand, caliber)
     if not url:
         cache.put(db, "calibercorner", cache_key, {})  # remember "no page"
         return None
