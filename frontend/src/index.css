@@ -42,7 +42,8 @@ body {
     input[type="tel"],
     select,
     textarea {
-      @apply bg-gray-800 text-white border-gray-600 placeholder-gray-400;
+      /* gray-900 so fields stand out on gray-800 dialogs and cards */
+      @apply bg-gray-900 text-white border-gray-600 placeholder-gray-400;
     }
 
     input[type="text"]:focus,
@@ -181,4 +182,6 @@ body {
     background-color: theme('colors.gray.800') !important; /* inline style */
     border-color: theme('colors.gray.600') !important;
   }
+  .recharts-default-tooltip .recharts-tooltip-item { color: theme('colors.gray.100') !important; }
+  .recharts-tooltip-cursor { fill: theme('colors.gray.700'); }
 }
