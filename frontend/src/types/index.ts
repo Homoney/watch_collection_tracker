@@ -247,7 +247,7 @@ export interface Watch {
   updated_at: string
   brand?: Brand
   movement_type?: MovementType
-  complications?: Complication[]
+  complications?: string[]  // complication names
   collection?: Collection
   images?: WatchImage[]
   service_history?: ServiceHistory[]
@@ -273,7 +273,7 @@ export interface WatchCreate {
   lug_width?: number | null
   water_resistance?: number | null
   power_reserve?: number | null
-  complication_ids?: string[]
+  complications?: string[]
   condition?: ConditionEnum | null
   current_market_value?: number | null
   current_market_currency?: string
@@ -300,7 +300,7 @@ export interface WatchUpdate {
   lug_width?: number | null
   water_resistance?: number | null
   power_reserve?: number | null
-  complication_ids?: string[]
+  complications?: string[]
   condition?: ConditionEnum | null
   current_market_value?: number | null
   current_market_currency?: string

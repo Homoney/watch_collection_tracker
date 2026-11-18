@@ -479,10 +479,10 @@ export default function WatchDetailPage() {
                 <div className="flex flex-wrap gap-2">
                   {watch.complications.map((comp) => (
                     <span
-                      key={comp.id}
+                      key={comp}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                     >
-                      {comp.name}
+                      {comp}
                     </span>
                   ))}
                 </div>

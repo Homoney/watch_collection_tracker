@@ -208,7 +208,7 @@ export default function ComparisonTable({ watches, onRemoveWatch }: ComparisonTa
           <ComparisonRow
             label="Complications"
             values={watches.map((w) =>
-              w.complications?.length ? w.complications.map((c) => c.name).join(', ') : null
+              w.complications?.length ? w.complications.join(', ') : null
             )}
           />
 

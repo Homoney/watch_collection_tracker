@@ -35,7 +35,7 @@ export default function WatchForm({
   const { data: collections } = useCollections()
 
   const [selectedComplications, setSelectedComplications] = useState<string[]>(
-    defaultValues?.complications?.map(c => c.id) || []
+    defaultValues?.complications || []
   )
 
   const {
@@ -82,7 +82,7 @@ export default function WatchForm({
   const handleFormSubmit = (data: WatchCreate | WatchUpdate) => {
     const formattedData = {
       ...data,
-      complication_ids: selectedComplications,
+      complications: selectedComplications,
       purchase_date: data.purchase_date ? `${data.purchase_date}T00:00:00Z` : null,
       last_value_update: data.last_value_update ? `${data.last_value_update}T00:00:00Z` : null,
       purchase_price: data.purchase_price ? Number(data.purchase_price) : null,
