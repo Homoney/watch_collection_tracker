@@ -65,17 +65,20 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
               className="w-full h-full object-cover"
             />
 
-            {/* Primary Badge */}
-            {image.is_primary && (
-              <div className="absolute top-2 left-2 px-2 py-1 bg-yellow-500 text-white text-xs font-medium rounded">
-                Primary
-              </div>
-            )}
-
-            {/* Reference photo: a catalogue copy, not the owner's own photo */}
-            {image.source === 'reference_photo' && (
-              <div className="absolute top-2 right-2 px-2 py-1 bg-gray-900/80 text-white text-xs font-medium rounded">
-                Reference photo
+            {/* Badges: one wrapping row, so neither covers the other on narrow screens */}
+            {(image.is_primary || image.source === 'reference_photo') && (
+              <div className="absolute top-2 left-2 right-2 flex flex-wrap gap-1">
+                {image.is_primary && (
+                  <span className="px-2 py-1 bg-yellow-500 text-white text-xs font-medium rounded">
+                    Primary
+                  </span>
+                )}
+                {/* Reference photo: a catalogue copy, not the owner's own photo */}
+                {image.source === 'reference_photo' && (
+                  <span className="px-2 py-1 bg-gray-900/80 text-white text-xs font-medium rounded">
+                    Reference photo
+                  </span>
+                )}
               </div>
             )}
 
@@ -150,7 +153,7 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
 
           {/* File Info; a reference photo links to where it came from */}
           {image.source === 'reference_photo' ? (
-            <div className="mt-2 text-xs text-gray-600 dark:text-gray-300 truncate">
+            <div className="mt-2 text-xs leading-snug text-gray-600 dark:text-gray-300 break-words">
               Reference photo from{' '}
               {image.source_url ? (
                 <a
