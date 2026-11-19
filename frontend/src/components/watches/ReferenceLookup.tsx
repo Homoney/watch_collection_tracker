@@ -86,6 +86,7 @@ export default function ReferenceLookup({ getContext, onResult }: ReferenceLooku
         variant="secondary"
         onClick={() => run()}
         disabled={isLoading}
+        className="inline-flex items-center whitespace-nowrap"
         title="Fill empty fields from the reference number"
       >
         <Search className="h-4 w-4 mr-1" aria-hidden="true" />

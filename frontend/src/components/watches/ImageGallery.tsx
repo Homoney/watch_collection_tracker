@@ -150,7 +150,7 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
 
           {/* File Info; a reference photo links to where it came from */}
           {image.source === 'reference_photo' ? (
-            <div className="mt-2 text-xs text-gray-600 dark:text-gray-300 truncate">
+            <div className="mt-2 text-xs leading-snug text-gray-600 dark:text-gray-300 break-words">
               Reference photo from{' '}
               {image.source_url ? (
                 <a
