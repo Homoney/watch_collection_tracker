@@ -1,0 +1,20 @@
+{
+    "num_results": 1,
+    "watches": [
+        {
+            "id": 31041,
+            "refnr": "SBGE225",
+            "name": "Spring Drive GMT Stainless Steel \/ Silver \/ Bracelet",
+            "brand": {
+                "id": 198,
+                "name": "Grand Seiko"
+            },
+            "family": {
+                "id": 830,
+                "name": "Spring Drive"
+            },
+            "thumb": "https:\/\/cdn.watchbase.com\/watch\/md\/grand-seiko\/spring-drive\/sbge225-5d.png",
+            "updated": "2018-03-06"
+        }
+    ]
+}

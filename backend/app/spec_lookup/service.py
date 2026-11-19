@@ -11,7 +11,7 @@ Every answer has `links`, so the user always has a next step.
 """
 
 import logging
-from typing import Optional
+from typing import List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
@@ -22,11 +22,12 @@ logger = logging.getLogger(__name__)
 MESSAGES = {
     "links_only": "Automatic look-up is off (no WatchBase key). Use the links "
     "to look the reference up yourself.",
-    "not_found": "No watch found for this reference. Check it, or use the links.",
+    "not_found": "WatchBase has no watch with this reference. Check it, or "
+    "use the links.",
     "bad_key": "WatchBase did not accept the API key (wrong key or no credits "
     "left). An admin can change it on the Admin page.",
-    "unavailable": "The look-up service is not answering right now. Try again "
-    "later, or use the links.",
+    "unavailable": "WatchBase could not be reached or answered with an error, "
+    "so the reference was not checked. Try again later, or use the links.",
     "choices": "Several watches match. Pick yours.",
     "ok": "Filled the empty fields we found. Check them before saving.",
 }
@@ -72,18 +73,27 @@ def _add_movement_facts(db, answer: dict, brand: Optional[str], caliber: Optiona
     answer["links"] = links.build(answer["reference"], brand, facts["url"])
 
 
-def _search(db: Session, reference: str, key: str) -> list:
-    norm = parse.norm_reference(reference)
-    hit = cache.get(db, "watchbase-search", norm)
-    if hit is None:
-        hit = cache.get(db, "watchbase-search-empty", norm, max_age_days=1)
-    if hit is not None:
-        return hit
-    choices = watchbase.search(reference, key)
-    cache.put(
-        db, "watchbase-search" if choices else "watchbase-search-empty", norm, choices
-    )
-    return choices
+def _search(db: Session, reference: str, key: str) -> Tuple[list, List[str]]:
+    """Search each form of the reference until one finds watches.
+
+    Cached by the exact query sent (any case): "SBGE 225" finding nothing
+    must not hide what "SBGE225" finds.
+    """
+    tried = []
+    for query in watchbase.queries(reference):
+        tried.append(query)
+        qkey = query.lower()
+        hit = cache.get(db, "watchbase-refnr", qkey)
+        if hit is None:
+            hit = cache.get(db, "watchbase-refnr-empty", qkey, max_age_days=1)
+        if hit is None:
+            hit = watchbase.search(query, key)
+            cache.put(
+                db, "watchbase-refnr" if hit else "watchbase-refnr-empty", qkey, hit
+            )
+        if hit:
+            return hit, tried
+    return [], tried
 
 
 def _watch(db: Session, watch_id: int, key: str) -> dict:
@@ -95,18 +105,26 @@ def _watch(db: Session, watch_id: int, key: str) -> dict:
     return w
 
 
-def _pick(choices: list, reference: str) -> Optional[dict]:
+def _pick(choices: list, reference: str, query: str = "") -> Optional[dict]:
     """One clear match: the only result, or the only exact reference match."""
     if len(choices) == 1:
         return choices[0]
-    norm = parse.norm_reference(reference)
+    norms = {parse.norm_reference(reference), parse.norm_reference(query)} - {""}
     exact = [
         c
         for c in choices
-        if parse.norm_reference(c["reference"]) == norm
-        or parse.norm_reference(c["reference"]).split("-")[0] == norm
+        if parse.norm_reference(c["reference"]) in norms
+        or parse.norm_reference(c["reference"].split("-")[0]) in norms
     ]
     return exact[0] if len(exact) == 1 else None
+
+
+def _not_found(tried: List[str]) -> str:
+    searched = ", ".join(f'"{q}"' for q in tried)
+    return (
+        f"WatchBase has no watch with this reference (searched for {searched}). "
+        "Check the reference, or use the links."
+    )
 
 
 def lookup(
@@ -124,10 +142,10 @@ def lookup(
         return answer
     try:
         if watchbase_id is None:
-            choices = _search(db, reference, key)
+            choices, tried = _search(db, reference, key)
             if not choices:
-                return _answer("not_found", reference, brand)
-            chosen = _pick(choices, reference)
+                return _answer("not_found", reference, brand, message=_not_found(tried))
+            chosen = _pick(choices, reference, tried[-1])
             if chosen is None:
                 return _answer("choices", reference, brand, choices=choices[:25])
             watchbase_id = chosen["id"]

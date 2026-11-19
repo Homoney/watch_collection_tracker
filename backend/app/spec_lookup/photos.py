@@ -51,10 +51,10 @@ def _resolve(db: Session, watch: Watch, watchbase_id: Optional[int], key: str):
     if watchbase_id is None:
         if not (watch.reference_number or "").strip():
             return "no_reference", None
-        choices = service._search(db, watch.reference_number, key)
+        choices, tried = service._search(db, watch.reference_number, key)
         if not choices:
             return "none", None
-        chosen = service._pick(choices, watch.reference_number)
+        chosen = service._pick(choices, watch.reference_number, tried[-1])
         if chosen is None:
             return "choices", None
         watchbase_id = chosen["id"]

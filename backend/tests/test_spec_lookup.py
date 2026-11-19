@@ -17,7 +17,7 @@ from app.config import settings
 from app.core.security import create_access_token, get_password_hash
 from app.models.spec_lookup import SpecLookupCache
 from app.models.user import User, UserRole
-from app.spec_lookup import calibercorner, http, keys, parse
+from app.spec_lookup import calibercorner, http, keys, parse, watchbase
 
 FIX = Path(__file__).parent / "fixtures" / "spec_lookup"
 URL = "/api/v1/spec-lookup"
@@ -575,3 +575,118 @@ class TestNewWatchFields:
 
         pdf = client.get(f"/api/v1/watches/{w['id']}/export/pdf", headers=auth_headers)
         assert pdf.status_code == 200
+
+
+class TestReferenceVariants:
+    """Grand Seiko SBGE225 was "not found" (2026-11-19). WatchBase's
+    search/refnr finds references that contain the query, any case:
+    recorded live, "SBGE225" and "sbge225" find watch 31041, "SBGE 225" finds
+    nothing (wb_live_search_SBGE225.json, wb_live_search_SBGE_225.json)."""
+
+    @staticmethod
+    def contains_search(net):
+        def handler(request):
+            net.calls.append(request)
+            url = str(request.url)
+            if url.endswith("/v1/search/refnr"):
+                q = net.wb_body(request)["q"]
+                name = (
+                    "wb_live_search_SBGE225.json"
+                    if q.upper() in "SBGE225"
+                    else "wb_live_search_SBGE_225.json"
+                )
+                return httpx.Response(200, text=fixture(name))
+            if url.endswith("/v1/watch"):
+                assert net.wb_body(request)["id"] == "31041"
+                # Stand-in Watch answer (a sister model; no paid call recorded)
+                return httpx.Response(200, text=fixture("wb_live_watch_31034.json"))
+            raise AssertionError(f"unexpected request {url}")
+
+        return handler
+
+    def searches(self, net):
+        return [net.wb_body(c)["q"] for c in net.calls if str(c.url).endswith("/refnr")]
+
+    @pytest.mark.parametrize(
+        "typed",
+        ["SBGE225", "sbge225", "SBGE 225", "SBGE-225", "SBGE225G", " sbge225g "],
+    )
+    def test_common_forms_find_the_watch(
+        self, client, auth_headers, with_key, monkeypatch, typed
+    ):
+        use_handler(monkeypatch, self.contains_search(with_key))
+        body = client.get(
+            URL,
+            params={"reference": typed, "brand": "Grand Seiko"},
+            headers=auth_headers,
+        ).json()
+        assert body["status"] == "ok", body["message"]
+        assert body["watchbase_id"] == 31041
+        assert self.searches(with_key)[-1].upper() == "SBGE225"
+
+    def test_a_form_that_finds_nothing_does_not_hide_the_right_one(
+        self, client, auth_headers, with_key, monkeypatch
+    ):
+        use_handler(monkeypatch, self.contains_search(with_key))
+        client.get(URL, params={"reference": "SBGE 225"}, headers=auth_headers)
+        assert self.searches(with_key) == ["SBGE 225", "SBGE225"]
+        body = client.get(
+            URL, params={"reference": "SBGE225"}, headers=auth_headers
+        ).json()
+        assert body["status"] == "ok"
+        # Both answers came from the cache: no new search
+        assert self.searches(with_key) == ["SBGE 225", "SBGE225"]
+
+    def test_not_found_says_what_was_searched(
+        self, client, auth_headers, with_key, monkeypatch
+    ):
+        use_handler(monkeypatch, self.contains_search(with_key))
+        body = client.get(
+            URL, params={"reference": "SBGX 999A"}, headers=auth_headers
+        ).json()
+        assert body["status"] == "not_found"
+        assert self.searches(with_key) == ["SBGX 999A", "SBGX999A", "SBGX999"]
+        assert body["message"].startswith("WatchBase has no watch with this reference")
+        assert '"SBGX999"' in body["message"]
+
+    def test_bad_key_is_not_reported_as_not_found(
+        self, client, auth_headers, with_key, monkeypatch
+    ):
+        # Recorded live with a made-up key: HTTP 200 {"error": "Invalid API key"}
+        with_key.add(
+            "POST",
+            "https://api.watchbase.com/v1/search/refnr",
+            text=fixture("wb_live_bad_key.json"),
+        )
+        body = client.get(
+            URL, params={"reference": "SBGE225"}, headers=auth_headers
+        ).json()
+        assert body["status"] == "bad_key"
+        assert "API key" in body["message"]
+
+    def test_api_error_is_not_reported_as_not_found(
+        self, client, auth_headers, with_key, monkeypatch
+    ):
+        with_key.add(
+            "POST", "https://api.watchbase.com/v1/search/refnr", status=429, text="{}"
+        )
+        body = client.get(
+            URL, params={"reference": "SBGE225"}, headers=auth_headers
+        ).json()
+        assert body["status"] == "unavailable"
+        assert "not checked" in body["message"]
+
+
+@pytest.mark.parametrize(
+    "typed, sent",
+    [
+        ("SBGE225", ["SBGE225"]),
+        ("SBGE 225", ["SBGE 225", "SBGE225"]),
+        ("SBGE225G", ["SBGE225G", "SBGE225"]),
+        ("5711/1A-010", ["5711/1A-010", "57111A010"]),
+        ("126610LN", ["126610LN", "126610"]),
+        ("ab1c", ["ab1c"]),
+    ],
+)
+def test_search_queries(typed, sent):
+    assert watchbase.queries(typed) == sent

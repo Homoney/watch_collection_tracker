@@ -7,6 +7,7 @@ up in a log line.
 """
 
 import logging
+import re
 from typing import Dict, List, Tuple
 from urllib.parse import urlsplit
 
@@ -52,7 +53,7 @@ def _call(path: str, key: str, params: Dict[str, str]) -> dict:
     if error:
         if "key" in str(error).lower() or "credit" in str(error).lower():
             raise BadKey()
-        raise Unavailable("API error")
+        raise Unavailable(f"API error: {str(error)[:200]}")
     return body.get("response", body)
 
 
@@ -64,6 +65,28 @@ def _as_list(value) -> list:
         inner = value.get("watch", value)
         return inner if isinstance(inner, list) else [inner]
     return list(value)
+
+
+def queries(reference: str) -> List[str]:
+    """What to send to search/refnr, best first.
+
+    WatchBase's search finds references that *contain* the query (any case),
+    so "SBGE 225", "SBGE-225" or a longer "SBGE225G" find nothing while
+    "SBGE225" does. Try the reference as typed, then without spaces, dashes,
+    dots and slashes, then without a short letter suffix after the last digit.
+    The later forms are only sent when the earlier ones found nothing.
+    """
+    typed = " ".join((reference or "").split())
+    plain = re.sub(r"[^A-Za-z0-9]", "", typed)
+    found = [typed, plain]
+    m = re.match(r"^(.*\d)[A-Za-z]{1,3}$", plain)
+    if m and len(m.group(1)) >= 4:
+        found.append(m.group(1))
+    out: List[str] = []
+    for q in found:
+        if q and q.lower() not in [o.lower() for o in out]:
+            out.append(q)
+    return out
 
 
 def search(reference: str, key: str) -> List[dict]:
