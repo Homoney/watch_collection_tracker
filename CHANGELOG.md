@@ -2,6 +2,13 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [2.1.3] - 2026-11-19
+
+Fixes only. No upgrade steps.
+
+### Fixed
+- Pop-ups with a form (add and edit watch, collections, accuracy reading, password reset) no longer close on a click outside. Escape, X and Cancel ask "Discard changes?" when something was typed. The Add watch form keeps a draft in the browser through a reload or crash.
+
 ## [2.1.2] - 2026-11-19
 
 Fixes and a lookup improvement. No upgrade steps.
