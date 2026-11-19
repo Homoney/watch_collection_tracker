@@ -2,6 +2,18 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [2.1.2] - 2026-11-19
+
+Fixes and a lookup improvement. No upgrade steps.
+
+### Added
+- New outgoing host: `www.grand-seiko.com`. Grand Seiko watches missing from WatchBase (for example SBGE253) are now filled from grand-seiko.com, with the official photo offered as a private reference photo.
+- Look up shows Caliber Corner movement facts when WatchBase does not have the watch.
+
+### Fixed
+- Look up finds references typed with spaces, dashes or a suffix.
+- A "not found" result is no longer remembered for 24 hours.
+
 ## [2.1.1] - 2026-11-19
 
 Fixes only. No upgrade steps.
