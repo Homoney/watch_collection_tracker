@@ -655,3 +655,81 @@ class TestDeleteImage:
         # Verify record is gone
         img_after = test_db.query(WatchImage).filter(WatchImage.id == image_id).first()
         assert img_after is None
+
+
+class TestOnePrimaryImage:
+    """#206: a watch never ends up with two primary images."""
+
+    def _upload(self, client, headers, watch):
+        r = client.post(
+            f"/api/v1/watches/{watch.id}/images",
+            headers=headers,
+            files={"file": ("t.jpg", create_test_image(), "image/jpeg")},
+        )
+        assert r.status_code == 201, r.text
+        return r.json()
+
+    def _primaries(self, db, watch):
+        db.expire_all()
+        return [
+            i for i in db.query(WatchImage).filter_by(watch_id=watch.id).all()
+            if i.is_primary
+        ]
+
+    def test_upload_after_delete_goes_last_and_not_primary(
+        self, client, auth_headers, test_watch, mock_upload_dir, test_db
+    ):
+        first = self._upload(client, auth_headers, test_watch)
+        second = self._upload(client, auth_headers, test_watch)
+        client.delete(
+            f"/api/v1/watches/{test_watch.id}/images/{second['id']}",
+            headers=auth_headers,
+        )
+        third = self._upload(client, auth_headers, test_watch)
+        fourth = self._upload(client, auth_headers, test_watch)
+        assert first["is_primary"] is True
+        assert (third["is_primary"], third["sort_order"]) == (False, 1)
+        assert (fourth["is_primary"], fourth["sort_order"]) == (False, 2)
+        assert len(self._primaries(test_db, test_watch)) == 1
+
+    def test_unsetting_a_non_primary_image_promotes_nothing(
+        self, client, auth_headers, test_watch, mock_upload_dir, test_db
+    ):
+        a = self._upload(client, auth_headers, test_watch)
+        b = self._upload(client, auth_headers, test_watch)
+        c = self._upload(client, auth_headers, test_watch)
+        url = f"/api/v1/watches/{test_watch.id}/images"
+        assert client.patch(
+            f"{url}/{c['id']}", json={"is_primary": True}, headers=auth_headers
+        ).status_code == 200
+        r = client.patch(
+            f"{url}/{b['id']}", json={"is_primary": False}, headers=auth_headers
+        )
+        assert r.status_code == 200
+        assert [str(i.id) for i in self._primaries(test_db, test_watch)] == [c["id"]]
+        assert a["id"] != c["id"]
+
+    def test_unsetting_the_primary_moves_it(
+        self, client, auth_headers, test_watch, mock_upload_dir, test_db
+    ):
+        a = self._upload(client, auth_headers, test_watch)
+        b = self._upload(client, auth_headers, test_watch)
+        r = client.patch(
+            f"/api/v1/watches/{test_watch.id}/images/{a['id']}",
+            json={"is_primary": False},
+            headers=auth_headers,
+        )
+        assert r.status_code == 200
+        assert [str(i.id) for i in self._primaries(test_db, test_watch)] == [b["id"]]
+
+    def test_database_refuses_a_second_primary(self, test_watch, test_db):
+        from sqlalchemy.exc import IntegrityError
+
+        for n in range(2):
+            test_db.add(WatchImage(
+                watch_id=test_watch.id, file_path=f"x/{n}.jpg", file_name="x.jpg",
+                file_size=1, mime_type="image/jpeg", is_primary=True, sort_order=n,
+            ))
+        with pytest.raises(IntegrityError):
+            test_db.commit()
+        test_db.rollback()
