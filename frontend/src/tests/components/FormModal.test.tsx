@@ -21,6 +21,7 @@ const MODEL = 'e.g., Submariner, Speedmaster'
 /** The Add watch pop-up as WatchListPage wires it */
 function AddWatch({ onSaved = () => undefined }: { onSaved?: () => void }) {
   const [open, setOpen] = useState(true)
+  const [saving, setSaving] = useState(false)
   return (
     <>
       <button onClick={() => setOpen(true)}>Open</button>
@@ -35,12 +36,19 @@ function AddWatch({ onSaved = () => undefined }: { onSaved?: () => void }) {
         form
       >
         <WatchForm
-          onSubmit={() => {
+          onSubmit={async () => {
+            // Like WatchListPage: saving, then clear, then the form re-renders
+            // (the save finishing) before the pop-up closes
+            setSaving(true)
+            await Promise.resolve()
             clearDraft(KEY)
+            setSaving(false)
+            await new Promise((r) => setTimeout(r, 20))
             setOpen(false)
             onSaved()
           }}
           onCancel={() => setOpen(false)}
+          isLoading={saving}
           draftKey={KEY}
         />
       </Modal>
@@ -150,6 +158,10 @@ describe('form pop-ups keep what was typed', () => {
     await user.click(screen.getByRole('button', { name: 'Add Watch' }))
     await waitFor(() => expect(onSaved).toHaveBeenCalled())
     expect(loadDraft(KEY)).toBeNull()
+    // Opening Add watch again shows an empty form
+    await user.click(screen.getByRole('button', { name: 'Open' }))
+    expect(screen.getByPlaceholderText(MODEL)).toHaveValue('')
+    expect(screen.queryByText(/Restored/)).not.toBeInTheDocument()
   })
 
   it('a broken draft is ignored', () => {

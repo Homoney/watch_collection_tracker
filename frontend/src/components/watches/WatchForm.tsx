@@ -127,12 +127,15 @@ export default function WatchForm({
     setSelectedComplications(draft.complications)
     setRestored(true)
   }, [draftKey, reset])
-  const values = watch()
+  // Written only when what was typed changes, not on every render: after a
+  // save the parent clears the draft while this form is still on screen, and
+  // a re-render then (e.g. the save finishing) must not write it back.
+  const snapshot = JSON.stringify({ values: watch(), complications: selectedComplications })
   useEffect(() => {
     if (!draftKey || !draftLoaded.current) return
-    if (dirty) saveDraft(draftKey, { values, complications: selectedComplications })
+    if (dirty) saveDraft(draftKey, JSON.parse(snapshot))
     else clearDraft(draftKey)
-  }, [draftKey, dirty, values, selectedComplications])
+  }, [draftKey, dirty, snapshot])
 
   const handleFormSubmit = (data: WatchCreate | WatchUpdate) => {
     const formattedData = {
