@@ -2,6 +2,13 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [2.1.1] - 2026-11-19
+
+Fixes only. No upgrade steps.
+
+### Fixed
+- Phone layout: the Look up button stays on one line, the Primary and Reference photo badges no longer overlap, the photo caption is no longer cut off, and the watch page no longer scrolls sideways at phone width.
+
 ## [2.1.0] - 2026-11-19
 
 Feature release. Database migration 0002 runs automatically on start (a backup is taken first). No other upgrade steps.
