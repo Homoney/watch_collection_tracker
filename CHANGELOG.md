@@ -2,6 +2,13 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [2.1.4] - 2026-11-19
+
+Fixes only. No upgrade steps. The database migration (0003) runs on start and takes a backup first.
+
+### Fixed
+- A watch can no longer end up with two primary images. Existing watches that had more than one are repaired by migration 0003.
+
 ## [2.1.3] - 2026-11-19
 
 Fixes only. No upgrade steps.
