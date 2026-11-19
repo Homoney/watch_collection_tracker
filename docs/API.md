@@ -711,7 +711,7 @@ The sections above show request and response bodies for the most used calls. The
 | `GET /api/v1/watches/{watch_id}/qr-code?base_url=...` | PNG QR code linking to the watch page; `base_url` must be this site |
 | `GET /api/v1/watches/{watch_id}/export/pdf` | One watch as a PDF |
 | `GET /api/v1/watches/export/pdf?collection_id=...` | All watches (or one collection) as a PDF |
-| `POST /api/v1/watches/{watch_id}/reference-photo` | Save WatchBase's photo of the watch as a reference photo; optional body `{"watchbase_id": 123}` (from Look up), otherwise the watch's reference number is used. 201 with `image` when saved; 200 with `status`, `message` and `image: null` otherwise (no reference number, not found, several matches, no photo, source down, already has one). Without a WatchBase key the photo is found through WatchBase's public search and the watch page's `og:image`. Upload rate limit applies |
+| `POST /api/v1/watches/{watch_id}/reference-photo` | Save WatchBase's photo of the watch as a reference photo; optional body `{"watchbase_id": 123}` (from Look up), otherwise the watch's reference number is used. 201 with `image` when saved; 200 with `status`, `message` and `image: null` otherwise (no reference number, not found, several matches, no photo, source down, already has one). Without a WatchBase key the photo is found through WatchBase's public search and the watch page's `og:image`. For a Grand Seiko reference WatchBase does not have, the photo is the official one named by the grand-seiko.com page (`source_url` is that page). Upload rate limit applies |
 | `GET /api/v1/atomic-time` | Reference time for accuracy readings |
 | `POST`, `GET /api/v1/watches/{watch_id}/accuracy-readings` | Record a movement accuracy reading; list readings with drift |
 | `GET`, `PUT`, `DELETE /api/v1/watches/{watch_id}/accuracy-readings/{reading_id}` | One reading |
@@ -759,7 +759,7 @@ Always answers **200**; `status` says what happened:
 
 | `status` | Meaning |
 |---|---|
-| `ok` | `fields` holds values to fill, `sources` says where each came from |
+| `ok` | `fields` holds values to fill, `sources` says where each came from. For a Grand Seiko reference that WatchBase lacks (or with no key), the values come from the watch's grand-seiko.com page and `message` says so |
 | `choices` | Several watches match; `choices` lists them (no paid call made yet) |
 | `not_found` | WatchBase has no watch for this reference |
 | `links_only` | No WatchBase key is set; only `links` (and Caliber Corner facts when `caliber` and the brand are given) |
@@ -799,6 +799,8 @@ Always answers **200**; `status` says what happened:
   ]
 }
 ```
+
+`has_photo` says a reference photo can be saved for this watch, and `photo_source` (`{"name": "WatchBase"}` or `{"name": "grand-seiko.com"}`) where it comes from; `watchbase_id` is the matched WatchBase watch, or `null`.
 
 `fields` uses names (`brand_name`, `movement_type_name`, complication names) rather than IDs; the web app matches them to the reference data. Answers are cached on the server for `SPEC_LOOKUP_CACHE_DAYS` (default 90).
 

@@ -8,7 +8,9 @@ size cap, Pillow checks), at most one per second, with an honest User-Agent.
 
 With a WatchBase key the photo comes from the Data Feed API's watch record.
 Without one it comes from WatchBase's public site: its search, then the
-watch page's og:image (see public.py).
+watch page's og:image (see public.py). When WatchBase has no such watch,
+a Grand Seiko reference gets the official photo named by its grand-seiko.com
+page (see grandseiko.py), under the same private-copy rules.
 """
 
 import logging
@@ -19,7 +21,16 @@ from sqlalchemy.orm import Session
 
 from app.models.watch import Watch
 from app.models.watch_image import ImageSourceEnum, WatchImage
-from app.spec_lookup import cache, http, keys, parse, public, service, watchbase
+from app.spec_lookup import (
+    cache,
+    grandseiko,
+    http,
+    keys,
+    parse,
+    public,
+    service,
+    watchbase,
+)
 from app.utils import image_import, safe_fetch
 
 logger = logging.getLogger(__name__)
@@ -28,7 +39,7 @@ throttle = http.Throttle(1.0)
 
 NO_PHOTO = "No photo found for this watch; you can upload your own."
 MESSAGES = {
-    "saved": "Saved the reference photo from WatchBase.",
+    "saved": "Saved the reference photo.",
     "exists": "This watch already has a reference photo. Delete it to get it again.",
     "no_reference": "Add a reference number first, or upload your own photo.",
     "choices": "Several WatchBase watches match this reference. Enter the full "
@@ -51,10 +62,10 @@ def _resolve(db: Session, watch: Watch, watchbase_id: Optional[int], key: str):
     if watchbase_id is None:
         if not (watch.reference_number or "").strip():
             return "no_reference", None
-        choices = service._search(db, watch.reference_number, key)
+        choices, tried = service._search(db, watch.reference_number, key)
         if not choices:
             return "none", None
-        chosen = service._pick(choices, watch.reference_number)
+        chosen = service._pick(choices, watch.reference_number, tried[-1])
         if chosen is None:
             return "choices", None
         watchbase_id = chosen["id"]
@@ -104,6 +115,17 @@ def _from_site(db: Session, watch: Watch):
     )
 
 
+def _from_brand_site(db: Session, watch: Watch):
+    """(status, photo URLs, source page) from the brand's own page."""
+    brand = watch.brand.name if watch.brand else None
+    if not grandseiko.applies(brand, watch.reference_number or ""):
+        return "none", [], None
+    page = grandseiko.lookup(db, watch.reference_number)
+    if not page or not page.get("photo"):
+        return "none", [], None
+    return "ok", [page["photo"]], page["url"]
+
+
 def save_reference_photo(
     db: Session, watch: Watch, watchbase_id: Optional[int] = None
 ) -> Tuple[str, Optional[WatchImage]]:
@@ -124,6 +146,8 @@ def save_reference_photo(
             status, urls, source_url = _from_api(db, watch, watchbase_id, key)
         else:
             status, urls, source_url = _from_site(db, watch)
+        if status == "none":
+            status, urls, source_url = _from_brand_site(db, watch)
     except watchbase.BadKey:
         return "bad_key", None
     except watchbase.Unavailable:

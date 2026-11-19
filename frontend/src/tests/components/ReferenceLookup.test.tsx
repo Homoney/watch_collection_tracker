@@ -6,7 +6,13 @@ import { specLookupApi } from '@/lib/api'
 import type { SpecLookupResult } from '@/types'
 
 vi.mock('@/hooks/useReferenceData', () => ({
-  useBrands: () => ({ data: [{ id: 'b-rolex', name: 'Rolex' }, { id: 'b-omega', name: 'Omega' }] }),
+  useBrands: () => ({
+    data: [
+      { id: 'b-rolex', name: 'Rolex' },
+      { id: 'b-omega', name: 'Omega' },
+      { id: 'b-gs', name: 'Grand Seiko' },
+    ],
+  }),
   useMovementTypes: () => ({ data: [{ id: 'mt-auto', name: 'Automatic' }] }),
   useComplications: () => ({
     data: [
@@ -101,6 +107,32 @@ describe('reference look-up on the watch form', () => {
     expect(sent.complications).toEqual(['Date', 'Dive Bezel'])
     expect(sent.caliber).toBe('3235')
     expect(sent.model).toBe('My Sub')
+  })
+
+  it('offers the grand-seiko.com photo when WatchBase has no such watch', async () => {
+    const gs = { name: 'grand-seiko.com', url: 'https://www.grand-seiko.com/us-en/collections/sbge253g' }
+    vi.spyOn(specLookupApi, 'lookup').mockResolvedValue({
+      ...okAnswer,
+      reference: 'SBGE253',
+      message: 'WatchBase has no watch with this reference. Filled the empty fields from grand-seiko.com.',
+      fields: { brand_name: 'Grand Seiko', model: 'Sport Collection', caliber: '9R66', water_resistance: 200 },
+      sources: { brand_name: gs, model: gs, caliber: gs, water_resistance: gs },
+      movement: null,
+      watchbase_id: null,
+      has_photo: true,
+      photo_source: { name: 'grand-seiko.com' },
+    })
+    const onSubmit = renderForm()
+    const user = userEvent.setup()
+    await user.type(screen.getByPlaceholderText('e.g., 126610LN'), 'SBGE253')
+    await user.click(screen.getByRole('button', { name: /look up/i }))
+    const box = await screen.findByRole('checkbox', { name: /grand-seiko\.com's photo/i })
+    expect(box).toBeChecked()
+    expect(screen.getAllByRole('link', { name: /grand-seiko\.com/ })[0]).toHaveAttribute('href', gs.url)
+    await user.click(screen.getByRole('button', { name: 'Add Watch' }))
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled())
+    // No WatchBase id: the server finds the photo by reference number
+    expect(onSubmit.mock.calls[0][1]).toEqual({ referencePhoto: {} })
   })
 
   it('can untick the reference photo', async () => {

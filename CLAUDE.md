@@ -544,7 +544,7 @@ interface WatchAnalytics {
 2. No drag-to-reorder images
 3. No batch operations
 4. No image editing (crop/rotate)
-5. Reference photos come only from WatchBase (API with a key, else its public search and the page's og:image); the old Google Images scraper was removed in 2.1
+5. Reference photos come from WatchBase (API with a key, else its public search and the page's og:image), and for Grand Seiko references WatchBase lacks, from the grand-seiko.com product page (`backend/app/spec_lookup/grandseiko.py`); the old Google Images scraper was removed in 2.1
 
 ---
 

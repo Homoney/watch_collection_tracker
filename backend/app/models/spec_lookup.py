@@ -10,9 +10,9 @@ from app.db_types import GUID
 class SpecLookupCache(Base):
     """Answers from the spec sources, kept so a repeat look-up costs nothing.
 
-    `source` is the provider ("watchbase-search", "watchbase-watch",
-    "calibercorner"); `lookup_key` is the normalised reference, watch id or
-    caliber. Shared by all users: the data is public catalogue data.
+    `source` is the provider ("watchbase-refnr", "watchbase-watch",
+    "calibercorner"); `lookup_key` is the search query sent (lower case),
+    watch id or caliber. Shared by all users: the data is public catalogue data.
     """
 
     __tablename__ = "spec_lookup_cache"

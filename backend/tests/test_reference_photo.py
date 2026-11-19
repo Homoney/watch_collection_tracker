@@ -12,7 +12,7 @@ import pytest
 
 from app.config import settings
 from app.models.watch_image import ImageSourceEnum, WatchImage
-from app.spec_lookup import http, photos, public
+from app.spec_lookup import grandseiko, http, photos, public
 from app.utils import pdf_export, safe_fetch
 
 FIX = Path(__file__).parent / "fixtures" / "spec_lookup"
@@ -331,6 +331,66 @@ class TestReferencePhotoWithoutKey:
         page = '<meta property="og:image" content="https://evil.example/a.jpg" />'
         assert public.og_image(page) is None
         assert public.og_image(fx("site_page_126610ln.html")) == OG
+
+
+GS_PAGE = "https://www.grand-seiko.com/us-en/collections/sbge253g"
+GS_PHOTO = (
+    "https://www.grand-seiko.com/us-en/-/media/Images/GlobalEn/GrandSeiko/Home/"
+    "collections/Products/SBGE253/01_SBGE253_4pc.jpg"
+)
+
+
+class TestReferencePhotoGrandSeiko:
+    """WatchBase has no SBGE253: the photo named by grand-seiko.com's page."""
+
+    @pytest.fixture
+    def gs_watch(self, test_db, test_watch):
+        from app.models.reference import Brand
+
+        brand = Brand(name="Grand Seiko")
+        test_db.add(brand)
+        test_db.commit()
+        test_watch.brand_id = brand.id
+        test_watch.reference_number = "SBGE253"
+        test_db.commit()
+        test_db.refresh(test_watch)
+        return test_watch
+
+    @pytest.mark.parametrize("key", ["test-key-0123456789", ""])
+    def test_saved_from_the_brand_page(
+        self, client, auth_headers, gs_watch, test_db, wb, monkeypatch, key
+    ):
+        monkeypatch.setattr(settings, "WATCHBASE_API_KEY", key)
+        monkeypatch.setattr(grandseiko, "throttle", http.Throttle(0))
+        wb["state"]["search"] = fx("wb_search_none.json")
+        wb["images"][GS_PHOTO] = ("image/png", (FIX / "wb_photo_126610ln.png").read_bytes())
+
+        def net(request):
+            url = str(request.url)
+            if url == GS_PAGE:
+                return httpx.Response(200, text=fx("gs_sbge253g.html"))
+            if url.startswith("https://watchbase.com/filter/results"):
+                return httpx.Response(200, text=fx("site_search_none.json"))
+            if url.startswith("https://api.watchbase.com/"):
+                return httpx.Response(200, text=fx("wb_search_none.json"))
+            raise AssertionError(f"unexpected request {url}")
+
+        monkeypatch.setattr(http, "TRANSPORT", httpx.MockTransport(net))
+        r = post(client, auth_headers, gs_watch)
+        assert r.status_code == 201, r.text
+        image = r.json()["image"]
+        assert image["source"] == "reference_photo"
+        assert image["source_url"] == GS_PAGE
+        assert [u for u, _ in wb["fetched"]] == [GS_PHOTO]
+
+    def test_only_product_photos_from_the_brand_site(self):
+        page = fx("gs_sbge253g.html")
+        logo = page.replace(
+            "collections/Products/SBGE253/01_SBGE253_4pc.jpg", "GrandSeikoLogo/x.jpg"
+        )
+        assert grandseiko.parse_page(logo, "sbge253")["photo"] is None
+        evil = page.replace("https://www.grand-seiko.com/", "https://evil.example/")
+        assert grandseiko.parse_page(evil, "sbge253")["photo"] is None
 
 
 def test_pdf_leaves_out_reference_photos(monkeypatch, tmp_path):
