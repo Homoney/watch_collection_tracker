@@ -561,6 +561,7 @@ export default function WatchDetailPage() {
         onClose={() => setIsEditModalOpen(false)}
         title="Edit Watch"
         size="xl"
+        form
       >
         <WatchForm
           defaultValues={watch}

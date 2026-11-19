@@ -5,7 +5,7 @@ import AppLayout from '@/components/layout/AppLayout'
 import Card from '@/components/common/Card'
 import Button from '@/components/common/Button'
 import Spinner from '@/components/common/Spinner'
-import Modal from '@/components/common/Modal'
+import Modal, { ModalClose } from '@/components/common/Modal'
 import Input from '@/components/common/Input'
 import { usersApi } from '@/lib/api'
 import WatchBaseKeyCard from '@/components/admin/WatchBaseKeyCard'
@@ -247,6 +247,8 @@ export default function AdminPage() {
           setNewPassword('')
         }}
         title="Reset User Password"
+        form
+        dirty={newPassword !== ''}
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -261,15 +263,13 @@ export default function AdminPage() {
             required
           />
           <div className="flex justify-end gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setIsPasswordModalOpen(false)
-                setNewPassword('')
-              }}
-            >
-              Cancel
-            </Button>
+            <ModalClose>
+              {(close) => (
+                <Button variant="secondary" onClick={close}>
+                  Cancel
+                </Button>
+              )}
+            </ModalClose>
             <Button
               onClick={handleResetPassword}
               disabled={resetPasswordMutation.isPending || newPassword.length < 8}

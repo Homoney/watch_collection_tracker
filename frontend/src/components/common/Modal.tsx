@@ -1,4 +1,5 @@
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { ModalFormContext } from '@/components/common/modalForm'
 
 interface ModalProps {
   isOpen: boolean
@@ -6,12 +7,66 @@ interface ModalProps {
   title: string
   children: ReactNode
   size?: 'sm' | 'md' | 'lg' | 'xl'
+  /**
+   * A pop-up with a form: a click outside never closes it, and Escape, the X
+   * and the form's Cancel ask "Discard changes?" when something was typed.
+   */
+  form?: boolean
+  /** Typed changes, for a form that is not its own component (else useModalForm) */
+  dirty?: boolean
 }
 
-export default function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+/**
+ * Gives a Cancel button inside a form pop-up the close that asks before
+ * discarding typed changes: <ModalClose>{(close) => <button onClick={close} />}</ModalClose>
+ */
+export function ModalClose({ children }: { children: (close: () => void) => ReactNode }) {
+  const ctx = useContext(ModalFormContext)
+  return <>{children(ctx ? ctx.requestClose : () => undefined)}</>
+}
+
+export default function Modal({
+  isOpen,
+  onClose,
+  title,
+  children,
+  size = 'md',
+  form = false,
+  dirty = false,
+}: ModalProps) {
+  const dirtyRef = useRef(false)
+  const [confirming, setConfirming] = useState(false)
+
+  const setDirty = useCallback((dirty: boolean) => {
+    dirtyRef.current = dirty
+  }, [])
+
+  const requestClose = useCallback(() => {
+    if (form && (dirtyRef.current || dirty)) {
+      setConfirming(true)
+    } else {
+      onClose()
+    }
+  }, [form, dirty, onClose])
+
+  const discard = () => {
+    setConfirming(false)
+    dirtyRef.current = false
+    onClose()
+  }
+
+  useEffect(() => {
+    if (!isOpen) {
+      setConfirming(false)
+      dirtyRef.current = false
+    }
+  }, [isOpen])
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key !== 'Escape') return
+      if (confirming) setConfirming(false)
+      else requestClose()
     }
 
     if (isOpen) {
@@ -23,7 +78,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
       document.removeEventListener('keydown', handleEscape)
       document.body.style.overflow = 'unset'
     }
-  }, [isOpen, onClose])
+  }, [isOpen, confirming, requestClose])
 
   if (!isOpen) return null
 
@@ -39,16 +94,21 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
       <div className="flex min-h-screen items-center justify-center p-4">
         <div
           className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-          onClick={onClose}
+          data-testid="modal-backdrop"
+          onClick={form ? undefined : onClose}
         />
 
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
           className={`relative bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}
         >
           <div className="flex items-center justify-between p-4 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
             <button
-              onClick={onClose}
+              onClick={requestClose}
+              aria-label="Close"
               className="text-gray-400 hover:text-gray-500 focus:outline-none"
             >
               <svg
@@ -65,7 +125,43 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' }:
             </button>
           </div>
 
-          <div className="p-4">{children}</div>
+          <ModalFormContext.Provider value={{ setDirty, requestClose }}>
+            <div className="p-4">{children}</div>
+          </ModalFormContext.Provider>
+
+          {confirming && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+              <div
+                role="alertdialog"
+                aria-labelledby="discard-title"
+                className="w-full max-w-sm rounded-lg bg-white p-4 shadow-xl dark:bg-gray-800"
+              >
+                <p id="discard-title" className="font-semibold text-gray-900 dark:text-gray-100">
+                  Discard changes?
+                </p>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                  What you typed in this form will be lost.
+                </p>
+                <div className="mt-4 flex justify-end gap-2">
+                  <button
+                    type="button"
+                    autoFocus
+                    onClick={() => setConfirming(false)}
+                    className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700"
+                  >
+                    Keep editing
+                  </button>
+                  <button
+                    type="button"
+                    onClick={discard}
+                    className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
+                  >
+                    Discard
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { useForm } from 'react-hook-form'
+import { useModalForm } from '@/components/common/modalForm'
 import Input from '@/components/common/Input'
 import Button from '@/components/common/Button'
 import type { Collection, CollectionCreate, CollectionUpdate } from '@/types'
@@ -31,7 +32,7 @@ export default function CollectionForm({
     register,
     handleSubmit,
     watch,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<CollectionCreate | CollectionUpdate>({
     defaultValues: defaultValues || {
       color: '#3B82F6',
@@ -39,6 +40,7 @@ export default function CollectionForm({
   })
 
   const selectedColor = watch('color')
+  const cancel = useModalForm(isDirty, onCancel)
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -96,7 +98,7 @@ export default function CollectionForm({
         <Button type="submit" disabled={isLoading} className="flex-1">
           {isLoading ? 'Saving...' : defaultValues ? 'Update Collection' : 'Create Collection'}
         </Button>
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={isLoading}>
+        <Button type="button" variant="secondary" onClick={cancel} disabled={isLoading}>
           Cancel
         </Button>
       </div>
