@@ -2,7 +2,17 @@ import enum
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, String
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    text,
+)
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -18,6 +28,16 @@ class ImageSourceEnum(str, enum.Enum):
 
 class WatchImage(Base):
     __tablename__ = "watch_images"
+    __table_args__ = (
+        # At most one primary image per watch (#206)
+        Index(
+            "uq_watch_images_one_primary",
+            "watch_id",
+            unique=True,
+            sqlite_where=text("is_primary = 1"),
+            postgresql_where=text("is_primary"),
+        ),
+    )
 
     id = Column(GUID, primary_key=True, default=uuid.uuid4)
     watch_id = Column(

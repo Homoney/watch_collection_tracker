@@ -3,6 +3,7 @@ from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -111,12 +112,20 @@ async def upload_image(
             detail="Failed to save file",
         )
 
-    # Check if this is the first image for this watch
-    existing_images_count = (
-        db.query(WatchImage).filter(WatchImage.watch_id == watch_id).count()
+    # The new image goes after the others; it is primary only when the watch
+    # has no primary image yet (#206). max() is None when there are no images.
+    max_order = (
+        db.query(func.max(WatchImage.sort_order))
+        .filter(WatchImage.watch_id == watch_id)
+        .scalar()
     )
-
-    is_primary = existing_images_count == 0  # First image is primary by default
+    has_primary = (
+        db.query(WatchImage.id)
+        .filter(WatchImage.watch_id == watch_id, WatchImage.is_primary.is_(True))
+        .first()
+        is not None
+    )
+    is_primary = not has_primary
 
     # Create database record
     watch_image = WatchImage(
@@ -128,7 +137,7 @@ async def upload_image(
         width=file_metadata["width"],
         height=file_metadata["height"],
         is_primary=is_primary,
-        sort_order=existing_images_count,
+        sort_order=(max_order + 1) if max_order is not None else 0,
         source=ImageSourceEnum.USER_UPLOAD,
     )
 
@@ -205,8 +214,11 @@ def update_image(
             db.query(WatchImage).filter(WatchImage.watch_id == watch_id).count()
         )
 
-        if total_images > 1:
+        # Only the primary image hands its place on; unsetting an image that
+        # is not primary must not promote another one (#206)
+        if total_images > 1 and image.is_primary:
             image.is_primary = False
+            db.flush()  # unset first: one primary per watch is a unique index
             # Auto-promote the next image by sort_order
             next_image = (
                 db.query(WatchImage)
