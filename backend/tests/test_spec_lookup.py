@@ -690,3 +690,40 @@ class TestReferenceVariants:
 )
 def test_search_queries(typed, sent):
     assert watchbase.queries(typed) == sent
+
+
+class TestNotFoundStillGetsCaliberFacts:
+    """A watch WatchBase lacks (David's SBGE253) can still get movement facts
+    from Caliber Corner when the user typed its calibre."""
+
+    def test_caliber_corner_facts_when_watchbase_has_nothing(
+        self, client, auth_headers, with_key, test_brand, monkeypatch
+    ):
+        caliber_corner(with_key)
+        use_handler(monkeypatch, with_key.wb_answers(fixture("wb_live_search_none.json")))
+        body = client.get(
+            URL,
+            params={"reference": "126610LN", "brand_id": str(test_brand.id), "caliber": "3235"},
+            headers=auth_headers,
+        ).json()
+        assert body["status"] == "not_found"
+        assert body["message"].startswith("WatchBase has no watch with this reference")
+        assert body["movement"]["jewels"] == 31
+        assert body["movement"]["source"]["name"] == "Caliber Corner"
+        assert body["fields"] == {"power_reserve": 70}
+        assert body["sources"]["power_reserve"]["name"] == "Caliber Corner"
+
+    def test_unknown_caliber_gets_no_other_calibre(
+        self, client, auth_headers, with_key, test_brand, monkeypatch
+    ):
+        # 3236 is not on Caliber Corner; 3235 must not be used instead
+        caliber_corner(with_key, with_page=False)
+        use_handler(monkeypatch, with_key.wb_answers(fixture("wb_live_search_none.json")))
+        body = client.get(
+            URL,
+            params={"reference": "126610LN", "brand_id": str(test_brand.id), "caliber": "3236"},
+            headers=auth_headers,
+        ).json()
+        assert body["status"] == "not_found"
+        assert body["movement"] is None
+        assert body["fields"] == {}

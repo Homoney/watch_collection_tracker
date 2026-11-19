@@ -144,7 +144,12 @@ def lookup(
         if watchbase_id is None:
             choices, tried = _search(db, reference, key)
             if not choices:
-                return _answer("not_found", reference, brand, message=_not_found(tried))
+                # WatchBase has no such watch; the calibre may still be known
+                answer = _answer(
+                    "not_found", reference, brand, message=_not_found(tried)
+                )
+                _add_movement_facts(db, answer, brand, caliber)
+                return answer
             chosen = _pick(choices, reference, tried[-1])
             if chosen is None:
                 return _answer("choices", reference, brand, choices=choices[:25])
