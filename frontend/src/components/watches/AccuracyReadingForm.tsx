@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Info } from 'lucide-react'
-import Modal from '@/components/common/Modal'
+import Modal, { ModalClose } from '@/components/common/Modal'
 import { AtomicClock } from './AtomicClock'
 import { useCreateAccuracyReading } from '@/hooks/useMovementAccuracy'
 import type { MovementAccuracyReadingCreate } from '@/types'
@@ -27,6 +27,7 @@ export function AccuracyReadingForm({ watchId, isOpen, onClose, isFirstReading =
     handleSubmit,
     reset,
     watch,
+    formState: { isDirty },
   } = useForm<FormData>({
     defaultValues: {
       is_initial_reading: isFirstReading,
@@ -64,7 +65,14 @@ export function AccuracyReadingForm({ watchId, isOpen, onClose, isFirstReading =
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Record Accuracy Reading" size="lg">
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title="Record Accuracy Reading"
+      size="lg"
+      form
+      dirty={isDirty || selectedMark !== null}
+    >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Atomic Clock */}
         <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-gray-50 dark:bg-gray-900">
@@ -149,13 +157,17 @@ export function AccuracyReadingForm({ watchId, isOpen, onClose, isFirstReading =
 
         {/* Form Actions */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            Cancel
-          </button>
+          <ModalClose>
+            {(close) => (
+              <button
+                type="button"
+                onClick={close}
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              >
+                Cancel
+              </button>
+            )}
+          </ModalClose>
           <button
             type="submit"
             disabled={selectedMark === null || createMutation.isPending}

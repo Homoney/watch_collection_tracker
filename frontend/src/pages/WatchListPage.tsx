@@ -15,6 +15,8 @@ import { useBrands, useMovementTypes } from '@/hooks/useReferenceData'
 import { useCollections } from '@/hooks/useCollections'
 import { useComparison } from '@/contexts/ComparisonContext'
 import { api, referencePhotoApi } from '@/lib/api'
+import { addWatchDraftKey, clearDraft } from '@/lib/watchDraft'
+import { useAuth } from '@/contexts/AuthContext'
 import type { WatchFilters as WatchFiltersType, WatchListItem, WatchCreate } from '@/types'
 
 export default function WatchListPage() {
@@ -62,6 +64,8 @@ export default function WatchListPage() {
   const { data: movementTypes } = useMovementTypes()
   const { data: collections } = useCollections()
   const createMutation = useCreateWatch()
+  const { user } = useAuth()
+  const draftKey = addWatchDraftKey(user?.id)
   const deleteMutation = useDeleteWatch()
 
   const handleFiltersChange = (newFilters: WatchFiltersType) => {
@@ -85,6 +89,7 @@ export default function WatchListPage() {
   const handleCreateWatch = async (data: WatchCreate, extras?: WatchFormExtras) => {
     try {
       const created = await createMutation.mutateAsync(data)
+      clearDraft(draftKey)
       setIsAddModalOpen(false)
       if (extras?.referencePhoto && created?.id) {
         // The watch is saved either way; a missing photo is not an error here
@@ -243,15 +248,21 @@ export default function WatchListPage() {
 
       <Modal
         isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        onClose={() => {
+          // Only after "Discard" or with nothing typed
+          clearDraft(draftKey)
+          setIsAddModalOpen(false)
+        }}
         title="Add New Watch"
         size="xl"
+        form
       >
         <WatchForm
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           onSubmit={handleCreateWatch as any}
           onCancel={() => setIsAddModalOpen(false)}
           isLoading={createMutation.isPending}
+          draftKey={draftKey}
         />
       </Modal>
 

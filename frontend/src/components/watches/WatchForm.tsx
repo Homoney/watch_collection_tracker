@@ -1,11 +1,13 @@
 import { useForm } from 'react-hook-form'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Input from '@/components/common/Input'
 import Select from '@/components/common/Select'
 import Button from '@/components/common/Button'
 import { useBrands, useMovementTypes, useComplications } from '@/hooks/useReferenceData'
 import { useCollections } from '@/hooks/useCollections'
 import ReferenceLookup, { SourceNote } from '@/components/watches/ReferenceLookup'
+import { useModalForm } from '@/components/common/modalForm'
+import { clearDraft, loadDraft, saveDraft } from '@/lib/watchDraft'
 import type { WatchCreate, WatchUpdate, Watch, SpecLookupResult, SpecSource } from '@/types'
 
 type FormField = keyof WatchCreate
@@ -23,6 +25,8 @@ interface WatchFormProps {
   onSubmit: (data: WatchCreate | WatchUpdate, extras?: WatchFormExtras) => void | Promise<void>
   onCancel: () => void
   isLoading?: boolean
+  /** Keep what is typed in the browser under this key (Add form only) */
+  draftKey?: string
 }
 
 const conditionOptions = [
@@ -39,6 +43,7 @@ export default function WatchForm({
   onSubmit,
   onCancel,
   isLoading,
+  draftKey,
 }: WatchFormProps) {
   const { data: brands } = useBrands()
   const { data: movementTypes } = useMovementTypes()
@@ -63,7 +68,9 @@ export default function WatchForm({
     handleSubmit,
     getValues,
     setValue,
-    formState: { errors },
+    reset,
+    watch,
+    formState: { errors, isDirty },
   } = useForm<WatchCreate | WatchUpdate>({
     defaultValues: defaultValues
       ? {
@@ -102,6 +109,35 @@ export default function WatchForm({
           current_market_currency: 'USD',
         },
   })
+
+  // Typed changes: the pop-up asks before discarding them
+  const defaultComplications = useRef(defaultValues?.complications || [])
+  const complicationsChanged =
+    [...selectedComplications].sort().join('|') !== [...defaultComplications.current].sort().join('|')
+  const dirty = isDirty || complicationsChanged
+  const cancel = useModalForm(dirty, onCancel)
+
+  // Draft: restore once, then keep it up to date while something is typed
+  const [restored, setRestored] = useState(false)
+  const draftLoaded = useRef(false)
+  useEffect(() => {
+    if (!draftKey || draftLoaded.current) return
+    draftLoaded.current = true
+    const draft = loadDraft(draftKey)
+    if (!draft) return
+    reset(draft.values, { keepDefaultValues: true })
+    setSelectedComplications(draft.complications)
+    setRestored(true)
+  }, [draftKey, reset])
+  // Written only when what was typed changes, not on every render: after a
+  // save the parent clears the draft while this form is still on screen, and
+  // a re-render then (e.g. the save finishing) must not write it back.
+  const snapshot = JSON.stringify({ values: watch(), complications: selectedComplications })
+  useEffect(() => {
+    if (!draftKey || !draftLoaded.current) return
+    if (dirty) saveDraft(draftKey, JSON.parse(snapshot))
+    else clearDraft(draftKey)
+  }, [draftKey, dirty, snapshot])
 
   const handleFormSubmit = (data: WatchCreate | WatchUpdate) => {
     const formattedData = {
@@ -187,6 +223,14 @@ export default function WatchForm({
 
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      {restored && (
+        <p
+          role="status"
+          className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-900 dark:bg-blue-900/40 dark:text-blue-100"
+        >
+          Restored what you typed last time. Save it, or Cancel to discard it.
+        </p>
+      )}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
 
@@ -440,7 +484,7 @@ export default function WatchForm({
         <Button type="submit" disabled={isLoading} className="flex-1">
           {isLoading ? 'Saving...' : defaultValues ? 'Update Watch' : 'Add Watch'}
         </Button>
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={isLoading}>
+        <Button type="button" variant="secondary" onClick={cancel} disabled={isLoading}>
           Cancel
         </Button>
       </div>

@@ -95,6 +95,7 @@ export default function CollectionsPage() {
         onClose={() => setIsCreateModalOpen(false)}
         title="Create New Collection"
         size="md"
+        form
       >
         <CollectionForm
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -110,6 +111,7 @@ export default function CollectionsPage() {
         onClose={() => setEditingCollection(null)}
         title="Edit Collection"
         size="md"
+        form
       >
         {editingCollection && (
           <CollectionForm
