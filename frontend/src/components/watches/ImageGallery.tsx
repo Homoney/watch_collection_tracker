@@ -9,6 +9,16 @@ interface ImageGalleryProps {
   onImageClick: (index: number) => void
 }
 
+/** Where a reference photo came from, named by its source page */
+function photoSourceName(url: string): string {
+  try {
+    if (new URL(url).hostname.endsWith('grand-seiko.com')) return 'grand-seiko.com'
+  } catch {
+    // not a URL: fall through
+  }
+  return 'WatchBase'
+}
+
 export default function ImageGallery({ watchId, images, onImageClick }: ImageGalleryProps) {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null)
   const updateMutation = useUpdateImage()
@@ -162,7 +172,7 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
                   rel="noopener noreferrer"
                   className="text-blue-700 underline dark:text-blue-300"
                 >
-                  WatchBase
+                  {photoSourceName(image.source_url)}
                 </a>
               ) : (
                 'WatchBase'

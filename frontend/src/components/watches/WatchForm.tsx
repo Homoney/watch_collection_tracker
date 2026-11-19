@@ -51,9 +51,11 @@ export default function WatchForm({
 
   // Fields the reference look-up filled, and where from
   const [filledFrom, setFilledFrom] = useState<Partial<Record<string, SpecSource>>>({})
-  // Photo to save after the watch, from the last look-up: a matched WatchBase
-  // watch with a photo, or (no key) a try by reference number
-  const [photoFrom, setPhotoFrom] = useState<{ watchbaseId?: number } | null>(null)
+  // Photo to save after the watch, from the last look-up: a matched watch with
+  // a photo (WatchBase or the brand's site), or (no key) a try by reference number
+  const [photoFrom, setPhotoFrom] = useState<{ watchbaseId?: number; sourceName?: string } | null>(
+    null
+  )
   const [savePhoto, setSavePhoto] = useState(true)
 
   const {
@@ -124,7 +126,8 @@ export default function WatchForm({
       condition: data.condition || null,
     }
     onSubmit(formattedData as WatchCreate | WatchUpdate, {
-      referencePhoto: photoFrom && savePhoto ? photoFrom : undefined,
+      referencePhoto:
+        photoFrom && savePhoto ? { watchbaseId: photoFrom.watchbaseId } : undefined,
     })
   }
 
@@ -161,7 +164,14 @@ export default function WatchForm({
     }
     setFilledFrom((prev) => ({ ...prev, ...filled }))
     if (result.status === 'ok') {
-      setPhotoFrom(result.has_photo && result.watchbase_id ? { watchbaseId: result.watchbase_id } : null)
+      setPhotoFrom(
+        result.has_photo
+          ? {
+              watchbaseId: result.watchbase_id ?? undefined,
+              sourceName: result.photo_source?.name ?? 'WatchBase',
+            }
+          : null
+      )
     } else if (result.status === 'links_only' && result.reference) {
       setPhotoFrom({})
     }
@@ -228,8 +238,8 @@ export default function WatchForm({
                 className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
               <span>
-                {photoFrom.watchbaseId
-                  ? "Also save WatchBase's photo of this watch"
+                {photoFrom.sourceName
+                  ? `Also save ${photoFrom.sourceName}'s photo of this watch`
                   : "Also look for this reference's photo on WatchBase"}{' '}
                 as a reference photo (kept private, labelled with its source; your own photos
                 stay first)

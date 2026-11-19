@@ -31,3 +31,8 @@ Saved responses for the reference look-up tests (no live calls in CI).
   recorded on 2026-11-19 for "SBGE225" (finds watch 31041) and "SBGE 225"
   (finds nothing): the search matches references that contain the query.
   `wb_live_bad_key.json`: the answer to a made-up key (HTTP 200).
+- `gs_sbge253g.html`, `gs_not_found.html`: grand-seiko.com saved on
+  2026-11-19 with the app's User-Agent (2 requests): the SBGE253 product page
+  and the answer for an unknown reference (HTTP 200 with a "404 Page Not
+  Found" heading). Trimmed to the `og:` tags, the product heading and the
+  spec tables; no photos or marketing text are kept.

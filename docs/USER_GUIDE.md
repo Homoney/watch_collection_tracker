@@ -98,13 +98,14 @@ Next to **Reference Number** on the Add and Edit forms is a **Look up** button. 
 - If several watches match (for example `SBGE2`), it lists them; click yours.
 - It offers to save WatchBase's photo of the watch as a reference photo, with or without a key (see [Reference photo from WatchBase](#reference-photo-from-watchbase)).
 - When it finds the movement's caliber, it also shows movement facts such as jewels, beat rate and power reserve, from [Caliber Corner](https://calibercorner.com) with a link to its page.
+- WatchBase lacks many Grand Seiko watches (for example SBGE253). For a Grand Seiko reference it does not have, Look up fills the form from the watch's page on [grand-seiko.com](https://www.grand-seiko.com) instead (size, caliber, power reserve, water resistance, crystal, case material) and offers the official photo as a reference photo. This works with or without a WatchBase key.
 - It always shows links to look the reference up yourself (WatchBase, Caliber Corner and the brand's own site).
 
 Automatic filling needs a WatchBase API key, which an admin adds on the Admin page (see [Administration](#administration)). Without a key, Look up shows the links only; if you have typed the brand and caliber, it still adds Caliber Corner's movement facts. If the reference is unknown or a source is down, it says so in plain words and the form is unchanged.
 
 Sources can be wrong or incomplete (a case thickness or lug width is sometimes missing, and measurements can differ slightly from the brand's own figures), so check the values before saving.
 
-Look up sends the reference, and the brand and caliber when known, to WatchBase and Caliber Corner. Nothing else about you or your collection leaves your server. Answers are kept on your server for 90 days, so looking up the same reference again is instant and free.
+Look up sends the reference, and the brand and caliber when known, to WatchBase and Caliber Corner (and, for a Grand Seiko reference WatchBase lacks, asks grand-seiko.com for that reference's page). Nothing else about you or your collection leaves your server. Answers are kept on your server for 90 days, so looking up the same reference again is instant and free.
 
 ### Viewing Watches
 

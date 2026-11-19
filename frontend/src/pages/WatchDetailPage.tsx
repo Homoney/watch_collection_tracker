@@ -148,7 +148,8 @@ export default function WatchDetailPage() {
     setEditingMarketValue(undefined)
   }
 
-  // WatchBase's photo of this watch, saved as a labelled reference photo
+  // The source's photo of this watch (WatchBase, or the brand's site for
+  // references WatchBase lacks), saved as a labelled reference photo
   const handleReferencePhoto = async (watchbaseId?: number) => {
     if (!id) return
     setIsFetchingImages(true)
@@ -258,7 +259,8 @@ export default function WatchDetailPage() {
             {!watch.images || watch.images.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  No images yet. Upload your own, or get the reference photo from WatchBase.
+                  No images yet. Upload your own, or get the reference photo (from WatchBase or the
+                  brand's site).
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Button

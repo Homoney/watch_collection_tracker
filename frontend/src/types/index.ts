@@ -489,6 +489,8 @@ export interface SpecLookupResult {
   /** The matched WatchBase watch, and whether it has a photo to save */
   watchbase_id: number | null
   has_photo: boolean
+  /** Where that photo comes from (WatchBase, or a brand site such as grand-seiko.com) */
+  photo_source?: { name: string } | null
 }
 
 export interface ReferencePhotoResult {

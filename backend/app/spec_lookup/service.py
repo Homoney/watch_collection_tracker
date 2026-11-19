@@ -15,7 +15,15 @@ from typing import List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
-from app.spec_lookup import cache, calibercorner, keys, links, parse, watchbase
+from app.spec_lookup import (
+    cache,
+    calibercorner,
+    grandseiko,
+    keys,
+    links,
+    parse,
+    watchbase,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +55,8 @@ def _answer(status, reference, brand, **extra) -> dict:
         # The matched WatchBase watch, and whether it has a photo to save
         "watchbase_id": None,
         "has_photo": False,
+        # Where the photo offered with has_photo comes from: {"name"}
+        "photo_source": None,
     }
     answer.update(extra)
     return answer
@@ -71,6 +81,37 @@ def _add_movement_facts(db, answer: dict, brand: Optional[str], caliber: Optiona
         answer["fields"]["power_reserve"] = facts["power_reserve"]
         answer["sources"]["power_reserve"] = source
     answer["links"] = links.build(answer["reference"], brand, facts["url"])
+
+
+def _from_brand_site(
+    db, reference: str, brand: Optional[str], caliber: Optional[str], why: str
+) -> Optional[dict]:
+    """An "ok" answer from the brand's own page when WatchBase gave none."""
+    if not grandseiko.applies(brand, reference):
+        return None
+    try:
+        page = grandseiko.lookup(db, reference)
+    except Exception:  # a parser surprise must not break the look-up
+        logger.warning("grand-seiko.com look-up failed", exc_info=True)
+        page = None
+    if not page:
+        return None
+    fields = page["fields"]
+    source = {"name": grandseiko.SOURCE_NAME, "url": page["url"]}
+    answer = _answer(
+        "ok",
+        reference,
+        brand or grandseiko.BRAND,
+        message=f"{why} Filled the empty fields from {grandseiko.SOURCE_NAME}. "
+        "Check them before saving.",
+        fields=dict(fields),
+        sources={name: source for name in fields},
+        movement=dict(page["movement"], source=source) if page["movement"] else None,
+        has_photo=bool(page.get("photo")),
+        photo_source={"name": grandseiko.SOURCE_NAME} if page.get("photo") else None,
+    )
+    _add_movement_facts(db, answer, grandseiko.BRAND, fields.get("caliber") or caliber)
+    return answer
 
 
 def _search(db: Session, reference: str, key: str) -> Tuple[list, List[str]]:
@@ -137,6 +178,11 @@ def lookup(
     reference = (reference or "").strip()
     key = keys.get_watchbase_key()
     if not key:
+        found = _from_brand_site(
+            db, reference, brand, caliber, "Automatic WatchBase look-up is off."
+        )
+        if found:
+            return found
         answer = _answer("links_only", reference, brand)
         _add_movement_facts(db, answer, brand, caliber)
         return answer
@@ -144,7 +190,17 @@ def lookup(
         if watchbase_id is None:
             choices, tried = _search(db, reference, key)
             if not choices:
-                # WatchBase has no such watch; the calibre may still be known
+                # WatchBase has no such watch: try the brand's own site
+                found = _from_brand_site(
+                    db,
+                    reference,
+                    brand,
+                    caliber,
+                    "WatchBase has no watch with this reference.",
+                )
+                if found:
+                    return found
+                # The calibre may still be known
                 answer = _answer(
                     "not_found", reference, brand, message=_not_found(tried)
                 )
@@ -175,6 +231,9 @@ def lookup(
         movement=dict(movement, source=source) if movement else None,
         watchbase_id=watchbase_id,
         has_photo=watchbase.has_photo(w),
+        photo_source=(
+            {"name": watchbase.SOURCE_NAME} if watchbase.has_photo(w) else None
+        ),
     )
     _add_movement_facts(
         db,

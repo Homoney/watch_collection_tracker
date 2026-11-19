@@ -17,7 +17,7 @@ from app.config import settings
 from app.core.security import create_access_token, get_password_hash
 from app.models.spec_lookup import SpecLookupCache
 from app.models.user import User, UserRole
-from app.spec_lookup import calibercorner, http, keys, parse, watchbase
+from app.spec_lookup import calibercorner, grandseiko, http, keys, parse, watchbase
 
 FIX = Path(__file__).parent / "fixtures" / "spec_lookup"
 URL = "/api/v1/spec-lookup"
@@ -75,6 +75,7 @@ def net(monkeypatch, tmp_path):
     monkeypatch.setattr(settings, "DATA_DIR", str(tmp_path))
     monkeypatch.setattr(settings, "WATCHBASE_API_KEY", "")
     monkeypatch.setattr(calibercorner, "throttle", http.Throttle(0))
+    monkeypatch.setattr(grandseiko, "throttle", http.Throttle(0))
     return n
 
 
@@ -727,3 +728,152 @@ class TestNotFoundStillGetsCaliberFacts:
         assert body["status"] == "not_found"
         assert body["movement"] is None
         assert body["fields"] == {}
+
+
+# ------------------------------------------------------------ grand-seiko.com
+
+GS_PAGE = "https://www.grand-seiko.com/us-en/collections/sbge253g"
+GS_PHOTO = (
+    "https://www.grand-seiko.com/us-en/-/media/Images/GlobalEn/GrandSeiko/Home/"
+    "collections/Products/SBGE253/01_SBGE253_4pc.jpg"
+)
+
+
+@pytest.fixture
+def gs_brand(test_db):
+    from app.models.reference import Brand
+
+    brand = Brand(name="Grand Seiko")
+    test_db.add(brand)
+    test_db.commit()
+    return brand
+
+
+class TestGrandSeiko:
+    """WatchBase lacks many Grand Seiko references (SBGE253): the brand's
+    own page fills the form instead."""
+
+    def test_parse_live_page(self):
+        page = grandseiko.parse_page(fixture("gs_sbge253g.html"), "sbge253")
+        assert page["fields"] == {
+            "brand_name": "Grand Seiko",
+            "model": "Sport Collection",
+            "case_material": "Stainless steel with ceramic bezel",
+            "crystal": "Dual-curved sapphire crystal",
+            "case_diameter": 40.5,
+            "case_thickness": 14.7,
+            "lug_width": 20.0,
+            "caliber": "9R66",
+            "movement_type_name": "Spring Drive",
+            "power_reserve": 72,  # "Approx. 72 hours(3 days)": not 3 x 24 x 72
+            "water_resistance": 200,  # 20 bar
+            "complications": ["GMT", "Power Reserve Indicator"],
+        }
+        assert page["movement"]["jewels"] == 30
+        assert page["photo"] == GS_PHOTO
+
+    def test_soft_404_is_not_a_watch(self):
+        # Unknown references answer 200 with a "404 Page Not Found" heading
+        assert grandseiko.parse_page(fixture("gs_not_found.html"), "sbge999") is None
+
+    @pytest.mark.parametrize(
+        "brand,reference,expected",
+        [
+            ("Grand Seiko", "SBGE253", True),
+            ("Grand Seiko", "sbge-253g", True),
+            (None, "SBGE 253", True),
+            ("Seiko", "SBGA211", True),
+            ("Rolex", "SBGE253", False),
+            ("Grand Seiko", "126610LN", False),
+        ],
+    )
+    def test_applies(self, brand, reference, expected):
+        assert grandseiko.applies(brand, reference) is expected
+
+    def test_watchbase_not_found_uses_brand_page(
+        self, client, auth_headers, with_key, gs_brand, monkeypatch
+    ):
+        caliber_corner(with_key, with_page=False)
+        with_key.add("GET", GS_PAGE, text=fixture("gs_sbge253g.html"))
+        use_handler(monkeypatch, with_key.wb_answers(fixture("wb_live_search_none.json")))
+        body = client.get(
+            URL,
+            params={"reference": "SBGE253", "brand_id": str(gs_brand.id)},
+            headers=auth_headers,
+        ).json()
+        assert body["status"] == "ok"
+        assert body["message"].startswith("WatchBase has no watch with this reference.")
+        assert "grand-seiko.com" in body["message"]
+        assert body["fields"]["caliber"] == "9R66"
+        assert body["fields"]["case_diameter"] == 40.5
+        assert body["sources"]["caliber"] == {"name": "grand-seiko.com", "url": GS_PAGE}
+        assert body["movement"]["jewels"] == 30
+        assert body["has_photo"] is True
+        assert body["watchbase_id"] is None
+        assert body["photo_source"] == {"name": "grand-seiko.com"}
+        gs_calls = [c for c in with_key.calls if c.url.host == "www.grand-seiko.com"]
+        assert {str(c.url) for c in gs_calls} == {GS_PAGE}
+        assert gs_calls[0].headers["user-agent"].startswith("WatchCollectionTracker/")
+
+        # A repeat look-up comes from the cache
+        before = len(gs_calls)
+        again = client.get(
+            URL,
+            params={"reference": "SBGE253", "brand_id": str(gs_brand.id)},
+            headers=auth_headers,
+        ).json()
+        assert again["fields"] == body["fields"]
+        gs_calls = [c for c in with_key.calls if c.url.host == "www.grand-seiko.com"]
+        assert len(gs_calls) == before
+
+    def test_without_key_uses_brand_page(self, client, auth_headers, net):
+        caliber_corner(net, with_page=False)
+        net.add("GET", GS_PAGE, text=fixture("gs_sbge253g.html"))
+        body = client.get(URL, params={"reference": "SBGE253"}, headers=auth_headers).json()
+        assert body["status"] == "ok"
+        assert body["fields"]["water_resistance"] == 200
+        assert body["fields"]["brand_name"] == "Grand Seiko"
+
+    def test_unknown_reference_stays_not_found(
+        self, client, auth_headers, with_key, gs_brand, monkeypatch
+    ):
+        with_key.add(
+            "GET",
+            "https://www.grand-seiko.com/us-en/collections/sbge999g",
+            text=fixture("gs_not_found.html"),
+        )
+        use_handler(monkeypatch, with_key.wb_answers(fixture("wb_live_search_none.json")))
+        body = client.get(
+            URL,
+            params={"reference": "SBGE999", "brand_id": str(gs_brand.id)},
+            headers=auth_headers,
+        ).json()
+        assert body["status"] == "not_found"
+        assert body["fields"] == {}
+
+    def test_site_down_is_not_remembered(
+        self, client, auth_headers, gs_brand, net, test_db
+    ):
+        net.add("GET", GS_PAGE, exc=httpx.ConnectError("down"))
+        params = {"reference": "SBGE253", "brand_id": str(gs_brand.id)}
+        body = client.get(URL, params=params, headers=auth_headers).json()
+        assert body["status"] == "links_only"
+        assert test_db.query(SpecLookupCache).filter(
+            SpecLookupCache.source.like("grandseiko%")
+        ).count() == 0
+        net.add("GET", GS_PAGE, text=fixture("gs_sbge253g.html"))
+        caliber_corner(net, with_page=False)
+        body = client.get(URL, params=params, headers=auth_headers).json()
+        assert body["status"] == "ok"
+
+    def test_rolex_never_asks_grand_seiko(
+        self, client, auth_headers, with_key, test_brand, monkeypatch
+    ):
+        use_handler(monkeypatch, with_key.wb_answers(fixture("wb_live_search_none.json")))
+        body = client.get(
+            URL,
+            params={"reference": "SBGE253", "brand_id": str(test_brand.id)},
+            headers=auth_headers,
+        ).json()
+        assert body["status"] == "not_found"
+        assert not [c for c in with_key.calls if c.url.host == "www.grand-seiko.com"]
