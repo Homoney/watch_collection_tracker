@@ -12,7 +12,7 @@ interface ImageGalleryProps {
 /** Where a reference photo came from, named by its source page */
 function photoSourceName(url: string): string {
   try {
-    if (new URL(url).hostname.endsWith('grand-seiko.com')) return 'grand-seiko.com'
+    if (new URL(url).hostname === 'www.grand-seiko.com') return 'grand-seiko.com'
   } catch {
     // not a URL: fall through
   }

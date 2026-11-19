@@ -802,8 +802,10 @@ class TestGrandSeiko:
             headers=auth_headers,
         ).json()
         assert body["status"] == "ok"
-        assert body["message"].startswith("WatchBase has no watch with this reference.")
-        assert "grand-seiko.com" in body["message"]
+        assert body["message"] == (
+            "WatchBase has no watch with this reference. Filled the empty fields "
+            "from grand-seiko.com. Check them before saving."
+        )
         assert body["fields"]["caliber"] == "9R66"
         assert body["fields"]["case_diameter"] == 40.5
         assert body["sources"]["caliber"] == {"name": "grand-seiko.com", "url": GS_PAGE}
