@@ -2,6 +2,18 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [2.1.0] - 2026-11-19
+
+Feature release. Database migration 0002 runs automatically on start (a backup is taken first). No other upgrade steps.
+
+### Added
+- Look up specs and a reference photo from the reference number: pick a match and the form fills in caliber, movement facts, crystal, case material and complications, and a reference photo is available to save.
+- New watch fields: caliber, crystal and case material.
+- WatchBase API key is optional. Set it on the Admin page or with `WATCHBASE_API_KEY`; without a key, Look up still works and returns links only.
+
+### Removed
+- The Google image fetch (scraper) is removed; reference photos now come from WatchBase (closes #205).
+
 ## [2.0.4] - 2026-11-18
 
 Fixes and maintenance only. No upgrade steps.
