@@ -3,8 +3,9 @@
 Rules for every request (including each redirect hop):
 - only http and https, only ports 80 and 443
 - the host must resolve only to public (global) IP addresses
-- the connection goes to the IP that was checked, so a second DNS answer
-  cannot swap in an internal address
+- the connection goes to an IP that was checked, so a second DNS answer
+  cannot swap in an internal address; the checked addresses are tried in
+  turn (IPv6 and IPv4), so a host without an IPv6 route still connects
 - the body is streamed and abandoned once it passes max_bytes
 """
 
@@ -32,7 +33,7 @@ class DownloadTooLargeError(ValueError):
 
 def _system_resolver(host: str, port: int) -> List[str]:
     infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
-    return list({info[4][0] for info in infos})
+    return list(dict.fromkeys(info[4][0] for info in infos))  # system order
 
 
 def _is_public(ip: str) -> bool:
@@ -44,6 +45,12 @@ def _is_public(ip: str) -> bool:
 
 def check_url(url: str, resolver: Resolver = _system_resolver) -> tuple:
     """Validate a URL. Returns (scheme, host, port, ip) or raises UnsafeURLError."""
+    scheme, host, port, ips = check_url_all(url, resolver)
+    return scheme, host, port, ips[0]
+
+
+def check_url_all(url: str, resolver: Resolver = _system_resolver) -> tuple:
+    """Validate a URL. Returns (scheme, host, port, [every checked ip])."""
     try:
         parts = urlsplit(url)
         port = parts.port
@@ -66,7 +73,26 @@ def check_url(url: str, resolver: Resolver = _system_resolver) -> tuple:
         raise UnsafeURLError("Host does not resolve") from exc
     if not ips or not all(_is_public(ip) for ip in ips):
         raise UnsafeURLError("Host resolves to a non-public address")
-    return scheme, host, port, ips[0]
+    return scheme, host, port, list(ips)
+
+
+def _connect_any(client, scheme, host, port, ips, path, headers):
+    """Send the GET to each checked address in turn until one connects."""
+    last_error: Optional[Exception] = None
+    for ip in ips:
+        ip_host = f"[{ip}]" if ":" in ip else ip
+        request = client.build_request(
+            "GET",
+            f"{scheme}://{ip_host}:{port}{path}",
+            headers=headers,
+            extensions={"sni_hostname": host} if scheme == "https" else {},
+        )
+        try:
+            return client.send(request, stream=True)
+        except (httpx.ConnectError, httpx.ConnectTimeout) as exc:
+            last_error = exc  # e.g. no IPv6 route: try the next address
+    assert last_error is not None
+    raise last_error
 
 
 def fetch_bytes(
@@ -84,22 +110,13 @@ def fetch_bytes(
         timeout=timeout, follow_redirects=False, transport=transport
     ) as client:
         for _ in range(max_redirects + 1):
-            scheme, host, port, ip = check_url(url, resolver)
+            scheme, host, port, ips = check_url_all(url, resolver)
             parts = urlsplit(url)
-            ip_host = f"[{ip}]" if ":" in ip else ip
-            target = f"{scheme}://{ip_host}:{port}{parts.path or '/'}"
-            if parts.query:
-                target += f"?{parts.query}"
+            path = (parts.path or "/") + (f"?{parts.query}" if parts.query else "")
             req_headers = dict(headers or {})
             default_port = ALLOWED_SCHEMES[scheme]
             req_headers["Host"] = host if port == default_port else f"{host}:{port}"
-            request = client.build_request(
-                "GET",
-                target,
-                headers=req_headers,
-                extensions={"sni_hostname": host} if scheme == "https" else {},
-            )
-            response = client.send(request, stream=True)
+            response = _connect_any(client, scheme, host, port, ips, path, req_headers)
             try:
                 if response.is_redirect:
                     location = response.headers.get("location")

@@ -5,11 +5,22 @@ import Select from '@/components/common/Select'
 import Button from '@/components/common/Button'
 import { useBrands, useMovementTypes, useComplications } from '@/hooks/useReferenceData'
 import { useCollections } from '@/hooks/useCollections'
-import type { WatchCreate, WatchUpdate, Watch } from '@/types'
+import ReferenceLookup, { SourceNote } from '@/components/watches/ReferenceLookup'
+import type { WatchCreate, WatchUpdate, Watch, SpecLookupResult, SpecSource } from '@/types'
+
+type FormField = keyof WatchCreate
+
+export interface WatchFormExtras {
+  /**
+   * Save WatchBase's photo as a reference photo after saving: the matched
+   * watch's (watchbaseId), or without a key the one found by reference number.
+   */
+  referencePhoto?: { watchbaseId?: number }
+}
 
 interface WatchFormProps {
   defaultValues?: Watch
-  onSubmit: (data: WatchCreate | WatchUpdate) => void | Promise<void>
+  onSubmit: (data: WatchCreate | WatchUpdate, extras?: WatchFormExtras) => void | Promise<void>
   onCancel: () => void
   isLoading?: boolean
 }
@@ -35,12 +46,21 @@ export default function WatchForm({
   const { data: collections } = useCollections()
 
   const [selectedComplications, setSelectedComplications] = useState<string[]>(
-    defaultValues?.complications?.map(c => c.id) || []
+    defaultValues?.complications || []
   )
+
+  // Fields the reference look-up filled, and where from
+  const [filledFrom, setFilledFrom] = useState<Partial<Record<string, SpecSource>>>({})
+  // Photo to save after the watch, from the last look-up: a matched WatchBase
+  // watch with a photo, or (no key) a try by reference number
+  const [photoFrom, setPhotoFrom] = useState<{ watchbaseId?: number } | null>(null)
+  const [savePhoto, setSavePhoto] = useState(true)
 
   const {
     register,
     handleSubmit,
+    getValues,
+    setValue,
     formState: { errors },
   } = useForm<WatchCreate | WatchUpdate>({
     defaultValues: defaultValues
@@ -57,6 +77,8 @@ export default function WatchForm({
           case_diameter: defaultValues.case_diameter,
           case_thickness: defaultValues.case_thickness,
           case_material: defaultValues.case_material,
+          caliber: defaultValues.caliber,
+          crystal: defaultValues.crystal,
           dial_color: defaultValues.dial_color,
           strap_material: defaultValues.strap_material,
           lug_width: defaultValues.lug_width,
@@ -82,7 +104,7 @@ export default function WatchForm({
   const handleFormSubmit = (data: WatchCreate | WatchUpdate) => {
     const formattedData = {
       ...data,
-      complication_ids: selectedComplications,
+      complications: selectedComplications,
       purchase_date: data.purchase_date ? `${data.purchase_date}T00:00:00Z` : null,
       last_value_update: data.last_value_update ? `${data.last_value_update}T00:00:00Z` : null,
       purchase_price: data.purchase_price ? Number(data.purchase_price) : null,
@@ -94,11 +116,55 @@ export default function WatchForm({
       lug_width: data.lug_width ? Number(data.lug_width) : null,
       water_resistance: data.water_resistance ? Number(data.water_resistance) : null,
       power_reserve: data.power_reserve ? Number(data.power_reserve) : null,
+      caliber: data.caliber || null,
+      crystal: data.crystal || null,
+      case_material: data.case_material || null,
       collection_id: data.collection_id || null,
       movement_type_id: data.movement_type_id || null,
       condition: data.condition || null,
     }
-    onSubmit(formattedData as WatchCreate | WatchUpdate)
+    onSubmit(formattedData as WatchCreate | WatchUpdate, {
+      referencePhoto: photoFrom && savePhoto ? photoFrom : undefined,
+    })
+  }
+
+  // Put a look-up answer into the empty fields only; never overwrite
+  const applyLookup = (result: SpecLookupResult) => {
+    const f = result.fields
+    const filled: Partial<Record<string, SpecSource>> = {}
+    const isEmpty = (v: unknown) => v === undefined || v === null || v === ''
+    const fill = (name: FormField, value: unknown, from: keyof typeof f) => {
+      if (value === undefined || value === null || !isEmpty(getValues(name))) return
+      setValue(name, value as never, { shouldDirty: true })
+      filled[name] = result.sources[from]
+    }
+    const byName = <T extends { id: string; name: string }>(list: T[] | undefined, name?: string) =>
+      name ? list?.find((x) => x.name.toLowerCase() === name.toLowerCase())?.id : undefined
+
+    fill('brand_id', byName(brands, f.brand_name), 'brand_name')
+    fill('model', f.model, 'model')
+    fill('movement_type_id', byName(movementTypes, f.movement_type_name), 'movement_type_name')
+    fill('case_diameter', f.case_diameter, 'case_diameter')
+    fill('case_thickness', f.case_thickness, 'case_thickness')
+    fill('lug_width', f.lug_width, 'lug_width')
+    fill('water_resistance', f.water_resistance, 'water_resistance')
+    fill('power_reserve', f.power_reserve, 'power_reserve')
+    fill('caliber', f.caliber, 'caliber')
+    fill('crystal', f.crystal, 'crystal')
+    fill('case_material', f.case_material, 'case_material')
+
+    const known = new Set(complications?.map((c) => c.name))
+    const found = (f.complications || []).filter((name) => known.has(name))
+    if (selectedComplications.length === 0 && found.length > 0) {
+      setSelectedComplications(found)
+      filled.complications = result.sources.complications
+    }
+    setFilledFrom((prev) => ({ ...prev, ...filled }))
+    if (result.status === 'ok') {
+      setPhotoFrom(result.has_photo && result.watchbase_id ? { watchbaseId: result.watchbase_id } : null)
+    } else if (result.status === 'links_only' && result.reference) {
+      setPhotoFrom({})
+    }
   }
 
   const toggleComplication = (complicationName: string) => {
@@ -114,30 +180,63 @@ export default function WatchForm({
       <div className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
 
-        <Select
-          label="Brand"
-          required
-          {...register('brand_id', { required: 'Brand is required' })}
-          error={errors.brand_id?.message}
-          options={[
-            { value: '', label: 'Select brand...' },
-            ...(brands?.map((b) => ({ value: b.id, label: b.name })) || []),
-          ]}
-        />
+        <div>
+          <Select
+            label="Brand"
+            required
+            {...register('brand_id', { required: 'Brand is required' })}
+            error={errors.brand_id?.message}
+            options={[
+              { value: '', label: 'Select brand...' },
+              ...(brands?.map((b) => ({ value: b.id, label: b.name })) || []),
+            ]}
+          />
+          <SourceNote source={filledFrom.brand_id} />
+        </div>
 
-        <Input
-          label="Model"
-          required
-          {...register('model', { required: 'Model is required' })}
-          error={errors.model?.message}
-          placeholder="e.g., Submariner, Speedmaster"
-        />
+        <div>
+          <Input
+            label="Model"
+            required
+            {...register('model', { required: 'Model is required' })}
+            error={errors.model?.message}
+            placeholder="e.g., Submariner, Speedmaster"
+          />
+          <SourceNote source={filledFrom.model} />
+        </div>
 
-        <Input
-          label="Reference Number"
-          {...register('reference_number')}
-          placeholder="e.g., 126610LN"
-        />
+        <div className="space-y-2">
+          <Input
+            label="Reference Number"
+            {...register('reference_number')}
+            placeholder="e.g., 126610LN"
+          />
+          <ReferenceLookup
+            getContext={() => ({
+              reference: (getValues('reference_number') as string) || '',
+              brand_id: getValues('brand_id') as string,
+              caliber: getValues('caliber') as string,
+            })}
+            onResult={applyLookup}
+          />
+          {photoFrom && (
+            <label className="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-100">
+              <input
+                type="checkbox"
+                checked={savePhoto}
+                onChange={(e) => setSavePhoto(e.target.checked)}
+                className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span>
+                {photoFrom.watchbaseId
+                  ? "Also save WatchBase's photo of this watch"
+                  : "Also look for this reference's photo on WatchBase"}{' '}
+                as a reference photo (kept private, labelled with its source; your own photos
+                stay first)
+              </span>
+            </label>
+          )}
+        </div>
 
         <Input
           label="Serial Number"
@@ -154,14 +253,17 @@ export default function WatchForm({
           ]}
         />
 
-        <Select
-          label="Movement Type"
-          {...register('movement_type_id')}
-          options={[
-            { value: '', label: 'Select movement type...' },
-            ...(movementTypes?.map((mt) => ({ value: mt.id, label: mt.name })) || []),
-          ]}
-        />
+        <div>
+          <Select
+            label="Movement Type"
+            {...register('movement_type_id')}
+            options={[
+              { value: '', label: 'Select movement type...' },
+              ...(movementTypes?.map((mt) => ({ value: mt.id, label: mt.name })) || []),
+            ]}
+          />
+          <SourceNote source={filledFrom.movement_type_id} />
+        </div>
 
         <Select
           label="Condition"
@@ -193,44 +295,80 @@ export default function WatchForm({
         <h3 className="text-lg font-semibold text-gray-900">Specifications</h3>
 
         <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Case Diameter (mm)"
-            type="number"
-            step="0.01"
-            {...register('case_diameter')}
-            placeholder="40.00"
-          />
-          <Input
-            label="Case Thickness (mm)"
-            type="number"
-            step="0.01"
-            {...register('case_thickness')}
-            placeholder="12.00"
-          />
+          <div>
+            <Input
+              label="Case Diameter (mm)"
+              type="number"
+              step="0.01"
+              {...register('case_diameter')}
+              placeholder="40.00"
+            />
+            <SourceNote source={filledFrom.case_diameter} />
+          </div>
+          <div>
+            <Input
+              label="Case Thickness (mm)"
+              type="number"
+              step="0.01"
+              {...register('case_thickness')}
+              placeholder="12.00"
+            />
+            <SourceNote source={filledFrom.case_thickness} />
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Lug Width (mm)"
-            type="number"
-            step="0.01"
-            {...register('lug_width')}
-            placeholder="20.00"
-          />
-          <Input
-            label="Water Resistance (m)"
-            type="number"
-            {...register('water_resistance')}
-            placeholder="300"
-          />
+          <div>
+            <Input
+              label="Lug Width (mm)"
+              type="number"
+              step="0.01"
+              {...register('lug_width')}
+              placeholder="20.00"
+            />
+            <SourceNote source={filledFrom.lug_width} />
+          </div>
+          <div>
+            <Input
+              label="Water Resistance (m)"
+              type="number"
+              {...register('water_resistance')}
+              placeholder="300"
+            />
+            <SourceNote source={filledFrom.water_resistance} />
+          </div>
         </div>
 
-        <Input
-          label="Power Reserve (hours)"
-          type="number"
-          {...register('power_reserve')}
-          placeholder="70"
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Input
+              label="Power Reserve (hours)"
+              type="number"
+              {...register('power_reserve')}
+              placeholder="70"
+            />
+            <SourceNote source={filledFrom.power_reserve} />
+          </div>
+          <div>
+            <Input label="Caliber" {...register('caliber')} placeholder="e.g., 3235" />
+            <SourceNote source={filledFrom.caliber} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <Input label="Crystal" {...register('crystal')} placeholder="e.g., Sapphire" />
+            <SourceNote source={filledFrom.crystal} />
+          </div>
+          <div>
+            <Input
+              label="Case Material"
+              {...register('case_material')}
+              placeholder="e.g., Stainless steel"
+            />
+            <SourceNote source={filledFrom.case_material} />
+          </div>
+        </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -252,6 +390,7 @@ export default function WatchForm({
               </label>
             ))}
           </div>
+          <SourceNote source={filledFrom.complications} />
         </div>
       </div>
 

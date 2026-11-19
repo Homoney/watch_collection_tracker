@@ -1,6 +1,9 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { getAccessToken, setAccessToken } from './tokenStore'
 import type {
+  ReferencePhotoResult,
+  SpecLookupResult,
+  WatchBaseKeyStatus,
   LoginRequest,
   RegisterRequest,
   TokenResponse,
@@ -535,6 +538,48 @@ export const movementAccuracyApi = {
 
   getAnalytics: async (watchId: string): Promise<AccuracyAnalytics> => {
     const response = await api.get<AccuracyAnalytics>(`/v1/watches/${watchId}/accuracy-analytics`)
+    return response.data
+  },
+}
+
+// Reference look-up: fills the watch form from outside sources
+export const specLookupApi = {
+  lookup: async (params: {
+    reference: string
+    brand_id?: string
+    caliber?: string
+    watchbase_id?: number
+  }): Promise<SpecLookupResult> => {
+    const response = await api.get<SpecLookupResult>('/v1/spec-lookup', { params })
+    return response.data
+  },
+}
+
+// Admin settings
+export const settingsApi = {
+  getWatchBaseKey: async (): Promise<WatchBaseKeyStatus> => {
+    const response = await api.get<WatchBaseKeyStatus>('/v1/settings/watchbase-key')
+    return response.data
+  },
+  setWatchBaseKey: async (apiKey: string): Promise<WatchBaseKeyStatus> => {
+    const response = await api.put<WatchBaseKeyStatus>('/v1/settings/watchbase-key', {
+      api_key: apiKey,
+    })
+    return response.data
+  },
+  clearWatchBaseKey: async (): Promise<WatchBaseKeyStatus> => {
+    const response = await api.delete<WatchBaseKeyStatus>('/v1/settings/watchbase-key')
+    return response.data
+  },
+}
+
+// WatchBase's photo of a watch, saved as a labelled private reference photo
+export const referencePhotoApi = {
+  save: async (watchId: string, watchbaseId?: number): Promise<ReferencePhotoResult> => {
+    const response = await api.post<ReferencePhotoResult>(
+      `/v1/watches/${watchId}/reference-photo`,
+      watchbaseId ? { watchbase_id: watchbaseId } : {}
+    )
     return response.data
   },
 }

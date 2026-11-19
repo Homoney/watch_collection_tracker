@@ -77,7 +77,7 @@ export interface CollectionUpdate {
 }
 
 // Watch Images
-export type ImageSource = 'user_upload' | 'google_images' | 'url_import'
+export type ImageSource = 'user_upload' | 'google_images' | 'url_import' | 'reference_photo'
 
 export interface WatchImage {
   id: string
@@ -91,6 +91,7 @@ export interface WatchImage {
   is_primary: boolean
   sort_order: number
   source: ImageSource
+  source_url?: string | null  // page a reference photo came from
   created_at: string
   url: string
 }
@@ -233,6 +234,8 @@ export interface Watch {
   case_diameter: number | null
   case_thickness: number | null
   case_material: string | null
+  caliber: string | null
+  crystal: string | null
   dial_color: string | null
   strap_material: string | null
   lug_width: number | null
@@ -247,7 +250,7 @@ export interface Watch {
   updated_at: string
   brand?: Brand
   movement_type?: MovementType
-  complications?: Complication[]
+  complications?: string[]  // complication names
   collection?: Collection
   images?: WatchImage[]
   service_history?: ServiceHistory[]
@@ -268,12 +271,14 @@ export interface WatchCreate {
   case_diameter?: number | null
   case_thickness?: number | null
   case_material?: string | null
+  caliber?: string | null
+  crystal?: string | null
   dial_color?: string | null
   strap_material?: string | null
   lug_width?: number | null
   water_resistance?: number | null
   power_reserve?: number | null
-  complication_ids?: string[]
+  complications?: string[]
   condition?: ConditionEnum | null
   current_market_value?: number | null
   current_market_currency?: string
@@ -295,12 +300,14 @@ export interface WatchUpdate {
   case_diameter?: number | null
   case_thickness?: number | null
   case_material?: string | null
+  caliber?: string | null
+  crystal?: string | null
   dial_color?: string | null
   strap_material?: string | null
   lug_width?: number | null
   water_resistance?: number | null
   power_reserve?: number | null
-  complication_ids?: string[]
+  complications?: string[]
   condition?: ConditionEnum | null
   current_market_value?: number | null
   current_market_currency?: string
@@ -433,4 +440,64 @@ export interface AtomicTimeResponse {
   is_atomic_source: boolean
   timezone: string
   unix_timestamp: number
+}
+
+// Reference look-up (GET /api/v1/spec-lookup)
+export type SpecLookupStatus =
+  | 'ok'
+  | 'choices'
+  | 'not_found'
+  | 'links_only'
+  | 'bad_key'
+  | 'unavailable'
+
+export interface SpecSource {
+  name: string
+  url: string
+}
+
+export interface SpecLookupFields {
+  brand_name?: string
+  model?: string
+  movement_type_name?: string
+  case_diameter?: number
+  case_thickness?: number
+  lug_width?: number
+  water_resistance?: number
+  power_reserve?: number
+  caliber?: string
+  crystal?: string
+  case_material?: string
+  complications?: string[]
+}
+
+export interface SpecLookupResult {
+  status: SpecLookupStatus
+  message: string
+  reference: string
+  fields: SpecLookupFields
+  sources: Partial<Record<keyof SpecLookupFields, SpecSource>>
+  choices: { id: number; reference: string; name: string; brand: string; family: string }[]
+  movement: {
+    caliber?: string
+    jewels?: number
+    frequency?: string
+    power_reserve?: number
+    source?: SpecSource
+  } | null
+  links: { label: string; url: string }[]
+  /** The matched WatchBase watch, and whether it has a photo to save */
+  watchbase_id: number | null
+  has_photo: boolean
+}
+
+export interface ReferencePhotoResult {
+  status: 'saved' | 'exists' | 'no_reference' | 'choices' | 'none' | 'bad_key' | 'unavailable'
+  message: string
+  image: WatchImage | null
+}
+
+export interface WatchBaseKeyStatus {
+  configured: boolean
+  from_environment: boolean
 }

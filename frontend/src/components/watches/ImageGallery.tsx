@@ -72,6 +72,13 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
               </div>
             )}
 
+            {/* Reference photo: a catalogue copy, not the owner's own photo */}
+            {image.source === 'reference_photo' && (
+              <div className="absolute top-2 right-2 px-2 py-1 bg-gray-900/80 text-white text-xs font-medium rounded">
+                Reference photo
+              </div>
+            )}
+
             {/* Hover Overlay */}
             <div className="
               absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30
@@ -141,10 +148,28 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
             )}
           </div>
 
-          {/* File Info */}
-          <div className="mt-2 text-xs text-gray-500 truncate">
-            {image.file_name}
-          </div>
+          {/* File Info; a reference photo links to where it came from */}
+          {image.source === 'reference_photo' ? (
+            <div className="mt-2 text-xs text-gray-600 dark:text-gray-300 truncate">
+              Reference photo from{' '}
+              {image.source_url ? (
+                <a
+                  href={image.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-700 underline dark:text-blue-300"
+                >
+                  WatchBase
+                </a>
+              ) : (
+                'WatchBase'
+              )}
+            </div>
+          ) : (
+            <div className="mt-2 text-xs text-gray-500 truncate">
+              {image.file_name}
+            </div>
+          )}
         </div>
       ))}
     </div>

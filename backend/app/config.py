@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     # Proxies whose X-Forwarded-For/-Proto are trusted (passed to uvicorn)
     TRUSTED_PROXIES: str = "127.0.0.1"
 
+    # WatchBase Data Feed API key for reference look-up. Optional: an admin can
+    # also set it on the Admin page (kept in DATA_DIR/watchbase_api_key).
+    # This variable wins when both are set.
+    WATCHBASE_API_KEY: str = ""
+    # Days a reference look-up result is reused before asking the sources again
+    SPEC_LOOKUP_CACHE_DAYS: int = 90
+
     # Login throttling per account
     LOGIN_MAX_FAILURES: int = 5
     LOGIN_LOCKOUT_MINUTES: int = 15

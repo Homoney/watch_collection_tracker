@@ -1,0 +1,5 @@
+{"num_results": 3, "watches": [
+ {"id": 31034, "refnr": "SBGE201", "name": "Spring Drive GMT", "brand": {"id": 120, "name": "Grand Seiko"}, "family": {"id": 801, "name": "Spring Drive"}, "updated": "2018-01-10"},
+ {"id": 31035, "refnr": "SBGE205", "name": "Spring Drive GMT Ice Blue", "brand": {"id": 120, "name": "Grand Seiko"}, "family": {"id": 801, "name": "Spring Drive"}, "updated": "2018-01-10"},
+ {"id": 31036, "refnr": "SBGE209", "name": "Spring Drive GMT Black Ceramic", "brand": {"id": 120, "name": "Grand Seiko"}, "family": {"id": 801, "name": "Spring Drive"}, "updated": "2018-01-10"}
+]}

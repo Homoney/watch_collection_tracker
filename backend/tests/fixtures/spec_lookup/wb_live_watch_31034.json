@@ -1,0 +1,83 @@
+{
+ "watch": {
+  "wb": {
+   "id": 31034,
+   "added": "2018-03-06",
+   "modified": "2018-03-06",
+   "published": "2018-03-06"
+  },
+  "reference_number": "SBGE201",
+  "name": "Spring Drive GMT Stainless Steel / Black / Bracelet",
+  "gender": "M",
+  "released": "2017",
+  "stopped": "",
+  "limited_nr": null,
+  "waterresistance": "100.00 m",
+  "description": "(trimmed for the fixture)",
+  "brand": {
+   "id": 198,
+   "name": "Grand Seiko",
+   "slug": "grand-seiko",
+   "address": "",
+   "zipcode": "",
+   "city": "",
+   "state": "",
+   "country_code": "JP",
+   "logo": "https://cdn.watchbase.com/brand/lg/grand-seiko-8f.png",
+   "year_established": null,
+   "website": "https://www.grand-seiko.com/",
+   "pricerange_start": null,
+   "pricerange_end": null,
+   "pricerange_currency": "EUR",
+   "description": "(trimmed for the fixture)"
+  },
+  "family": {
+   "id": 830,
+   "name": "Spring Drive",
+   "slug": "spring-drive",
+   "description": "(trimmed for the fixture)",
+   "image": ""
+  },
+  "caliber": {
+   "id": 2130,
+   "reference_number": "9R66",
+   "image": "https://cdn.watchbase.com/caliber/lg/grand-seiko/9r66-5b.png",
+   "diameter": null,
+   "jewels": 30,
+   "frequency": null,
+   "powerreserve": "72 h",
+   "brand": "Grand Seiko",
+   "type": "Spring Drive",
+   "display": "Analog",
+   "description": "(trimmed for the fixture)",
+   "parent_caliber": "Grand Seiko 9R65",
+   "acoustic": null,
+   "additional": "Power Reserve Indicator",
+   "astronomical": null,
+   "chronograph": null,
+   "date": "Date",
+   "hands": "Hours, Minutes, Seconds, Additional 24 Hour Hand (adjustable)"
+  },
+  "case": {
+   "materials": [
+    "Stainless Steel"
+   ],
+   "bezel": "Rotating, 24 Hour",
+   "glass": "Sapphire",
+   "back": "Closed",
+   "shape": "Round",
+   "diameter": "44.00 mm",
+   "height": "14.70 mm"
+  },
+  "dial": {
+   "color": "Black",
+   "finish": "Gloss",
+   "indextype": "Stick / Dot",
+   "handstyle": "Dauphine"
+  },
+  "images": [
+   "https://cdn.watchbase.com/watch/md/grand-seiko/spring-drive/sbge201-3c.png"
+  ],
+  "prices": null
+ }
+}

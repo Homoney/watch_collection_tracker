@@ -76,6 +76,8 @@ After logging in, you'll see the dashboard with:
    - **Reference Number**: Official reference (e.g., "116610LN")
    - **Serial Number**: Watch serial number
    - **Movement Type**: Automatic, Manual, Quartz, etc.
+   - **Caliber**: The movement's caliber number (e.g., "3235")
+   - **Crystal**: Sapphire, mineral, hesalite, etc.
    - **Case Material**: Stainless Steel, Gold, Titanium, etc.
    - **Case Diameter**: Size in millimeters
    - **Water Resistance**: Depth rating in meters
@@ -86,6 +88,23 @@ After logging in, you'll see the dashboard with:
    - **Notes**: Any additional information
 
 4. Click "Add Watch" to save
+
+### Looking up specs from the reference number
+
+Next to **Reference Number** on the Add and Edit forms is a **Look up** button. Type the reference (for example `126610LN`), click **Look up**, check what it filled, then save.
+
+- It only fills fields that are still empty; anything you typed stays.
+- Each filled field says where the value came from, with a link (for example "Filled from WatchBase").
+- If several watches match (for example `SBGE2`), it lists them; click yours.
+- It offers to save WatchBase's photo of the watch as a reference photo, with or without a key (see [Reference photo from WatchBase](#reference-photo-from-watchbase)).
+- When it finds the movement's caliber, it also shows movement facts such as jewels, beat rate and power reserve, from [Caliber Corner](https://calibercorner.com) with a link to its page.
+- It always shows links to look the reference up yourself (WatchBase, Caliber Corner and the brand's own site).
+
+Automatic filling needs a WatchBase API key, which an admin adds on the Admin page (see [Administration](#administration)). Without a key, Look up shows the links only; if you have typed the brand and caliber, it still adds Caliber Corner's movement facts. If the reference is unknown or a source is down, it says so in plain words and the form is unchanged.
+
+Sources can be wrong or incomplete (a case thickness or lug width is sometimes missing, and measurements can differ slightly from the brand's own figures), so check the values before saving.
+
+Look up sends the reference, and the brand and caliber when known, to WatchBase and Caliber Corner. Nothing else about you or your collection leaves your server. Answers are kept on your server for 90 days, so looking up the same reference again is instant and free.
 
 ### Viewing Watches
 
@@ -202,6 +221,19 @@ Upload and manage photos of your watches.
 - JPG, PNG, GIF, WebP
 - Maximum size: 20MB per image
 - Automatically extracts dimensions
+
+### Reference photo from WatchBase
+
+The app can save WatchBase's catalogue photo of your exact reference. This works without a WatchBase key:
+
+- **From Look up**: after Look up, tick "Also save WatchBase's photo" (ticked by default) and save the form. Without a key the box reads "Also look for this reference's photo on WatchBase".
+- **On the watch page**: click **Get reference photo**. It uses the watch's reference number. If several watches match, type the full reference (for example `5711/1A-010` rather than `5711/1A`), or, with a key, use Look up on the Edit form to pick yours.
+
+With a key, the photo comes with the watch's WatchBase record. Without one, the app searches WatchBase's public site for the reference and takes the main photo of the watch page it finds (two requests at most, one per second).
+
+The photo is a private copy on your server, labelled **Reference photo** with a link to its WatchBase page. A watch has at most one. It never replaces your own photos: it only becomes the primary photo when the watch has no other photo. Delete it like any other image. Reference photos are left out of PDF exports, because WatchBase does not license its photos for sharing.
+
+If no photo is found, the app says so; upload your own instead. (The old "Fetch from Google Images" button is gone: Google no longer serves image results to apps.)
 
 ### Managing Images
 
@@ -608,6 +640,18 @@ Admins see an **Admin** link in the navigation bar. On the Admin page they can:
 - Delete an account
 
 New accounts are not created on this page: either the site allows sign-up (`ALLOW_REGISTRATION=true`) or the server's administrator runs `docker exec -it watch-tracker python -m app.cli create-user EMAIL` (add `--admin` for an admin).
+
+### Reference look-up key (WatchBase)
+
+The **Reference look-up** card on the Admin page holds the WatchBase API key that lets **Look up** fill the watch form.
+
+1. Get a key from WatchBase's Data Feed: sign up at https://datafeed.watchbase.com and buy credits. WatchBase charges per watch looked up (about US $0.30 each); searching is not charged. This app keeps every answer for 90 days, so the same reference again costs nothing.
+2. On the Admin page, paste the key into **WatchBase API key** and click **Save key**.
+3. Open Add Watch, type a reference and click **Look up** to check it works.
+
+**Remove key** turns automatic look-up off again (links only). The key is stored on the server (`/data/watchbase_api_key`, readable only by the app) and is never shown again or sent to browsers. If the server sets `WATCHBASE_API_KEY`, that key is used and the card says so; change it there and restart the container.
+
+If Look up says WatchBase did not accept the key, the key is wrong or the account is out of credits.
 
 Admins cannot demote or delete their own account. Someone locked out of the only admin account can be promoted again from the server: `docker exec -it watch-tracker python -m app.cli create-user EMAIL --admin`.
 

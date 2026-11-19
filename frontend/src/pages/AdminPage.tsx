@@ -8,6 +8,7 @@ import Spinner from '@/components/common/Spinner'
 import Modal from '@/components/common/Modal'
 import Input from '@/components/common/Input'
 import { usersApi } from '@/lib/api'
+import WatchBaseKeyCard from '@/components/admin/WatchBaseKeyCard'
 import { User } from '@/types'
 
 export default function AdminPage() {
@@ -212,6 +213,8 @@ export default function AdminPage() {
             </table>
           </div>
         </Card>
+
+        <WatchBaseKeyCard />
       </div>
 
       {/* Update Role Modal */}

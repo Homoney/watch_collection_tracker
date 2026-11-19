@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { FileDown } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import WatchList from '@/components/watches/WatchList'
 import WatchFilters from '@/components/watches/WatchFilters'
 import FilterChips from '@/components/watches/FilterChips'
-import WatchForm from '@/components/watches/WatchForm'
+import WatchForm, { type WatchFormExtras } from '@/components/watches/WatchForm'
 import ComparisonBar from '@/components/watches/ComparisonBar'
 import Modal from '@/components/common/Modal'
 import Button from '@/components/common/Button'
@@ -13,10 +14,11 @@ import { useWatches, useCreateWatch, useDeleteWatch } from '@/hooks/useWatches'
 import { useBrands, useMovementTypes } from '@/hooks/useReferenceData'
 import { useCollections } from '@/hooks/useCollections'
 import { useComparison } from '@/contexts/ComparisonContext'
-import { api } from '@/lib/api'
+import { api, referencePhotoApi } from '@/lib/api'
 import type { WatchFilters as WatchFiltersType, WatchListItem, WatchCreate } from '@/types'
 
 export default function WatchListPage() {
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -80,10 +82,17 @@ export default function WatchListPage() {
     })
   }
 
-  const handleCreateWatch = async (data: WatchCreate) => {
+  const handleCreateWatch = async (data: WatchCreate, extras?: WatchFormExtras) => {
     try {
-      await createMutation.mutateAsync(data)
+      const created = await createMutation.mutateAsync(data)
       setIsAddModalOpen(false)
+      if (extras?.referencePhoto && created?.id) {
+        // The watch is saved either way; a missing photo is not an error here
+        await referencePhotoApi
+          .save(created.id, extras.referencePhoto.watchbaseId)
+          .catch(() => undefined)
+        queryClient.invalidateQueries({ queryKey: ['watches'] })
+      }
     } catch (error) {
       console.error('Failed to create watch:', error)
     }

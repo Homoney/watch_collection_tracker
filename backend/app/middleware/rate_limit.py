@@ -40,12 +40,14 @@ RULES = (
         "upload",
         re.compile(
             r"^/api/v1/watches/[^/]+/"
-            r"(images|fetch-images|service-history/[^/]+/documents)$"
+            r"(images|reference-photo|service-history/[^/]+/documents)$"
         ),
         10 / 60,
         10,
         methods=("POST",),
     ),
+    # Look-ups reach outside services (one of them paid): keep them slow
+    Rule("lookup", re.compile(r"^/api/v1/spec-lookup$"), 20 / 60, 10),
     Rule("api", re.compile(r"^/api/"), 10.0, 20),
 )
 

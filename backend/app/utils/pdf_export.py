@@ -88,7 +88,10 @@ def generate_watch_pdf(watch_data: dict, upload_dir: Optional[str] = None) -> By
     elements.append(Spacer(1, 0.2 * inch))
 
     # Primary Image
-    images = watch_data.get("images", [])
+    # Reference photos (catalogue copies) stay out of exports, which may be shared
+    images = [
+        i for i in watch_data.get("images", []) if i.get("source") != "reference_photo"
+    ]
     if images:
         primary_image = next(
             (img for img in images if img.get("is_primary")), images[0]
@@ -156,6 +159,9 @@ def generate_watch_pdf(watch_data: dict, upload_dir: Optional[str] = None) -> By
             watch_data.get("lug_width"),
             watch_data.get("water_resistance"),
             watch_data.get("power_reserve"),
+            watch_data.get("caliber"),
+            watch_data.get("crystal"),
+            watch_data.get("case_material"),
         ]
     ):
 
@@ -174,6 +180,12 @@ def generate_watch_pdf(watch_data: dict, upload_dir: Optional[str] = None) -> By
             )
         if watch_data.get("power_reserve"):
             spec_data.append(["Power Reserve:", f"{watch_data['power_reserve']} hours"])
+        if watch_data.get("caliber"):
+            spec_data.append(["Caliber:", watch_data["caliber"]])
+        if watch_data.get("crystal"):
+            spec_data.append(["Crystal:", watch_data["crystal"]])
+        if watch_data.get("case_material"):
+            spec_data.append(["Case Material:", watch_data["case_material"]])
 
         spec_table = Table(spec_data, colWidths=[2 * inch, 4 * inch])
         spec_table.setStyle(
@@ -451,7 +463,9 @@ def generate_collection_pdf(
         elements.append(watch_title)
 
         # Add watch image if available
-        images = watch.get("images", [])
+        images = [
+            i for i in watch.get("images", []) if i.get("source") != "reference_photo"
+        ]
         if images:
             primary_image = next(
                 (img for img in images if img.get("is_primary")), images[0]

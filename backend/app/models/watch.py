@@ -64,6 +64,9 @@ class Watch(Base):
     lug_width = Column(Numeric(5, 2))  # mm
     water_resistance = Column(Integer)  # meters
     power_reserve = Column(Integer)  # hours
+    caliber = Column(String(100))  # e.g. "3235"
+    crystal = Column(String(100))  # e.g. "Sapphire"
+    case_material = Column(String(200))  # e.g. "Stainless steel"
 
     # Complications (stored as JSON array of complication names)
     complications = Column(JSON, default=[])

@@ -452,7 +452,8 @@ interface WatchImage {
   height: number | null
   is_primary: boolean
   sort_order: number
-  source: 'user_upload' | 'google_images' | 'url_import'
+  source: 'user_upload' | 'google_images' | 'url_import' | 'reference_photo'
+  source_url?: string | null  // reference photo: page it came from
   created_at: string
   url: string                // "/uploads/watch_id/filename.jpg"
 }
@@ -543,7 +544,7 @@ interface WatchAnalytics {
 2. No drag-to-reorder images
 3. No batch operations
 4. No image editing (crop/rotate)
-5. No Google Images integration (schema ready)
+5. Reference photos come only from WatchBase (API with a key, else its public search and the page's og:image); the old Google Images scraper was removed in 2.1
 
 ---
 

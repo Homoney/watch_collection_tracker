@@ -15,6 +15,7 @@ from app.api.v1 import (
     reference,
     saved_searches,
     service_history,
+    spec_lookup,
     uploads,
     users,
     watches,
@@ -142,6 +143,12 @@ app.include_router(
     saved_searches.router, prefix="/api/v1/saved-searches", tags=["Saved Searches"]
 )
 app.include_router(users.router, prefix="/api/v1/users", tags=["User Management"])
+app.include_router(
+    spec_lookup.router, prefix="/api/v1/spec-lookup", tags=["Reference Look-up"]
+)
+app.include_router(
+    spec_lookup.settings_router, prefix="/api/v1/settings", tags=["Settings"]
+)
 app.include_router(files.router, prefix="/api/v1/files", tags=["Files"])
 # Movement accuracy (all routes require auth)
 app.include_router(

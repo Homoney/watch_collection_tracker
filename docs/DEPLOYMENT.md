@@ -127,6 +127,12 @@ All settings are optional environment variables. The full table is in the
 - `TRUSTED_PROXIES`: the address of your reverse proxy (see below)
 - `BACKUP_KEEP_DAYS`, `BACKUP_INTERVAL_HOURS`: backup retention and frequency
 - `TZ`: time zone for log times
+- `WATCHBASE_API_KEY`: optional key for automatic reference look-up; admins
+  can set it on the Admin page instead. Look-up makes outgoing HTTPS requests
+  to `api.watchbase.com` and `calibercorner.com`; without a key it only
+  contacts Caliber Corner, and only when the user typed a caliber. Saving a
+  reference photo contacts `cdn.watchbase.com`, and without a key also
+  `watchbase.com` (its search and the watch page)
 
 ## 6. HTTPS with a reverse proxy
 

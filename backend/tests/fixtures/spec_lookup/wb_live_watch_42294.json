@@ -1,0 +1,114 @@
+{
+ "watch": {
+  "wb": {
+   "id": 42294,
+   "added": "2020-09-01",
+   "modified": "2024-01-02",
+   "published": "2020-09-01"
+  },
+  "reference_number": "126610LN-0001",
+  "name": "Submariner Date 41 Stainless Steel / Black / Cerachrom",
+  "gender": "M",
+  "released": "2020",
+  "stopped": "",
+  "limited_nr": null,
+  "waterresistance": "300.00 m",
+  "description": "(trimmed for the fixture)",
+  "brand": {
+   "id": 54,
+   "name": "Rolex",
+   "slug": "rolex",
+   "address": "Rue François- Dussaud 3-7",
+   "zipcode": "CH-1211",
+   "city": "Geneva",
+   "state": "Geneva",
+   "country_code": "CH",
+   "logo": "https://cdn.watchbase.com/brand/lg/rolex-bc.png",
+   "year_established": 1908,
+   "website": "http://www.rolex.com",
+   "pricerange_start": "5850.00",
+   "pricerange_end": "164700.00",
+   "pricerange_currency": "EUR",
+   "description": "(trimmed for the fixture)"
+  },
+  "family": {
+   "id": 281,
+   "name": "Submariner",
+   "slug": "submariner",
+   "description": "(trimmed for the fixture)",
+   "image": "https://cdn.watchbase.com/family/lg/rolex/submariner-52.jpg"
+  },
+  "caliber": {
+   "id": 1048,
+   "reference_number": "3235",
+   "image": "https://cdn.watchbase.com/caliber/lg/rolex/3235-ae.jpg",
+   "diameter": "28.50 mm",
+   "jewels": 31,
+   "frequency": "28800 bph",
+   "powerreserve": "70 h",
+   "brand": "Rolex",
+   "type": "Automatic",
+   "display": "Analog",
+   "description": "(trimmed for the fixture)",
+   "parent_caliber": "Rolex 3035",
+   "acoustic": null,
+   "additional": "Chronometer",
+   "astronomical": null,
+   "chronograph": null,
+   "date": "Date",
+   "hands": "Hours, Minutes, Seconds"
+  },
+  "case": {
+   "materials": [
+    "Stainless Steel"
+   ],
+   "bezel": "Rotating, 0-60 (Dive)",
+   "glass": "Sapphire",
+   "back": "Closed",
+   "shape": "Round",
+   "diameter": "41.00 mm",
+   "lugwidth": "21.00 mm"
+  },
+  "dial": {
+   "color": "Black",
+   "finish": "Gloss",
+   "indextype": "Stick / Dot",
+   "handstyle": "Mercedes"
+  },
+  "images": [
+   "https://cdn.watchbase.com/watch/md/rolex/submariner/126610ln-0001-78.jpg"
+  ],
+  "prices": [
+   {
+    "currency": "EUR",
+    "watch_price": "11100",
+    "date": "2026-02-03"
+   },
+   {
+    "currency": "EUR",
+    "watch_price": "10800",
+    "date": "2025-01-04"
+   },
+   {
+    "currency": "EUR",
+    "watch_price": "10700",
+    "date": "2024-01-01"
+   },
+   {
+    "currency": "EUR",
+    "watch_price": "10250",
+    "date": "2023-01-10"
+   },
+   {
+    "currency": "EUR",
+    "watch_price": "9600",
+    "date": "2022-01-19"
+   },
+   {
+    "currency": "EUR",
+    "watch_price": "8700",
+    "date": "2020-09-01"
+   }
+  ]
+ }
+}

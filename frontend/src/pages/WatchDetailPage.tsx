@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { FileDown, Download, Clock } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import AppLayout from '@/components/layout/AppLayout'
-import WatchForm from '@/components/watches/WatchForm'
+import WatchForm, { type WatchFormExtras } from '@/components/watches/WatchForm'
 import ImageUpload from '@/components/watches/ImageUpload'
 import ImageGallery from '@/components/watches/ImageGallery'
 import ImageLightbox from '@/components/common/ImageLightbox'
@@ -20,7 +20,7 @@ import Badge from '@/components/common/Badge'
 import Spinner from '@/components/common/Spinner'
 import Card from '@/components/common/Card'
 import { useWatch, useUpdateWatch, useDeleteWatch } from '@/hooks/useWatches'
-import { api } from '@/lib/api'
+import { api, referencePhotoApi } from '@/lib/api'
 import type { WatchUpdate, ServiceHistory, MarketValue } from '@/types'
 
 export default function WatchDetailPage() {
@@ -39,14 +39,16 @@ export default function WatchDetailPage() {
   const deleteMutation = useDeleteWatch()
   const queryClient = useQueryClient()
   const [isFetchingImages, setIsFetchingImages] = useState(false)
-  const [imageOffset, setImageOffset] = useState(0)
   const [imageFetchMessage, setImageFetchMessage] = useState<string | null>(null)
 
-  const handleUpdate = async (data: WatchUpdate) => {
+  const handleUpdate = async (data: WatchUpdate, extras?: WatchFormExtras) => {
     if (!id) return
     try {
       await updateMutation.mutateAsync({ id, data })
       setIsEditModalOpen(false)
+      if (extras?.referencePhoto) {
+        await handleReferencePhoto(extras.referencePhoto.watchbaseId)
+      }
     } catch (error) {
       console.error('Failed to update watch:', error)
     }
@@ -146,28 +148,25 @@ export default function WatchDetailPage() {
     setEditingMarketValue(undefined)
   }
 
-  const handleFetchGoogleImages = async () => {
+  // WatchBase's photo of this watch, saved as a labelled reference photo
+  const handleReferencePhoto = async (watchbaseId?: number) => {
     if (!id) return
     setIsFetchingImages(true)
     setImageFetchMessage(null)
     try {
-      const { data } = await api.post<{ message: string; images: unknown[] }>(
-        `/v1/watches/${id}/fetch-images?offset=${imageOffset}`
-      )
-      if (!data.images?.length) {
-        // Nothing found (or the image source failed): say so plainly
-        setImageFetchMessage(data.message || 'No images found; you can upload your own')
-        return
+      const result = await referencePhotoApi.save(id, watchbaseId)
+      if (result.image) {
+        queryClient.invalidateQueries({ queryKey: ['watches', id] })
+        queryClient.invalidateQueries({ queryKey: ['watches'] })
       }
-      // Invalidate queries to refetch watch data with new images
-      queryClient.invalidateQueries({ queryKey: ['watches', id] })
-      queryClient.invalidateQueries({ queryKey: ['watches'] })
-      // Increment offset for next fetch
-      setImageOffset((prev) => prev + 3)
+      setImageFetchMessage(result.message)
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { detail?: string } } }
-      console.error('Failed to fetch images:', error)
-      setImageFetchMessage(err.response?.data?.detail || 'Failed to fetch images from Google')
+      const err = error as { response?: { status?: number } }
+      setImageFetchMessage(
+        err.response?.status === 429
+          ? 'Too many requests in a row. Wait a minute and try again.'
+          : 'Could not get the reference photo. Try again later, or upload your own.'
+      )
     } finally {
       setIsFetchingImages(false)
     }
@@ -251,16 +250,16 @@ export default function WatchDetailPage() {
             {!watch.images || watch.images.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  No images yet. Upload your own or fetch from Google Images.
+                  No images yet. Upload your own, or get the reference photo from WatchBase.
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Button
-                    onClick={handleFetchGoogleImages}
+                    onClick={() => handleReferencePhoto()}
                     disabled={isFetchingImages}
                     variant="secondary"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    {isFetchingImages ? 'Fetching Images...' : 'Fetch from Google Images'}
+                    {isFetchingImages ? 'Getting photo...' : 'Get reference photo'}
                   </Button>
                 </div>
               </div>
@@ -271,16 +270,18 @@ export default function WatchDetailPage() {
                   images={watch.images || []}
                   onImageClick={(index) => setLightboxIndex(index)}
                 />
-                <div className="flex justify-center pt-4">
-                  <Button
-                    onClick={handleFetchGoogleImages}
-                    disabled={isFetchingImages}
-                    variant="secondary"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    {isFetchingImages ? 'Loading More Images...' : 'Load More Images from Google'}
-                  </Button>
-                </div>
+                {!watch.images.some((img) => img.source === 'reference_photo') && (
+                  <div className="flex justify-center pt-4">
+                    <Button
+                      onClick={() => handleReferencePhoto()}
+                      disabled={isFetchingImages}
+                      variant="secondary"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      {isFetchingImages ? 'Getting photo...' : 'Get reference photo'}
+                    </Button>
+                  </div>
+                )}
               </>
             )}
 
@@ -435,7 +436,10 @@ export default function WatchDetailPage() {
               watch.case_thickness ||
               watch.lug_width ||
               watch.water_resistance ||
-              watch.power_reserve) && (
+              watch.power_reserve ||
+              watch.caliber ||
+              watch.crystal ||
+              watch.case_material) && (
               <Card className="p-6">
                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Specifications</h2>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -469,6 +473,24 @@ export default function WatchDetailPage() {
                       <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.power_reserve} hours</dd>
                     </div>
                   )}
+                  {watch.caliber && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Caliber</dt>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.caliber}</dd>
+                    </div>
+                  )}
+                  {watch.crystal && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Crystal</dt>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.crystal}</dd>
+                    </div>
+                  )}
+                  {watch.case_material && (
+                    <div>
+                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Case Material</dt>
+                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.case_material}</dd>
+                    </div>
+                  )}
                 </dl>
               </Card>
             )}
@@ -479,10 +501,10 @@ export default function WatchDetailPage() {
                 <div className="flex flex-wrap gap-2">
                   {watch.complications.map((comp) => (
                     <span
-                      key={comp.id}
+                      key={comp}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                     >
-                      {comp.name}
+                      {comp}
                     </span>
                   ))}
                 </div>

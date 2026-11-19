@@ -171,6 +171,47 @@ class TestFetchBytes:
         assert ctype == "image/jpeg" and body == b"x" * 10
         assert seen == {"host": "93.184.216.34", "header": "img.example.com"}
 
+    def test_tries_each_checked_address_in_turn(self):
+        # No IPv6 route: the first (IPv6) address fails to connect, IPv4 works
+        r = resolver_for({"cdn.example.com": ["2606:4700::6810:1", "93.184.216.34"]})
+        tried = []
+
+        def handler(request):
+            tried.append(request.url.host)
+            if ":" in request.url.host:
+                raise httpx.ConnectError("Network is unreachable")
+            assert request.headers["host"] == "cdn.example.com"
+            return httpx.Response(200, headers={"content-type": "image/jpeg"}, content=b"ok")
+
+        ctype, body = fetch_bytes(
+            "https://cdn.example.com/a.jpg", resolver=r, transport=httpx.MockTransport(handler)
+        )
+        assert body == b"ok"
+        assert tried == ["2606:4700::6810:1", "93.184.216.34"]
+
+    def test_every_address_still_checked(self):
+        # A private address anywhere in the answer blocks the whole host
+        r = resolver_for({"cdn.example.com": ["2606:4700::6810:1", "10.0.0.7"]})
+
+        def handler(request):
+            raise AssertionError("must not connect")
+
+        with pytest.raises(UnsafeURLError):
+            fetch_bytes(
+                "https://cdn.example.com/a.jpg", resolver=r, transport=httpx.MockTransport(handler)
+            )
+
+    def test_all_addresses_unreachable_raises(self):
+        r = resolver_for({"cdn.example.com": ["2606:4700::6810:1", "93.184.216.34"]})
+
+        def handler(request):
+            raise httpx.ConnectError("Network is unreachable")
+
+        with pytest.raises(httpx.ConnectError):
+            fetch_bytes(
+                "https://cdn.example.com/a.jpg", resolver=r, transport=httpx.MockTransport(handler)
+            )
+
     def test_redirect_to_internal_is_blocked(self):
         def handler(request):
             return httpx.Response(302, headers={"location": "http://metadata.test/latest"})
