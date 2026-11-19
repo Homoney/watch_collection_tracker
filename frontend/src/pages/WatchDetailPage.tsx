@@ -197,8 +197,8 @@ export default function WatchDetailPage() {
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex justify-between items-start">
-          <div>
+        <div className="flex flex-wrap justify-between items-start gap-4">
+          <div className="min-w-0">
             <button
               onClick={() => navigate('/watches')}
               className="text-blue-600 hover:text-blue-800 mb-2 flex items-center text-sm"
@@ -218,19 +218,27 @@ export default function WatchDetailPage() {
               </svg>
               Back to Watches
             </button>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white break-words">
               {watch.brand?.name} {watch.model}
             </h1>
             {watch.reference_number && (
               <p className="text-gray-600 dark:text-gray-400 mt-1">Reference: {watch.reference_number}</p>
             )}
           </div>
-          <div className="flex gap-3">
-            <Button onClick={() => navigate(`/watches/${id}/accuracy`)} variant="secondary">
+          <div className="flex flex-wrap gap-3">
+            <Button
+              onClick={() => navigate(`/watches/${id}/accuracy`)}
+              variant="secondary"
+              className="inline-flex items-center whitespace-nowrap"
+            >
               <Clock className="h-4 w-4 mr-2" />
               Movement Accuracy
             </Button>
-            <Button onClick={handleExportPDF} variant="secondary">
+            <Button
+              onClick={handleExportPDF}
+              variant="secondary"
+              className="inline-flex items-center whitespace-nowrap"
+            >
               <FileDown className="h-4 w-4 mr-2" />
               Export PDF
             </Button>
