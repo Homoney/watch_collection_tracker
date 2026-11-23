@@ -1,4 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeAll } from 'vitest'
+import userEvent from '@testing-library/user-event'
 import { renderWithProviders, screen } from '../test-utils'
 import WatchCard from '@/components/watches/WatchCard'
 import type { WatchListItem } from '@/types'
@@ -105,5 +106,62 @@ describe('WatchCard', () => {
 
     const checkbox = screen.queryByRole('checkbox')
     expect(checkbox).not.toBeInTheDocument()
+  })
+
+  describe("Collector's Vault card", () => {
+    beforeAll(() => {
+      // Radix menus need these in jsdom
+      window.HTMLElement.prototype.hasPointerCapture = () => false
+      window.HTMLElement.prototype.releasePointerCapture = () => undefined
+      window.HTMLElement.prototype.scrollIntoView = () => undefined
+      globalThis.ResizeObserver = class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      } as unknown as typeof ResizeObserver
+    })
+
+    it('shows the current value and the gain since purchase when the API sends a value', () => {
+      renderWithProviders(
+        <WatchCard watch={{ ...mockWatch, current_market_value: '13653.00', current_market_currency: 'USD' }} />
+      )
+      expect(screen.getByText('$13,653')).toBeInTheDocument()
+      expect(screen.getByText('+51.7%')).toBeInTheDocument()
+      expect(screen.queryByText('Paid')).not.toBeInTheDocument()
+    })
+
+    it('marks a loss and skips the gain when the currencies differ', () => {
+      const { unmount } = renderWithProviders(
+        <WatchCard watch={{ ...mockWatch, current_market_value: 8100, current_market_currency: 'USD' }} />
+      )
+      expect(screen.getByText('-10.0%')).toHaveClass('text-negative')
+      unmount()
+      renderWithProviders(
+        <WatchCard watch={{ ...mockWatch, current_market_value: 8100, current_market_currency: 'EUR' }} />
+      )
+      expect(screen.queryByText(/%$/)).not.toBeInTheDocument()
+    })
+
+    it('falls back to the price paid, labelled, when there is no value', () => {
+      renderWithProviders(<WatchCard watch={mockWatch} />)
+      expect(screen.getByText('$9,000')).toBeInTheDocument()
+      expect(screen.getByText('Paid')).toBeInTheDocument()
+    })
+
+    it('keeps Delete in the card menu instead of on the card face', async () => {
+      const onDelete = vi.fn()
+      const user = userEvent.setup()
+      renderWithProviders(<WatchCard watch={mockWatch} onDelete={onDelete} />)
+      expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Actions for Rolex Submariner Date' }))
+      await user.click(await screen.findByRole('menuitem', { name: 'Delete' }))
+      expect(onDelete).toHaveBeenCalledWith(expect.objectContaining({ id: '123' }))
+    })
+
+    it('draws a dial instead of a photo when there is none', () => {
+      renderWithProviders(<WatchCard watch={{ ...mockWatch, primary_image: null }} />)
+      expect(screen.queryByRole('img')).not.toBeInTheDocument()
+      expect(document.querySelector('svg circle')).toBeInTheDocument()
+    })
   })
 })

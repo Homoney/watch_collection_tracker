@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { FileDown } from 'lucide-react'
+import { FileDown, GitCompare, MoreHorizontal, Plus, Search, SlidersHorizontal } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import WatchList from '@/components/watches/WatchList'
 import WatchFilters from '@/components/watches/WatchFilters'
@@ -13,6 +13,9 @@ import Button from '@/components/common/Button'
 import { useWatches, useCreateWatch, useDeleteWatch } from '@/hooks/useWatches'
 import { useBrands, useMovementTypes } from '@/hooks/useReferenceData'
 import { useCollections } from '@/hooks/useCollections'
+import { useCollectionAnalytics } from '@/hooks/useMarketValues'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { formatMoney, formatPercent, gainPercent } from '@/lib/money'
 import { useComparison } from '@/contexts/ComparisonContext'
 import { api, referencePhotoApi } from '@/lib/api'
 import { addWatchDraftKey, clearDraft } from '@/lib/watchDraft'
@@ -67,6 +70,24 @@ export default function WatchListPage() {
   const { user } = useAuth()
   const draftKey = addWatchDraftKey(user?.id)
   const deleteMutation = useDeleteWatch()
+  const { data: analytics } = useCollectionAnalytics('USD')
+  const [showFilters, setShowFilters] = useState(false)
+
+  // Toolbar search box, applied half a second after typing stops
+  const [search, setSearch] = useState(filters.search || '')
+  useEffect(() => {
+    setSearch(filters.search || '')
+  }, [filters.search])
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if ((search || undefined) !== filters.search) {
+        setFilters((f) => ({ ...f, search: search || undefined }))
+        setPage(0)
+      }
+    }, 500)
+    return () => clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
 
   const handleFiltersChange = (newFilters: WatchFiltersType) => {
     setFilters(newFilters)
@@ -153,37 +174,104 @@ export default function WatchListPage() {
     return (
       <AppLayout>
         <div className="text-center py-12">
-          <p className="text-red-600">Failed to load watches. Please try again.</p>
+          <p className="text-destructive">Failed to load watches. Please try again.</p>
         </div>
       </AppLayout>
     )
   }
 
+  const activeFilterCount = [
+    filters.brand_id,
+    filters.movement_type_id,
+    filters.condition,
+    filters.collection_id,
+    filters.min_price ?? filters.max_price,
+    filters.min_value ?? filters.max_value,
+    filters.purchase_date_from ?? filters.purchase_date_to,
+  ].filter((v) => v !== undefined && v !== null && v !== '').length
+
+  const totalValue = analytics ? Number(analytics.total_current_value) : null
+  const totalPaid = analytics ? Number(analytics.total_purchase_price) : null
+  const totalReturn = totalValue !== null && totalPaid ? gainPercent(totalValue, totalPaid) : null
+
   return (
     <AppLayout>
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Watches</h1>
+            <p className="mb-2 text-[11px] uppercase tracking-[0.3em] text-gold">Collection</p>
+            <h1 className="text-3xl font-light tracking-wide text-foreground sm:text-4xl">My Watches</h1>
             {data && (
-              <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {data.total} {data.total === 1 ? 'watch' : 'watches'} in your collection
               </p>
             )}
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Button onClick={handleExportAllPDF} variant="secondary" disabled={!data || data.total === 0}>
-              <FileDown className="h-4 w-4 mr-2" />
-              Export All PDF
-            </Button>
-            <Button
-              onClick={() => setCompareMode(!isCompareMode)}
-              variant={isCompareMode ? 'primary' : 'secondary'}
-            >
-              {isCompareMode ? 'Exit Compare Mode' : 'Compare Mode'}
-            </Button>
-            <Button onClick={() => setIsAddModalOpen(true)}>Add Watch</Button>
-          </div>
+          {analytics && analytics.total_watches > 0 && (
+            <dl className="flex gap-8 text-right">
+              <div>
+                <dd className="text-2xl font-light text-foreground">{formatMoney(totalValue, analytics.currency)}</dd>
+                <dt className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Market value</dt>
+              </div>
+              {totalReturn !== null && (
+                <div>
+                  <dd className={`text-2xl font-light ${totalReturn >= 0 ? 'text-positive' : 'text-negative'}`}>
+                    {formatPercent(totalReturn)}
+                  </dd>
+                  <dt className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Return</dt>
+                </div>
+              )}
+            </dl>
+          )}
+        </div>
+
+        {/* Toolbar: search, filters, actions */}
+        <div className="flex flex-wrap items-stretch gap-2">
+          <label className="relative min-w-[12rem] flex-1">
+            <span className="sr-only">Search watches</span>
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search brand, model, reference"
+              className="h-10 w-full rounded-sm border border-input bg-card pl-9 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
+            />
+          </label>
+          <Button
+            variant="secondary"
+            onClick={() => setShowFilters((v) => !v)}
+            aria-expanded={showFilters}
+            aria-controls="watch-filters"
+          >
+            <SlidersHorizontal className="h-4 w-4" />
+            Filters{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+          </Button>
+          <Button
+            onClick={() => setCompareMode(!isCompareMode)}
+            variant={isCompareMode ? 'outline' : 'secondary'}
+            aria-pressed={isCompareMode}
+          >
+            <GitCompare className="h-4 w-4" />
+            <span className="hidden sm:inline">{isCompareMode ? 'Exit compare' : 'Compare'}</span>
+            <span className="sm:hidden">{isCompareMode ? 'Done' : 'Compare'}</span>
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="icon" aria-label="More actions">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onSelect={handleExportAllPDF} disabled={!data || data.total === 0}>
+                <FileDown className="mr-2 h-4 w-4" /> Export PDF
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button onClick={() => setIsAddModalOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Add watch
+          </Button>
         </div>
 
         {/* Filter Chips */}
@@ -196,12 +284,14 @@ export default function WatchListPage() {
           onClearAll={handleClearAllFilters}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div className="lg:col-span-1">
-            <WatchFilters filters={filters} onFiltersChange={handleFiltersChange} />
-          </div>
+        <div className={showFilters ? 'grid grid-cols-1 gap-6 lg:grid-cols-4' : ''}>
+          {showFilters && (
+            <div id="watch-filters" className="lg:col-span-1">
+              <WatchFilters filters={filters} onFiltersChange={handleFiltersChange} showSearch={false} />
+            </div>
+          )}
 
-          <div className="lg:col-span-3 space-y-6">
+          <div className={showFilters ? 'space-y-6 lg:col-span-3' : 'space-y-6'}>
             <WatchList
               watches={data?.items || []}
               isLoading={isLoading}
@@ -221,7 +311,7 @@ export default function WatchListPage() {
                   Previous
                 </Button>
 
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-muted-foreground">
                   Page {page + 1} of {totalPages}
                 </span>
 
@@ -273,9 +363,9 @@ export default function WatchListPage() {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Are you sure you want to delete{' '}
-            <span className="font-semibold">
+            <span className="font-medium text-foreground">
               {deleteWatch?.brand?.name} {deleteWatch?.model}
             </span>
             ? This action cannot be undone.
