@@ -17,7 +17,7 @@ function ExtLink({ href, children }: { href: string; children: React.ReactNode }
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex items-center gap-0.5 text-blue-700 underline hover:text-blue-900 dark:text-blue-300 dark:hover:text-blue-200"
+      className="inline-flex items-center gap-0.5 text-gold underline underline-offset-2 hover:opacity-80"
     >
       {children}
       <ExternalLink className="h-3 w-3" aria-hidden="true" />
@@ -29,7 +29,7 @@ function ExtLink({ href, children }: { href: string; children: React.ReactNode }
 export function SourceNote({ source }: { source?: SpecSource }) {
   if (!source) return null
   return (
-    <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+    <p className="mt-1 text-xs text-muted-foreground">
       Filled from <ExtLink href={source.url}>{source.name}</ExtLink>
     </p>
   )
@@ -79,26 +79,28 @@ export default function ReferenceLookup({ getContext, onResult }: ReferenceLooku
       ].filter(Boolean)
     : []
 
+  // display: contents, so the form can put the button beside the reference
+  // field and the result on the row below (it spans the full width)
   return (
-    <div className="space-y-2">
+    <div className="contents">
       <Button
         type="button"
         variant="secondary"
         onClick={() => run()}
         disabled={isLoading}
-        className="inline-flex items-center whitespace-nowrap"
+        className="h-10 self-end whitespace-nowrap"
         title="Fill empty fields from the reference number"
       >
-        <Search className="h-4 w-4 mr-1" aria-hidden="true" />
+        <Search className="h-4 w-4" aria-hidden="true" />
         {isLoading ? 'Looking up...' : 'Look up'}
       </Button>
 
       {(error || result) && (
         <div
           role="status"
-          className="rounded-md border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-900 p-3 text-sm space-y-2"
+          className="col-span-full space-y-2 rounded-sm border border-border bg-muted p-3 text-sm"
         >
-          <p className="text-gray-800 dark:text-gray-100">{error || result?.message}</p>
+          <p className="text-foreground">{error || result?.message}</p>
 
           {result?.status === 'choices' && (
             <ul className="space-y-1">
@@ -108,12 +110,12 @@ export default function ReferenceLookup({ getContext, onResult }: ReferenceLooku
                     type="button"
                     onClick={() => run(c.id)}
                     disabled={isLoading}
-                    className="w-full text-left px-2 py-1 rounded border border-gray-300 dark:border-gray-600 hover:bg-white dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100"
+                    className="w-full rounded-sm border border-input px-2 py-1 text-left text-foreground hover:bg-card"
                   >
                     <span className="font-medium">{c.reference}</span>
                     {' · '}
                     {c.name}
-                    <span className="text-gray-600 dark:text-gray-300">
+                    <span className="text-muted-foreground">
                       {' '}
                       ({[c.brand, c.family].filter(Boolean).join(', ')})
                     </span>
@@ -124,7 +126,7 @@ export default function ReferenceLookup({ getContext, onResult }: ReferenceLooku
           )}
 
           {movementFacts.length > 0 && (
-            <p className="text-gray-700 dark:text-gray-200">
+            <p className="text-muted-foreground">
               Movement: {movementFacts.join(' · ')}
               {movement?.source && (
                 <>
@@ -136,7 +138,7 @@ export default function ReferenceLookup({ getContext, onResult }: ReferenceLooku
           )}
 
           {result && result.links.length > 0 && (
-            <p className="text-gray-700 dark:text-gray-200">
+            <p className="text-muted-foreground">
               Look it up yourself:{' '}
               {result.links.map((link, i) => (
                 <span key={link.url}>

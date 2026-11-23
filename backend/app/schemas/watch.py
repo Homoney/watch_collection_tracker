@@ -137,6 +137,10 @@ class WatchListResponse(BaseModel):
     purchase_currency: str
     condition: Optional[ConditionEnum]
     created_at: datetime
+    # Lets the collection grid show value and gain without a request per
+    # watch. Optional and additive: older clients ignore them.
+    current_market_value: Optional[Decimal] = None
+    current_market_currency: Optional[str] = None
     brand: Optional[BrandInWatch] = None
     collection: Optional[CollectionInWatch] = None
     primary_image: Optional[WatchImageResponse] = None

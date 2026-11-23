@@ -1,5 +1,6 @@
 import { ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { ModalFormContext } from '@/components/common/modalForm'
+import Button from '@/components/common/Button'
 
 interface ModalProps {
   isOpen: boolean
@@ -93,7 +94,7 @@ export default function Modal({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+          className="fixed inset-0 bg-black/70 transition-opacity"
           data-testid="modal-backdrop"
           onClick={form ? undefined : onClose}
         />
@@ -102,14 +103,14 @@ export default function Modal({
           role="dialog"
           aria-modal="true"
           aria-label={title}
-          className={`relative bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}
+          className={`relative bg-card text-card-foreground border border-border rounded-sm shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}
         >
-          <div className="flex items-center justify-between p-4 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+          <div className="flex items-center justify-between px-4 py-4 sm:px-6 border-b border-border">
+            <h3 className="text-lg font-light tracking-wide text-foreground">{title}</h3>
             <button
               onClick={requestClose}
               aria-label="Close"
-              className="text-gray-400 hover:text-gray-500 focus:outline-none"
+              className="text-muted-foreground hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <svg
                 className="h-6 w-6"
@@ -126,7 +127,7 @@ export default function Modal({
           </div>
 
           <ModalFormContext.Provider value={{ setDirty, requestClose }}>
-            <div className="p-4">{children}</div>
+            <div className="p-4 sm:p-6">{children}</div>
           </ModalFormContext.Provider>
 
           {confirming && (
@@ -134,30 +135,21 @@ export default function Modal({
               <div
                 role="alertdialog"
                 aria-labelledby="discard-title"
-                className="w-full max-w-sm rounded-lg bg-white p-4 shadow-xl dark:bg-gray-800"
+                className="w-full max-w-sm rounded-sm border border-border bg-popover p-4 text-popover-foreground shadow-xl"
               >
-                <p id="discard-title" className="font-semibold text-gray-900 dark:text-gray-100">
+                <p id="discard-title" className="font-medium text-foreground">
                   Discard changes?
                 </p>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+                <p className="mt-1 text-sm text-muted-foreground">
                   What you typed in this form will be lost.
                 </p>
                 <div className="mt-4 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    autoFocus
-                    onClick={() => setConfirming(false)}
-                    className="rounded-md border border-gray-300 px-3 py-2 text-sm font-medium text-gray-800 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-100 dark:hover:bg-gray-700"
-                  >
+                  <Button type="button" variant="secondary" size="sm" autoFocus onClick={() => setConfirming(false)}>
                     Keep editing
-                  </button>
-                  <button
-                    type="button"
-                    onClick={discard}
-                    className="rounded-md bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700"
-                  >
+                  </Button>
+                  <Button type="button" variant="danger" size="sm" onClick={discard}>
                     Discard
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>

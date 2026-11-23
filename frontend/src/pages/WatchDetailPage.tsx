@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { FileDown, Download, Clock } from 'lucide-react'
+import { ArrowLeft, Clock, Download, FileDown, MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import AppLayout from '@/components/layout/AppLayout'
 import WatchForm, { type WatchFormExtras } from '@/components/watches/WatchForm'
@@ -20,6 +20,16 @@ import Badge from '@/components/common/Badge'
 import Spinner from '@/components/common/Spinner'
 import Card from '@/components/common/Card'
 import { useWatch, useUpdateWatch, useDeleteWatch } from '@/hooks/useWatches'
+import WatchDial from '@/components/watches/WatchDial'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { formatMoney, formatPercent, gainPercent } from '@/lib/money'
 import { api, referencePhotoApi } from '@/lib/api'
 import type { WatchUpdate, ServiceHistory, MarketValue } from '@/types'
 
@@ -187,375 +197,275 @@ export default function WatchDetailPage() {
     return (
       <AppLayout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Watch Not Found</h2>
-          <p className="text-gray-600 mb-4">The watch you're looking for doesn't exist.</p>
+          <h2 className="text-2xl font-light text-foreground mb-2">Watch Not Found</h2>
+          <p className="text-muted-foreground mb-4">The watch you're looking for doesn't exist.</p>
           <Button onClick={() => navigate('/watches')}>Back to Watches</Button>
         </div>
       </AppLayout>
     )
   }
 
+  const primaryIndex = watch.images?.findIndex((img) => img.is_primary) ?? -1
+  const heroImage = watch.images?.[primaryIndex >= 0 ? primaryIndex : 0]
+  const hasValue = watch.current_market_value !== null && watch.current_market_value !== undefined
+  const valueCurrency = watch.current_market_currency || watch.purchase_currency
+  const gain = hasValue
+    ? gainPercent(watch.current_market_value, watch.purchase_price, valueCurrency, watch.purchase_currency)
+    : null
+  const gainAmount = gain !== null ? Number(watch.current_market_value) - Number(watch.purchase_price) : null
+  const hasReferencePhoto = watch.images?.some((img) => img.source === 'reference_photo')
+
+  const caseFacts = [
+    watch.case_diameter && `${watch.case_diameter} mm`,
+    watch.case_thickness && `${watch.case_thickness} mm thick`,
+    watch.case_material,
+  ].filter(Boolean)
+  const movementFacts = [watch.movement_type?.name, watch.caliber && `cal. ${watch.caliber}`].filter(Boolean)
+  const purchaseFacts = [watch.purchase_date && formatDate(watch.purchase_date), watch.retailer].filter(Boolean)
+
+  // Key facts beside the photo; everything else sits in the tabs below
+  const keyFacts: Array<[string, ReactNode]> = [
+    ['Reference', watch.reference_number],
+    ['Movement', movementFacts.join(' · ')],
+    ['Case', caseFacts.join(' · ')],
+    ['Water resistance', watch.water_resistance ? `${watch.water_resistance} m` : null],
+    ['Purchased', purchaseFacts.join(' · ')],
+    ['Condition', watch.condition ? <Badge condition={watch.condition} /> : null],
+  ]
+  const shownFacts = keyFacts.filter(([, v]) => v !== null && v !== undefined && v !== '')
+
+  const specs: Array<[string, ReactNode]> = [
+    ['Brand', watch.brand?.name],
+    ['Model', watch.model],
+    ['Reference number', watch.reference_number],
+    ['Serial number', watch.serial_number],
+    ['Movement type', watch.movement_type?.name],
+    ['Caliber', watch.caliber],
+    ['Case diameter', watch.case_diameter ? `${watch.case_diameter} mm` : null],
+    ['Case thickness', watch.case_thickness ? `${watch.case_thickness} mm` : null],
+    ['Lug width', watch.lug_width ? `${watch.lug_width} mm` : null],
+    ['Case material', watch.case_material],
+    ['Crystal', watch.crystal],
+    ['Water resistance', watch.water_resistance ? `${watch.water_resistance} m` : null],
+    ['Power reserve', watch.power_reserve ? `${watch.power_reserve} hours` : null],
+    ['Purchase date', watch.purchase_date ? formatDate(watch.purchase_date) : null],
+    ['Purchase price', watch.purchase_price !== null ? formatCurrency(watch.purchase_price, watch.purchase_currency) : null],
+    ['Retailer', watch.retailer],
+    ['Collection', watch.collection?.name],
+    ['Value last updated', watch.last_value_update ? formatDate(watch.last_value_update) : null],
+  ]
+  const shownSpecs = specs.filter(([, v]) => v !== null && v !== undefined && v !== '')
+
+  const eyebrow = 'text-[10px] uppercase tracking-[0.22em] text-muted-foreground'
+
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div className="flex flex-wrap justify-between items-start gap-4">
-          <div className="min-w-0">
-            <button
-              onClick={() => navigate('/watches')}
-              className="text-blue-600 hover:text-blue-800 mb-2 flex items-center text-sm"
-            >
-              <svg
-                className="w-4 h-4 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+      <div className="space-y-8">
+        <button
+          type="button"
+          onClick={() => navigate('/watches')}
+          className="inline-flex items-center gap-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground hover:text-gold"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Collection
+        </button>
+
+        {/* Photo and key facts first */}
+        <section className="grid grid-cols-1 gap-px border border-border bg-border lg:grid-cols-2">
+          <div className="flex min-h-[18rem] items-center justify-center bg-card bg-[radial-gradient(circle_at_50%_40%,hsl(var(--muted)),hsl(var(--card))_70%)] p-6">
+            {heroImage ? (
+              <button
+                type="button"
+                onClick={() => setLightboxIndex(primaryIndex >= 0 ? primaryIndex : 0)}
+                className="block w-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label="Open photos"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
+                <img
+                  src={heroImage.url}
+                  alt={`${watch.brand?.name} ${watch.model}`}
+                  className="mx-auto max-h-[28rem] w-full object-contain"
                 />
-              </svg>
-              Back to Watches
-            </button>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white break-words">
-              {watch.brand?.name} {watch.model}
-            </h1>
-            {watch.reference_number && (
-              <p className="text-gray-600 dark:text-gray-400 mt-1">Reference: {watch.reference_number}</p>
+              </button>
+            ) : (
+              <WatchDial accent={watch.collection?.color} className="h-56 w-56 sm:h-72 sm:w-72" />
             )}
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              onClick={() => navigate(`/watches/${id}/accuracy`)}
-              variant="secondary"
-              className="inline-flex items-center whitespace-nowrap"
-            >
-              <Clock className="h-4 w-4 mr-2" />
-              Movement Accuracy
-            </Button>
-            <Button
-              onClick={handleExportPDF}
-              variant="secondary"
-              className="inline-flex items-center whitespace-nowrap"
-            >
-              <FileDown className="h-4 w-4 mr-2" />
-              Export PDF
-            </Button>
-            <Button onClick={() => setIsEditModalOpen(true)}>Edit</Button>
-            <Button variant="danger" onClick={() => setIsDeleteModalOpen(true)}>
-              Delete
-            </Button>
-          </div>
-        </div>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            Images {watch.images && watch.images.length > 0 && `(${watch.images.length})`}
-          </h2>
+          <div className="bg-card p-6 sm:p-10">
+            <p className="text-[11px] uppercase tracking-[0.3em] text-gold">{watch.brand?.name}</p>
+            <h1 className="mt-2 break-words text-3xl font-light tracking-wide text-foreground sm:text-4xl">
+              {watch.model}
+            </h1>
+            {watch.collection && (
+              <p className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">{watch.collection.name}</p>
+            )}
 
-          <div className="space-y-6">
-            {!watch.images || watch.images.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  No images yet. Upload your own, or get the reference photo (from WatchBase or the
-                  brand's site).
-                </p>
-                <div className="flex gap-3 justify-center">
-                  <Button
-                    onClick={() => handleReferencePhoto()}
-                    disabled={isFetchingImages}
-                    variant="secondary"
-                  >
-                    <Download className="h-4 w-4 mr-2" />
-                    {isFetchingImages ? 'Getting photo...' : 'Get reference photo'}
-                  </Button>
-                </div>
-              </div>
+            <p className="mt-6 text-4xl font-light text-foreground sm:text-5xl">
+              {hasValue
+                ? formatMoney(watch.current_market_value, valueCurrency)
+                : formatMoney(watch.purchase_price, watch.purchase_currency)}
+            </p>
+            {hasValue && gain !== null && gainAmount !== null ? (
+              <p className={`mt-1 text-sm ${gain >= 0 ? 'text-positive' : 'text-negative'}`}>
+                {gain >= 0 ? '▲' : '▼'} {formatMoney(Math.abs(gainAmount), valueCurrency)} · {formatPercent(gain)} on{' '}
+                {formatMoney(watch.purchase_price, watch.purchase_currency)}
+              </p>
             ) : (
-              <>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {hasValue ? 'Current market value' : 'Price paid · no valuation yet'}
+              </p>
+            )}
+
+            {shownFacts.length > 0 && (
+              <dl className="mt-8 grid grid-cols-2 gap-x-6 gap-y-5">
+                {shownFacts.map(([label, value]) => (
+                  <div key={label} className="min-w-0">
+                    <dt className={eyebrow}>{label}</dt>
+                    <dd className="mt-1 break-words text-sm text-foreground">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+
+            <div className="mt-8 flex flex-wrap gap-2">
+              <Button onClick={() => setIsEditModalOpen(true)}>
+                <Pencil className="h-4 w-4" />
+                Edit
+              </Button>
+              <Button variant="outline" onClick={handleAddMarketValue}>
+                <Plus className="h-4 w-4" />
+                Add valuation
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="secondary" size="icon" aria-label="More actions">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => navigate(`/watches/${id}/accuracy`)}>
+                    <Clock className="mr-2 h-4 w-4" /> Movement accuracy
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={handleExportPDF}>
+                    <FileDown className="mr-2 h-4 w-4" /> Export PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onSelect={() => setIsDeleteModalOpen(true)}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" /> Delete watch
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </section>
+
+        {/* Everything else, one tab at a time */}
+        <Tabs defaultValue="value">
+          <TabsList aria-label="Watch details">
+            <TabsTrigger value="value">Value</TabsTrigger>
+            <TabsTrigger value="details">Details</TabsTrigger>
+            <TabsTrigger value="service">Service</TabsTrigger>
+            <TabsTrigger value="photos">
+              Photos{watch.images && watch.images.length > 0 ? ` (${watch.images.length})` : ''}
+            </TabsTrigger>
+            <TabsTrigger value="qr">QR code</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="value" className="space-y-6">
+            <Card className="p-6">
+              <ValueChart watchId={watch.id} />
+            </Card>
+            <Card className="p-6">
+              <WatchAnalytics watchId={watch.id} />
+            </Card>
+            <Card className="p-6">
+              <MarketValueHistory
+                watchId={watch.id}
+                onAddValue={handleAddMarketValue}
+                onEditValue={handleEditMarketValue}
+              />
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="details" className="space-y-6">
+            <Card className="p-6">
+              <dl className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+                {shownSpecs.map(([label, value]) => (
+                  <div key={label} className="min-w-0">
+                    <dt className={eyebrow}>{label}</dt>
+                    <dd className="mt-1 break-words text-sm text-foreground">{value}</dd>
+                  </div>
+                ))}
+              </dl>
+              {watch.complications && watch.complications.length > 0 && (
+                <div className="mt-8 border-t border-border pt-6">
+                  <h2 className={eyebrow}>Complications</h2>
+                  <ul className="mt-3 flex flex-wrap gap-2">
+                    {watch.complications.map((comp) => (
+                      <li key={comp} className="border border-border px-3 py-1 text-sm text-foreground">
+                        {comp}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {watch.notes && (
+                <div className="mt-8 border-t border-border pt-6">
+                  <h2 className={eyebrow}>Notes</h2>
+                  <p className="mt-3 whitespace-pre-wrap text-sm text-foreground">{watch.notes}</p>
+                </div>
+              )}
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="service">
+            <Card className="p-6">
+              <ServiceHistoryList
+                watchId={watch.id}
+                onAddService={handleAddService}
+                onEditService={handleEditService}
+              />
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="photos">
+            <Card className="space-y-6 p-6">
+              {!watch.images || watch.images.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No images yet. Upload your own, or get the reference photo (from WatchBase or the brand's site).
+                </p>
+              ) : (
                 <ImageGallery
                   watchId={watch.id}
                   images={watch.images || []}
                   onImageClick={(index) => setLightboxIndex(index)}
                 />
-                {!watch.images.some((img) => img.source === 'reference_photo') && (
-                  <div className="flex justify-center pt-4">
-                    <Button
-                      onClick={() => handleReferencePhoto()}
-                      disabled={isFetchingImages}
-                      variant="secondary"
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      {isFetchingImages ? 'Getting photo...' : 'Get reference photo'}
-                    </Button>
-                  </div>
-                )}
-              </>
-            )}
-
-            {imageFetchMessage && (
-              <p role="status" className="text-center text-sm text-gray-600 dark:text-gray-300">
-                {imageFetchMessage}
-              </p>
-            )}
-
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Upload New Images</h3>
-              <ImageUpload watchId={watch.id} />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <ServiceHistoryList
-            watchId={watch.id}
-            onAddService={handleAddService}
-            onEditService={handleEditService}
-          />
-        </Card>
-
-        <Card className="p-6">
-          <WatchAnalytics watchId={watch.id} />
-        </Card>
-
-        <Card className="p-6">
-          <MarketValueHistory
-            watchId={watch.id}
-            onAddValue={handleAddMarketValue}
-            onEditValue={handleEditMarketValue}
-          />
-        </Card>
-
-        <ValueChart watchId={watch.id} />
-
-        <WatchQRCode watchId={watch.id} />
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <Card className="p-6">
-              <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center mb-4 overflow-hidden">
-                {watch.images?.[0] ? (
-                  <img
-                    src={watch.images.find(img => img.is_primary)?.url || watch.images[0].url}
-                    alt={`${watch.brand?.name} ${watch.model}`}
-                    className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={() => {
-                      const primaryIndex = watch.images?.findIndex(img => img.is_primary) ?? -1
-                      setLightboxIndex(primaryIndex >= 0 ? primaryIndex : 0)
-                    }}
-                  />
-                ) : (
-                  <svg
-                    className="w-24 h-24 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                    />
-                  </svg>
-                )}
+              )}
+              {!hasReferencePhoto && (
+                <Button onClick={() => handleReferencePhoto()} disabled={isFetchingImages} variant="secondary">
+                  <Download className="h-4 w-4" />
+                  {isFetchingImages ? 'Getting photo...' : 'Get reference photo'}
+                </Button>
+              )}
+              {imageFetchMessage && (
+                <p role="status" className="text-sm text-muted-foreground">
+                  {imageFetchMessage}
+                </p>
+              )}
+              <div className="border-t border-border pt-6">
+                <h3 className={`${eyebrow} mb-3`}>Upload new images</h3>
+                <ImageUpload watchId={watch.id} />
               </div>
-              {watch.condition && (
-                <div className="mb-4">
-                  <Badge condition={watch.condition} />
-                </div>
-              )}
-              {watch.collection && (
-                <div>
-                  <span
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium dark:!text-gray-100"
-                    style={{
-                      backgroundColor: `${watch.collection.color}20`,
-                      color: watch.collection.color,
-                      borderColor: watch.collection.color,
-                      borderWidth: '1px',
-                    }}
-                  >
-                    {watch.collection.name}
-                  </span>
-                </div>
-              )}
             </Card>
-          </div>
+          </TabsContent>
 
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Basic Information</h2>
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Brand</dt>
-                  <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.brand?.name || 'N/A'}</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Model</dt>
-                  <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.model}</dd>
-                </div>
-                {watch.reference_number && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Reference Number</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.reference_number}</dd>
-                  </div>
-                )}
-                {watch.serial_number && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Serial Number</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.serial_number}</dd>
-                  </div>
-                )}
-                {watch.movement_type && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Movement Type</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.movement_type.name}</dd>
-                  </div>
-                )}
-              </dl>
-            </Card>
-
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Purchase Information</h2>
-              <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Purchase Date</dt>
-                  <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">
-                    {formatDate(watch.purchase_date)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Purchase Price</dt>
-                  <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">
-                    {formatCurrency(watch.purchase_price, watch.purchase_currency)}
-                  </dd>
-                </div>
-                {watch.retailer && (
-                  <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Retailer</dt>
-                    <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.retailer}</dd>
-                  </div>
-                )}
-              </dl>
-            </Card>
-
-            {(watch.case_diameter ||
-              watch.case_thickness ||
-              watch.lug_width ||
-              watch.water_resistance ||
-              watch.power_reserve ||
-              watch.caliber ||
-              watch.crystal ||
-              watch.case_material) && (
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Specifications</h2>
-                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {watch.case_diameter && (
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Case Diameter</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.case_diameter}mm</dd>
-                    </div>
-                  )}
-                  {watch.case_thickness && (
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Case Thickness</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.case_thickness}mm</dd>
-                    </div>
-                  )}
-                  {watch.lug_width && (
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Lug Width</dt>
-                      <dd className="mt-1 text-sm text-sm text-gray-900 dark:text-gray-300">{watch.lug_width}mm</dd>
-                    </div>
-                  )}
-                  {watch.water_resistance && (
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Water Resistance</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.water_resistance}m</dd>
-                    </div>
-                  )}
-                  {watch.power_reserve && (
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Power Reserve</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.power_reserve} hours</dd>
-                    </div>
-                  )}
-                  {watch.caliber && (
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Caliber</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.caliber}</dd>
-                    </div>
-                  )}
-                  {watch.crystal && (
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Crystal</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.crystal}</dd>
-                    </div>
-                  )}
-                  {watch.case_material && (
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Case Material</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">{watch.case_material}</dd>
-                    </div>
-                  )}
-                </dl>
-              </Card>
-            )}
-
-            {watch.complications && watch.complications.length > 0 && (
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Complications</h2>
-                <div className="flex flex-wrap gap-2">
-                  {watch.complications.map((comp) => (
-                    <span
-                      key={comp}
-                      className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                    >
-                      {comp}
-                    </span>
-                  ))}
-                </div>
-              </Card>
-            )}
-
-            {(watch.current_market_value || watch.last_value_update) && (
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Market Value</h2>
-                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {watch.current_market_value && (
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Current Market Value</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">
-                        {formatCurrency(
-                          watch.current_market_value,
-                          watch.current_market_currency || watch.purchase_currency
-                        )}
-                      </dd>
-                    </div>
-                  )}
-                  {watch.last_value_update && (
-                    <div>
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Last Updated</dt>
-                      <dd className="mt-1 text-sm text-gray-900 dark:text-gray-300">
-                        {formatDate(watch.last_value_update)}
-                      </dd>
-                    </div>
-                  )}
-                </dl>
-              </Card>
-            )}
-
-            {watch.notes && (
-              <Card className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Notes</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{watch.notes}</p>
-              </Card>
-            )}
-          </div>
-        </div>
+          <TabsContent value="qr">
+            <WatchQRCode watchId={watch.id} />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <Modal
@@ -580,7 +490,7 @@ export default function WatchDetailPage() {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Are you sure you want to delete{' '}
             <span className="font-semibold">
               {watch.brand?.name} {watch.model}
