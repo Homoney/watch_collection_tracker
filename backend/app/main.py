@@ -79,7 +79,7 @@ Authorization: Bearer <your_access_token>
 * Uploads: served only with a signed, expiring URL
 * API responses: No-cache by default
     """,
-    version="2.1.5",
+    version="2.1.6",
     contact={
         "name": "Watch Collection Tracker Support",
         "url": "https://github.com/Homoney/watch_collection_tracker",
