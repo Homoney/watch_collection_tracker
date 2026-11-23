@@ -2,14 +2,73 @@
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Collector's Vault design tokens (shadcn/ui convention: HSL channels).
+ * Dark is the designed default feel; light is the bone/parchment variant.
+ * Text pairs meet WCAG AA (4.5:1); --input borders meet 3:1 (UI components).
+ *   dark  gold #c9a45c on #0b0b0c 8.4:1, muted text #9a958a on card 6.3:1
+ *   light gold #7a5d1c on #f4f1ea 5.5:1 (the mockup's #8a6a22 was 4.47:1)
+ */
+@layer base {
+  :root {
+    --background: 42 31.3% 93.7%;
+    --foreground: 48 14.3% 6.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 48 14.3% 6.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 48 14.3% 6.9%;
+    --primary: 41 62.7% 29.4%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 42 29.8% 88.8%;
+    --secondary-foreground: 48 14.3% 6.9%;
+    --muted: 42 29.8% 88.8%;
+    --muted-foreground: 42 7.4% 34.3%;
+    --accent: 42 29.8% 88.8%;
+    --accent-foreground: 48 14.3% 6.9%;
+    --destructive: 8 58.8% 40%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 43 21.6% 81%;
+    --input: 42 9.3% 51.6%;
+    --ring: 41 62.7% 29.4%;
+    --gold: 41 62.7% 29.4%;
+    --positive: 134 39.5% 29.8%;
+    --negative: 8 58.8% 40%;
+    --radius: 0.125rem;
+  }
+  .dark {
+    --background: 240 4.3% 4.5%;
+    --foreground: 43 32.1% 89%;
+    --card: 60 2.9% 6.9%;
+    --card-foreground: 43 32.1% 89%;
+    --popover: 60 5% 7.8%;
+    --popover-foreground: 43 32.1% 89%;
+    --primary: 40 50.2% 57.5%;
+    --primary-foreground: 240 4.3% 4.5%;
+    --secondary: 45 7.7% 10.2%;
+    --secondary-foreground: 43 32.1% 89%;
+    --muted: 45 7.7% 10.2%;
+    --muted-foreground: 41 7.3% 57.3%;
+    --accent: 45 7.7% 10.2%;
+    --accent-foreground: 43 32.1% 89%;
+    --destructive: 10 64.6% 65.7%;
+    --destructive-foreground: 240 4.3% 4.5%;
+    --border: 43 9.1% 15.1%;
+    --input: 40 7.5% 39%;
+    --ring: 40 50.2% 57.5%;
+    --gold: 40 50.2% 57.5%;
+    --positive: 135 34% 62.5%;
+    --negative: 10 64.6% 65.7%;
+  }
+}
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Helvetica Neue", Helvetica, Arial, system-ui, sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(0, 0, 0, 0.87);
-  background-color: #ffffff;
+  color-scheme: light;
+  color: hsl(var(--foreground));
+  background-color: hsl(var(--background));
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -27,39 +86,41 @@ body {
   min-height: 100vh;
 }
 
-@layer base {
-  /* Dark mode support for form elements */
-  @media (prefers-color-scheme: dark) {
-    input[type="text"],
-    input[type="email"],
-    input[type="password"],
-    input[type="number"],
-    input[type="date"],
-    input[type="time"],
-    input[type="datetime-local"],
-    input[type="url"],
-    input[type="search"],
-    input[type="tel"],
-    select,
-    textarea {
-      /* gray-900 so fields stand out on gray-800 dialogs and cards */
-      @apply bg-gray-900 text-white border-gray-600 placeholder-gray-400;
-    }
+:root.dark {
+  color-scheme: dark;
+}
 
-    input[type="text"]:focus,
-    input[type="email"]:focus,
-    input[type="password"]:focus,
-    input[type="number"]:focus,
-    input[type="date"]:focus,
-    input[type="time"]:focus,
-    input[type="datetime-local"]:focus,
-    input[type="url"]:focus,
-    input[type="search"]:focus,
-    input[type="tel"]:focus,
-    select:focus,
-    textarea:focus {
-      @apply border-blue-500 ring-blue-500;
-    }
+@layer base {
+  /* Form fields in dark mode (class-based, so the manual theme switch decides).
+     Fields sit darker than cards; borders use --input (3:1 contrast). */
+  .dark input[type="text"],
+  .dark input[type="email"],
+  .dark input[type="password"],
+  .dark input[type="number"],
+  .dark input[type="date"],
+  .dark input[type="time"],
+  .dark input[type="datetime-local"],
+  .dark input[type="url"],
+  .dark input[type="search"],
+  .dark input[type="tel"],
+  .dark select,
+  .dark textarea {
+    @apply bg-gray-900 text-white border-input placeholder-gray-400;
+  }
+
+  .dark input[type="text"]:focus,
+  .dark input[type="email"]:focus,
+  .dark input[type="password"]:focus,
+  .dark input[type="number"]:focus,
+  .dark input[type="date"]:focus,
+  .dark input[type="time"]:focus,
+  .dark input[type="datetime-local"]:focus,
+  .dark input[type="url"]:focus,
+  .dark input[type="search"]:focus,
+  .dark input[type="tel"]:focus,
+  .dark select:focus,
+  .dark textarea:focus {
+    @apply border-ring ring-ring;
   }
 }
 
@@ -73,117 +134,115 @@ body {
  * explicit dark styles still decide. Light mode is untouched.
  * Text colours are chosen for at least WCAG AA contrast on gray-800/900.
  */
-@media (prefers-color-scheme: dark) {
   /* Base text and page colour; chart labels and plain text inherit this */
-  :root {
+  :root.dark {
     color: theme('colors.gray.100');
     background-color: theme('colors.gray.900');
   }
 
-  .bg-white:not([class*="dark:bg-"]) { background-color: theme('colors.gray.800'); }
-  .bg-gray-50:not([class*="dark:bg-"]) { background-color: theme('colors.gray.900'); }
-  .bg-gray-100:not([class*="dark:bg-"]) { background-color: theme('colors.gray.700'); }
-  .bg-gray-200:not([class*="dark:bg-"]) { background-color: theme('colors.gray.700'); }
-  .disabled\:bg-gray-100:disabled:not([class*="dark:disabled:bg-"]) { background-color: theme('colors.gray.700'); }
-  .hover\:bg-white:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.700'); }
-  .hover\:bg-gray-50:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.700'); }
-  .hover\:bg-gray-100:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.700'); }
-  .hover\:bg-gray-200:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.600'); }
-  .hover\:bg-gray-300:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.600'); }
-  .bg-red-50:not([class*="dark:bg-"]) { background-color: theme('colors.red.900 / 30%'); }
-  .bg-red-100:not([class*="dark:bg-"]) { background-color: theme('colors.red.900 / 50%'); }
-  .border-red-200:not([class*="dark:border-"]) { border-color: theme('colors.red.800'); }
-  .text-red-500:not([class*="dark:text-"]) { color: theme('colors.red.400'); }
-  .text-red-600:not([class*="dark:text-"]) { color: theme('colors.red.400'); }
-  .text-red-700:not([class*="dark:text-"]) { color: theme('colors.red.300'); }
-  .text-red-800:not([class*="dark:text-"]) { color: theme('colors.red.300'); }
-  .text-red-900:not([class*="dark:text-"]) { color: theme('colors.red.300'); }
-  .hover\:text-red-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.red.300'); }
-  .hover\:text-red-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.red.300'); }
-  .hover\:text-red-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.red.300'); }
-  .hover\:text-red-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.red.300'); }
-  .bg-blue-50:not([class*="dark:bg-"]) { background-color: theme('colors.blue.900 / 30%'); }
-  .bg-blue-100:not([class*="dark:bg-"]) { background-color: theme('colors.blue.900 / 50%'); }
-  .border-blue-200:not([class*="dark:border-"]) { border-color: theme('colors.blue.800'); }
-  .text-blue-500:not([class*="dark:text-"]) { color: theme('colors.blue.400'); }
-  .text-blue-600:not([class*="dark:text-"]) { color: theme('colors.blue.400'); }
-  .text-blue-700:not([class*="dark:text-"]) { color: theme('colors.blue.300'); }
-  .text-blue-800:not([class*="dark:text-"]) { color: theme('colors.blue.300'); }
-  .text-blue-900:not([class*="dark:text-"]) { color: theme('colors.blue.300'); }
-  .hover\:text-blue-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.blue.300'); }
-  .hover\:text-blue-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.blue.300'); }
-  .hover\:text-blue-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.blue.300'); }
-  .hover\:text-blue-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.blue.300'); }
-  .bg-green-50:not([class*="dark:bg-"]) { background-color: theme('colors.green.900 / 30%'); }
-  .bg-green-100:not([class*="dark:bg-"]) { background-color: theme('colors.green.900 / 50%'); }
-  .border-green-200:not([class*="dark:border-"]) { border-color: theme('colors.green.800'); }
-  .text-green-500:not([class*="dark:text-"]) { color: theme('colors.green.400'); }
-  .text-green-600:not([class*="dark:text-"]) { color: theme('colors.green.400'); }
-  .text-green-700:not([class*="dark:text-"]) { color: theme('colors.green.300'); }
-  .text-green-800:not([class*="dark:text-"]) { color: theme('colors.green.300'); }
-  .text-green-900:not([class*="dark:text-"]) { color: theme('colors.green.300'); }
-  .hover\:text-green-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.green.300'); }
-  .hover\:text-green-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.green.300'); }
-  .hover\:text-green-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.green.300'); }
-  .hover\:text-green-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.green.300'); }
-  .bg-yellow-50:not([class*="dark:bg-"]) { background-color: theme('colors.yellow.900 / 30%'); }
-  .bg-yellow-100:not([class*="dark:bg-"]) { background-color: theme('colors.yellow.900 / 50%'); }
-  .border-yellow-200:not([class*="dark:border-"]) { border-color: theme('colors.yellow.800'); }
-  .text-yellow-500:not([class*="dark:text-"]) { color: theme('colors.yellow.400'); }
-  .text-yellow-600:not([class*="dark:text-"]) { color: theme('colors.yellow.400'); }
-  .text-yellow-700:not([class*="dark:text-"]) { color: theme('colors.yellow.300'); }
-  .text-yellow-800:not([class*="dark:text-"]) { color: theme('colors.yellow.300'); }
-  .text-yellow-900:not([class*="dark:text-"]) { color: theme('colors.yellow.300'); }
-  .hover\:text-yellow-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.yellow.300'); }
-  .hover\:text-yellow-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.yellow.300'); }
-  .hover\:text-yellow-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.yellow.300'); }
-  .hover\:text-yellow-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.yellow.300'); }
-  .bg-purple-50:not([class*="dark:bg-"]) { background-color: theme('colors.purple.900 / 30%'); }
-  .bg-purple-100:not([class*="dark:bg-"]) { background-color: theme('colors.purple.900 / 50%'); }
-  .border-purple-200:not([class*="dark:border-"]) { border-color: theme('colors.purple.800'); }
-  .text-purple-500:not([class*="dark:text-"]) { color: theme('colors.purple.400'); }
-  .text-purple-600:not([class*="dark:text-"]) { color: theme('colors.purple.400'); }
-  .text-purple-700:not([class*="dark:text-"]) { color: theme('colors.purple.300'); }
-  .text-purple-800:not([class*="dark:text-"]) { color: theme('colors.purple.300'); }
-  .text-purple-900:not([class*="dark:text-"]) { color: theme('colors.purple.300'); }
-  .hover\:text-purple-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.purple.300'); }
-  .hover\:text-purple-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.purple.300'); }
-  .hover\:text-purple-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.purple.300'); }
-  .hover\:text-purple-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.purple.300'); }
-  .bg-orange-50:not([class*="dark:bg-"]) { background-color: theme('colors.orange.900 / 30%'); }
-  .bg-orange-100:not([class*="dark:bg-"]) { background-color: theme('colors.orange.900 / 50%'); }
-  .border-orange-200:not([class*="dark:border-"]) { border-color: theme('colors.orange.800'); }
-  .text-orange-500:not([class*="dark:text-"]) { color: theme('colors.orange.400'); }
-  .text-orange-600:not([class*="dark:text-"]) { color: theme('colors.orange.400'); }
-  .text-orange-700:not([class*="dark:text-"]) { color: theme('colors.orange.300'); }
-  .text-orange-800:not([class*="dark:text-"]) { color: theme('colors.orange.300'); }
-  .text-orange-900:not([class*="dark:text-"]) { color: theme('colors.orange.300'); }
-  .hover\:text-orange-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.orange.300'); }
-  .hover\:text-orange-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.orange.300'); }
-  .hover\:text-orange-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.orange.300'); }
-  .hover\:text-orange-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.orange.300'); }
-  .hover\:bg-blue-100:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.blue.900 / 50%'); }
-  .hover\:bg-blue-200:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.blue.800 / 60%'); }
-  .text-gray-900:not([class*="dark:text-"]) { color: theme('colors.gray.50'); }
-  .text-gray-800:not([class*="dark:text-"]) { color: theme('colors.gray.100'); }
-  .text-gray-700:not([class*="dark:text-"]) { color: theme('colors.gray.200'); }
-  .text-gray-600:not([class*="dark:text-"]) { color: theme('colors.gray.300'); }
-  .text-gray-500:not([class*="dark:text-"]) { color: theme('colors.gray.400'); }
-  .hover\:text-gray-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.white'); }
-  .hover\:text-gray-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.white'); }
-  .hover\:text-gray-500:hover:not([class*="dark:hover:text-"]) { color: theme('colors.gray.300'); }
-  .border-gray-100:not([class*="dark:border-"]) { border-color: theme('colors.gray.700'); }
-  .border-gray-200:not([class*="dark:border-"]) { border-color: theme('colors.gray.700'); }
-  .border-gray-300:not([class*="dark:border-"]) { border-color: theme('colors.gray.600'); }
-  .divide-gray-200:not([class*="dark:divide-"]) > :not([hidden]) ~ :not([hidden]) { border-color: theme('colors.gray.700'); }
+  .dark .bg-white:not([class*="dark:bg-"]) { background-color: theme('colors.gray.800'); }
+  .dark .bg-gray-50:not([class*="dark:bg-"]) { background-color: theme('colors.gray.900'); }
+  .dark .bg-gray-100:not([class*="dark:bg-"]) { background-color: theme('colors.gray.700'); }
+  .dark .bg-gray-200:not([class*="dark:bg-"]) { background-color: theme('colors.gray.700'); }
+  .dark .disabled\:bg-gray-100:disabled:not([class*="dark:disabled:bg-"]) { background-color: theme('colors.gray.700'); }
+  .dark .hover\:bg-white:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.700'); }
+  .dark .hover\:bg-gray-50:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.700'); }
+  .dark .hover\:bg-gray-100:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.700'); }
+  .dark .hover\:bg-gray-200:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.600'); }
+  .dark .hover\:bg-gray-300:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.gray.600'); }
+  .dark .bg-red-50:not([class*="dark:bg-"]) { background-color: theme('colors.red.900 / 30%'); }
+  .dark .bg-red-100:not([class*="dark:bg-"]) { background-color: theme('colors.red.900 / 50%'); }
+  .dark .border-red-200:not([class*="dark:border-"]) { border-color: theme('colors.red.800'); }
+  .dark .text-red-500:not([class*="dark:text-"]) { color: theme('colors.red.400'); }
+  .dark .text-red-600:not([class*="dark:text-"]) { color: theme('colors.red.400'); }
+  .dark .text-red-700:not([class*="dark:text-"]) { color: theme('colors.red.300'); }
+  .dark .text-red-800:not([class*="dark:text-"]) { color: theme('colors.red.300'); }
+  .dark .text-red-900:not([class*="dark:text-"]) { color: theme('colors.red.300'); }
+  .dark .hover\:text-red-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.red.300'); }
+  .dark .hover\:text-red-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.red.300'); }
+  .dark .hover\:text-red-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.red.300'); }
+  .dark .hover\:text-red-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.red.300'); }
+  .dark .bg-blue-50:not([class*="dark:bg-"]) { background-color: theme('colors.blue.900 / 30%'); }
+  .dark .bg-blue-100:not([class*="dark:bg-"]) { background-color: theme('colors.blue.900 / 50%'); }
+  .dark .border-blue-200:not([class*="dark:border-"]) { border-color: theme('colors.blue.800'); }
+  .dark .text-blue-500:not([class*="dark:text-"]) { color: theme('colors.blue.400'); }
+  .dark .text-blue-600:not([class*="dark:text-"]) { color: theme('colors.blue.400'); }
+  .dark .text-blue-700:not([class*="dark:text-"]) { color: theme('colors.blue.300'); }
+  .dark .text-blue-800:not([class*="dark:text-"]) { color: theme('colors.blue.300'); }
+  .dark .text-blue-900:not([class*="dark:text-"]) { color: theme('colors.blue.300'); }
+  .dark .hover\:text-blue-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.blue.300'); }
+  .dark .hover\:text-blue-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.blue.300'); }
+  .dark .hover\:text-blue-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.blue.300'); }
+  .dark .hover\:text-blue-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.blue.300'); }
+  .dark .bg-green-50:not([class*="dark:bg-"]) { background-color: theme('colors.green.900 / 30%'); }
+  .dark .bg-green-100:not([class*="dark:bg-"]) { background-color: theme('colors.green.900 / 50%'); }
+  .dark .border-green-200:not([class*="dark:border-"]) { border-color: theme('colors.green.800'); }
+  .dark .text-green-500:not([class*="dark:text-"]) { color: theme('colors.green.400'); }
+  .dark .text-green-600:not([class*="dark:text-"]) { color: theme('colors.green.400'); }
+  .dark .text-green-700:not([class*="dark:text-"]) { color: theme('colors.green.300'); }
+  .dark .text-green-800:not([class*="dark:text-"]) { color: theme('colors.green.300'); }
+  .dark .text-green-900:not([class*="dark:text-"]) { color: theme('colors.green.300'); }
+  .dark .hover\:text-green-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.green.300'); }
+  .dark .hover\:text-green-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.green.300'); }
+  .dark .hover\:text-green-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.green.300'); }
+  .dark .hover\:text-green-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.green.300'); }
+  .dark .bg-yellow-50:not([class*="dark:bg-"]) { background-color: theme('colors.yellow.900 / 30%'); }
+  .dark .bg-yellow-100:not([class*="dark:bg-"]) { background-color: theme('colors.yellow.900 / 50%'); }
+  .dark .border-yellow-200:not([class*="dark:border-"]) { border-color: theme('colors.yellow.800'); }
+  .dark .text-yellow-500:not([class*="dark:text-"]) { color: theme('colors.yellow.400'); }
+  .dark .text-yellow-600:not([class*="dark:text-"]) { color: theme('colors.yellow.400'); }
+  .dark .text-yellow-700:not([class*="dark:text-"]) { color: theme('colors.yellow.300'); }
+  .dark .text-yellow-800:not([class*="dark:text-"]) { color: theme('colors.yellow.300'); }
+  .dark .text-yellow-900:not([class*="dark:text-"]) { color: theme('colors.yellow.300'); }
+  .dark .hover\:text-yellow-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.yellow.300'); }
+  .dark .hover\:text-yellow-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.yellow.300'); }
+  .dark .hover\:text-yellow-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.yellow.300'); }
+  .dark .hover\:text-yellow-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.yellow.300'); }
+  .dark .bg-purple-50:not([class*="dark:bg-"]) { background-color: theme('colors.purple.900 / 30%'); }
+  .dark .bg-purple-100:not([class*="dark:bg-"]) { background-color: theme('colors.purple.900 / 50%'); }
+  .dark .border-purple-200:not([class*="dark:border-"]) { border-color: theme('colors.purple.800'); }
+  .dark .text-purple-500:not([class*="dark:text-"]) { color: theme('colors.purple.400'); }
+  .dark .text-purple-600:not([class*="dark:text-"]) { color: theme('colors.purple.400'); }
+  .dark .text-purple-700:not([class*="dark:text-"]) { color: theme('colors.purple.300'); }
+  .dark .text-purple-800:not([class*="dark:text-"]) { color: theme('colors.purple.300'); }
+  .dark .text-purple-900:not([class*="dark:text-"]) { color: theme('colors.purple.300'); }
+  .dark .hover\:text-purple-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.purple.300'); }
+  .dark .hover\:text-purple-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.purple.300'); }
+  .dark .hover\:text-purple-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.purple.300'); }
+  .dark .hover\:text-purple-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.purple.300'); }
+  .dark .bg-orange-50:not([class*="dark:bg-"]) { background-color: theme('colors.orange.900 / 30%'); }
+  .dark .bg-orange-100:not([class*="dark:bg-"]) { background-color: theme('colors.orange.900 / 50%'); }
+  .dark .border-orange-200:not([class*="dark:border-"]) { border-color: theme('colors.orange.800'); }
+  .dark .text-orange-500:not([class*="dark:text-"]) { color: theme('colors.orange.400'); }
+  .dark .text-orange-600:not([class*="dark:text-"]) { color: theme('colors.orange.400'); }
+  .dark .text-orange-700:not([class*="dark:text-"]) { color: theme('colors.orange.300'); }
+  .dark .text-orange-800:not([class*="dark:text-"]) { color: theme('colors.orange.300'); }
+  .dark .text-orange-900:not([class*="dark:text-"]) { color: theme('colors.orange.300'); }
+  .dark .hover\:text-orange-600:hover:not([class*="dark:hover:text-"]) { color: theme('colors.orange.300'); }
+  .dark .hover\:text-orange-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.orange.300'); }
+  .dark .hover\:text-orange-800:hover:not([class*="dark:hover:text-"]) { color: theme('colors.orange.300'); }
+  .dark .hover\:text-orange-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.orange.300'); }
+  .dark .hover\:bg-blue-100:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.blue.900 / 50%'); }
+  .dark .hover\:bg-blue-200:hover:not([class*="dark:hover:bg-"]) { background-color: theme('colors.blue.800 / 60%'); }
+  .dark .text-gray-900:not([class*="dark:text-"]) { color: theme('colors.gray.50'); }
+  .dark .text-gray-800:not([class*="dark:text-"]) { color: theme('colors.gray.100'); }
+  .dark .text-gray-700:not([class*="dark:text-"]) { color: theme('colors.gray.200'); }
+  .dark .text-gray-600:not([class*="dark:text-"]) { color: theme('colors.gray.300'); }
+  .dark .text-gray-500:not([class*="dark:text-"]) { color: theme('colors.gray.400'); }
+  .dark .hover\:text-gray-900:hover:not([class*="dark:hover:text-"]) { color: theme('colors.white'); }
+  .dark .hover\:text-gray-700:hover:not([class*="dark:hover:text-"]) { color: theme('colors.white'); }
+  .dark .hover\:text-gray-500:hover:not([class*="dark:hover:text-"]) { color: theme('colors.gray.300'); }
+  .dark .border-gray-100:not([class*="dark:border-"]) { border-color: theme('colors.gray.700'); }
+  .dark .border-gray-200:not([class*="dark:border-"]) { border-color: theme('colors.gray.700'); }
+  .dark .border-gray-300:not([class*="dark:border-"]) { border-color: theme('colors.gray.600'); }
+  .dark .divide-gray-200:not([class*="dark:divide-"]) > :not([hidden]) ~ :not([hidden]) { border-color: theme('colors.gray.700'); }
 
   /* Charts (Recharts): axis labels, light grid lines and the default tooltip */
-  .recharts-cartesian-axis-tick-value { fill: theme('colors.gray.400'); }
-  .recharts-cartesian-grid line[stroke="#e5e7eb"] { stroke: theme('colors.gray.700'); }
-  .recharts-default-tooltip {
+  .dark .recharts-cartesian-axis-tick-value { fill: theme('colors.gray.400'); }
+  .dark .recharts-cartesian-grid line[stroke="#e5e7eb"] { stroke: theme('colors.gray.700'); }
+  .dark .recharts-default-tooltip {
     background-color: theme('colors.gray.800') !important; /* inline style */
     border-color: theme('colors.gray.600') !important;
   }
-  .recharts-default-tooltip .recharts-tooltip-item { color: theme('colors.gray.100') !important; }
-  .recharts-tooltip-cursor { fill: theme('colors.gray.700'); }
-}
+  .dark .recharts-default-tooltip .recharts-tooltip-item { color: theme('colors.gray.100') !important; }
+  .dark .recharts-tooltip-cursor { fill: theme('colors.gray.700'); }

@@ -11,6 +11,8 @@ import type { WatchFilters as WatchFiltersType } from '@/types'
 interface WatchFiltersProps {
   filters: WatchFiltersType
   onFiltersChange: (filters: WatchFiltersType) => void
+  /** The watch list page has its own search box in the toolbar */
+  showSearch?: boolean
 }
 
 const conditionOptions = [
@@ -34,7 +36,7 @@ const sortOrderOptions = [
   { value: 'asc', label: 'Ascending' },
 ]
 
-export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersProps) {
+export default function WatchFilters({ filters, onFiltersChange, showSearch = true }: WatchFiltersProps) {
   const { data: brands } = useBrands()
   const { data: movementTypes } = useMovementTypes()
   const { data: collections } = useCollections()
@@ -43,6 +45,11 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
   const deleteSavedSearch = useDeleteSavedSearch()
 
   const [search, setSearch] = useState(filters.search || '')
+
+  // Keep the box in step when the search changes elsewhere (toolbar, chips)
+  useEffect(() => {
+    setSearch(filters.search || '')
+  }, [filters.search])
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [showSaveDialog, setShowSaveDialog] = useState(false)
   const [searchName, setSearchName] = useState('')
@@ -108,9 +115,9 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 space-y-4">
+    <div className="bg-card p-4 rounded-sm border border-border space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Filters</h3>
+        <h3 className="text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Filters</h3>
         <div className="flex gap-2">
           {hasActiveFilters && (
             <>
@@ -132,8 +139,8 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
 
       {/* Save Search Dialog */}
       {showSaveDialog && (
-        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md space-y-2">
-          <label className="block text-sm font-medium text-gray-900 dark:text-white">
+        <div className="p-3 bg-muted border border-border rounded-sm space-y-2">
+          <label className="block text-sm text-foreground">
             Save current filters as:
           </label>
           <div className="flex gap-2">
@@ -163,25 +170,25 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
       {/* Saved Searches */}
       {savedSearches && savedSearches.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-gray-900 dark:text-white mb-2">
+          <label className="block text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-2">
             Saved Searches
           </label>
           <div className="space-y-1">
             {savedSearches.map((savedSearch) => (
               <div
                 key={savedSearch.id}
-                className="flex items-center justify-between p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="flex items-center justify-between p-2 rounded-sm hover:bg-accent"
               >
                 <button
                   onClick={() => handleLoadSearch(savedSearch)}
-                  className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 flex-1 text-left"
+                  className="flex items-center gap-2 text-sm text-foreground hover:text-gold flex-1 text-left"
                 >
                   <Star className="h-4 w-4" />
                   {savedSearch.name}
                 </button>
                 <button
                   onClick={() => handleDeleteSearch(savedSearch.id)}
-                  className="text-xs text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
+                  className="text-xs text-destructive hover:underline"
                 >
                   Delete
                 </button>
@@ -191,11 +198,13 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
         </div>
       )}
 
-      <Input
-        placeholder="Search watches..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
+      {showSearch && (
+        <Input
+          placeholder="Search watches..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      )}
 
       <Select
         label="Brand"
@@ -247,11 +256,11 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
       />
 
       {/* Advanced Filters Section */}
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="pt-4 border-t border-border">
         <button
           type="button"
           onClick={() => setShowAdvanced(!showAdvanced)}
-          className="flex items-center justify-between w-full text-sm font-medium text-gray-900 dark:text-white mb-3"
+          className="flex items-center justify-between w-full text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3"
         >
           <span>Advanced Filters</span>
           {showAdvanced ? (
@@ -265,7 +274,7 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
           <div className="space-y-4">
             {/* Price Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-2">
                 Purchase Price Range
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -296,7 +305,7 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
 
             {/* Market Value Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-2">
                 Market Value Range
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -327,7 +336,7 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
 
             {/* Purchase Date Range */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-2">
                 Purchase Date Range
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -359,8 +368,8 @@ export default function WatchFilters({ filters, onFiltersChange }: WatchFiltersP
         )}
       </div>
 
-      <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
-        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Sort By</h4>
+      <div className="pt-4 border-t border-border">
+        <h4 className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground mb-3">Sort By</h4>
 
         <Select
           value={filters.sort_by || 'created_at'}

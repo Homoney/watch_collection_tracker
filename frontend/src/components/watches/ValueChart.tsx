@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { format } from 'date-fns'
 import { useMarketValues } from '@/hooks/useMarketValues'
+import { useTheme } from '@/contexts/ThemeContext'
 
 interface ValueChartProps {
   watchId: string
@@ -9,31 +9,21 @@ interface ValueChartProps {
 
 export default function ValueChart({ watchId }: ValueChartProps) {
   const { data: values, isLoading, error } = useMarketValues(watchId)
-  const [isDarkMode, setIsDarkMode] = useState(false)
-
-  // Detect dark mode
-  useEffect(() => {
-    const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    setIsDarkMode(darkModeQuery.matches)
-
-    const handler = (e: MediaQueryListEvent) => setIsDarkMode(e.matches)
-    darkModeQuery.addEventListener('change', handler)
-
-    return () => darkModeQuery.removeEventListener('change', handler)
-  }, [])
+  // Follows the app's theme switch, not only the OS setting
+  const isDarkMode = useTheme().theme === 'dark'
 
   if (isLoading) {
     return (
       <div className="flex justify-center items-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold"></div>
       </div>
     )
   }
 
   if (error || !values || values.length === 0) {
     return (
-      <div className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
-        <p className="text-gray-600 dark:text-gray-400 text-center">
+      <div className="py-6">
+        <p className="text-sm text-muted-foreground">
           {error ? 'Failed to load value history' : 'No value history available'}
         </p>
       </div>
@@ -62,9 +52,9 @@ export default function ValueChart({ watchId }: ValueChartProps) {
     if (active && payload && payload.length) {
       const data = payload[0].payload
       return (
-        <div className="bg-white dark:bg-gray-800 p-3 border border-gray-300 dark:border-gray-600 rounded shadow-lg">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{data.date}</p>
-          <p className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="rounded-sm border border-border bg-popover p-3 text-popover-foreground shadow-lg">
+          <p className="mb-1 text-xs text-muted-foreground">{data.date}</p>
+          <p className="text-base text-foreground">
             {formatCurrency(data.value, data.currency)}
           </p>
         </div>
@@ -84,22 +74,19 @@ export default function ValueChart({ watchId }: ValueChartProps) {
   ]
 
   // Theme-aware colors
-  const gridColor = isDarkMode ? '#374151' : '#e5e7eb'
-  const axisColor = isDarkMode ? '#9ca3af' : '#6b7280'
-  const lineColor = isDarkMode ? '#60a5fa' : '#3b82f6'
-  const textColor = isDarkMode ? '#e5e7eb' : '#374151'
-  const backgroundColor = isDarkMode ? '#1f2937' : '#ffffff'
+  // Collector's Vault: gold line on hairlines (token values from index.css)
+  const gridColor = isDarkMode ? '#25241f' : '#e7e1d3'
+  const axisColor = isDarkMode ? '#9a958a' : '#5e5a51'
+  const lineColor = isDarkMode ? '#c9a45c' : '#7a5d1c'
+  const textColor = isDarkMode ? '#9a958a' : '#5e5a51'
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
-      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Value History</h3>
-      <div className="bg-white dark:bg-gray-900 rounded p-4">
-        <ResponsiveContainer width="100%" height={300}>
+    <div>
+      <h3 className="mb-4 text-[11px] uppercase tracking-[0.24em] text-muted-foreground">Market value over time</h3>
+      <div>
+        <ResponsiveContainer width="100%" height={260}>
           <LineChart data={chartData}>
-            <defs>
-              <rect id="chartBackground" x="0" y="0" width="100%" height="100%" fill={backgroundColor} />
-            </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
+            <CartesianGrid stroke={gridColor} vertical={false} />
             <XAxis
               dataKey="date"
               tick={{ fontSize: 12, fill: textColor }}
@@ -117,20 +104,19 @@ export default function ValueChart({ watchId }: ValueChartProps) {
               }
             />
             <Tooltip content={<CustomTooltip />} />
-            <Legend wrapperStyle={{ color: textColor }} />
             <Line
               type="monotone"
               dataKey="value"
               stroke={lineColor}
-              strokeWidth={2}
-              dot={{ fill: lineColor, r: 4 }}
+              strokeWidth={1.5}
+              dot={{ fill: lineColor, r: 3 }}
               activeDot={{ r: 6 }}
               name="Market Value"
             />
           </LineChart>
         </ResponsiveContainer>
       </div>
-      <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 text-center">
+      <div className="mt-3 text-xs text-muted-foreground">
         Showing {chartData.length} valuations from {chartData[0]?.date} to{' '}
         {chartData[chartData.length - 1]?.date}
       </div>
