@@ -57,7 +57,7 @@ export function AtomicClock({ onSecondMarkSelect, selectedMark = null, timezone 
     <div className="space-y-6">
       {/* Warning if not atomic source */}
       {atomicTime && !atomicTime.is_atomic_source && (
-        <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+        <div className="flex items-center gap-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-sm">
           <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
           <p className="text-sm text-yellow-800 dark:text-yellow-200">
             Atomic time source unavailable. Using server time as fallback.
@@ -69,7 +69,7 @@ export function AtomicClock({ onSecondMarkSelect, selectedMark = null, timezone 
       <div className="flex justify-center">
         <div className="relative w-64 h-64">
           {/* Clock face */}
-          <div className="absolute inset-0 rounded-full border-4 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 shadow-lg">
+          <div className="absolute inset-0 rounded-full border-4 border-border bg-card shadow-lg">
             {/* Hour markers */}
             {[...Array(12)].map((_, i) => {
               const angle = i * 30
@@ -118,7 +118,7 @@ export function AtomicClock({ onSecondMarkSelect, selectedMark = null, timezone 
 
             {/* Hour hand */}
             <div
-              className="absolute top-1/2 left-1/2 origin-bottom bg-gray-800 dark:bg-gray-200 rounded-full shadow-md"
+              className="absolute top-1/2 left-1/2 origin-bottom bg-gray-800 rounded-full shadow-md"
               style={{
                 width: '6px',
                 height: '50px',
@@ -129,7 +129,7 @@ export function AtomicClock({ onSecondMarkSelect, selectedMark = null, timezone 
 
             {/* Minute hand */}
             <div
-              className="absolute top-1/2 left-1/2 origin-bottom bg-gray-700 dark:bg-gray-300 rounded-full shadow-md"
+              className="absolute top-1/2 left-1/2 origin-bottom bg-gray-700 rounded-full shadow-md"
               style={{
                 width: '4px',
                 height: '70px',
@@ -149,16 +149,16 @@ export function AtomicClock({ onSecondMarkSelect, selectedMark = null, timezone 
             />
 
             {/* Center dot */}
-            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-gray-800 dark:bg-gray-200 shadow-md" />
+            <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-gray-800 shadow-md" />
           </div>
         </div>
       </div>
 
       {/* Digital time display */}
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
-          <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          <span className="text-2xl font-mono font-semibold text-gray-900 dark:text-white">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-sm">
+          <Clock className="w-5 h-5 text-muted-foreground" />
+          <span className="text-2xl font-mono font-semibold text-foreground">
             {currentTime.toLocaleTimeString('en-US', {
               hour12: false,
               hour: '2-digit',
@@ -167,7 +167,7 @@ export function AtomicClock({ onSecondMarkSelect, selectedMark = null, timezone 
             })}
           </span>
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+        <p className="text-sm text-muted-foreground mt-2">
           {currentTime.toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
@@ -179,7 +179,7 @@ export function AtomicClock({ onSecondMarkSelect, selectedMark = null, timezone 
 
       {/* Second mark buttons */}
       <div className="space-y-3">
-        <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+        <p className="text-sm text-muted-foreground text-center">
           Click when your watch's second hand aligns with one of these marks:
         </p>
         <div className="grid grid-cols-4 gap-3">
@@ -188,7 +188,7 @@ export function AtomicClock({ onSecondMarkSelect, selectedMark = null, timezone 
               key={mark}
               type="button"
               onClick={() => onSecondMarkSelect(mark)}
-              className={`py-3 px-4 rounded-lg font-semibold transition-all ${
+              className={`py-3 px-4 rounded-sm font-semibold transition-all ${
                 selectedMark === mark
                   ? 'bg-blue-600 text-white shadow-lg scale-105'
                   : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-2 border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 hover:scale-105'
@@ -199,7 +199,7 @@ export function AtomicClock({ onSecondMarkSelect, selectedMark = null, timezone 
           ))}
         </div>
         {selectedMark !== null && (
-          <p className="text-sm text-center text-blue-600 dark:text-blue-400 font-medium">
+          <p className="text-sm text-center text-gold font-medium">
             Selected: {selectedMark} seconds past the minute
           </p>
         )}

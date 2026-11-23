@@ -38,9 +38,9 @@ export function AccuracyChart({ watchId }: AccuracyChartProps) {
 
   if (chartData.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-900">
-        <TrendingUp className="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" />
-        <p className="text-gray-600 dark:text-gray-400 text-center max-w-md">
+      <div className="flex flex-col items-center justify-center p-12 border border-border rounded-sm bg-muted">
+        <TrendingUp className="w-16 h-16 text-muted-foreground mb-4" />
+        <p className="text-muted-foreground text-center max-w-md">
           No drift data to display yet. Record at least one subsequent reading after your initial baseline to see your
           watch's accuracy trend over time.
         </p>
@@ -56,18 +56,18 @@ export function AccuracyChart({ watchId }: AccuracyChartProps) {
       const driftColor = Math.abs(drift) <= 5 ? 'text-green-600' : Math.abs(drift) <= 10 ? 'text-yellow-600' : 'text-red-600'
 
       return (
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-3">
-          <p className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+        <div className="bg-card border border-border rounded-sm shadow-lg p-3">
+          <p className="text-sm font-medium text-foreground mb-2">
             {format(new Date(data.date), 'MMM d, yyyy h:mm a')}
           </p>
           <p className={`text-lg font-bold ${driftColor}`}>
             {drift >= 0 ? '+' : ''}{drift.toFixed(2)} spd
           </p>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-xs text-muted-foreground mt-1">
             {drift > 0 ? 'Running fast' : drift < 0 ? 'Running slow' : 'Perfect'}
           </p>
           {data.notes && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 border-t border-gray-200 dark:border-gray-700 pt-2">
+            <p className="text-xs text-muted-foreground mt-2 border-t border-border pt-2">
               {data.notes}
             </p>
           )}
@@ -90,8 +90,8 @@ export function AccuracyChart({ watchId }: AccuracyChartProps) {
   return (
     <div className="space-y-4">
       {/* Info banner */}
-      <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
-        <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+      <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-sm">
+        <Info className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
         <div className="text-sm text-blue-900 dark:text-blue-100">
           <p>
             <strong>Understanding drift:</strong> Positive values (above zero) mean your watch is running fast.
@@ -101,10 +101,10 @@ export function AccuracyChart({ watchId }: AccuracyChartProps) {
       </div>
 
       {/* Chart */}
-      <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
+      <div className="border border-border rounded-sm p-6 bg-card">
         <div className="flex items-center gap-2 mb-6">
-          <TrendingUp className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Drift Over Time</h3>
+          <TrendingUp className="w-5 h-5 text-muted-foreground" />
+          <h3 className="text-lg font-light tracking-wide text-foreground">Drift Over Time</h3>
         </div>
 
         <ResponsiveContainer width="100%" height={400}>

@@ -35,14 +35,14 @@ export default function WatchBaseKeyCard() {
   return (
     <Card className="p-6 space-y-4">
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Reference look-up</h2>
-        <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
+        <h2 className="text-xl font-light tracking-wide text-foreground">Reference look-up</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           With a{' '}
           <a
             href="https://watchbase.com/manuals/datafeed"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-700 underline dark:text-blue-300"
+            className="text-blue-700 underline"
           >
             WatchBase Data Feed
           </a>{' '}
@@ -52,7 +52,7 @@ export default function WatchBaseKeyCard() {
         </p>
       </div>
 
-      <p className="text-sm text-gray-800 dark:text-gray-100" role="status">
+      <p className="text-sm text-foreground" role="status">
         Status:{' '}
         <strong>
           {status?.configured
@@ -64,7 +64,7 @@ export default function WatchBaseKeyCard() {
       </p>
 
       {status?.from_environment ? (
-        <p className="text-sm text-gray-600 dark:text-gray-300">
+        <p className="text-sm text-muted-foreground">
           To change it, change WATCHBASE_API_KEY and restart the container.
         </p>
       ) : (
@@ -101,8 +101,8 @@ export default function WatchBaseKeyCard() {
           )}
         </form>
       )}
-      {message && <p className="text-sm text-gray-700 dark:text-gray-200">{message}</p>}
-      <p className="text-xs text-gray-600 dark:text-gray-300">
+      {message && <p className="text-sm text-foreground">{message}</p>}
+      <p className="text-xs text-muted-foreground">
         The key is stored on the server only and is never shown again or sent to browsers.
       </p>
     </Card>

@@ -35,7 +35,7 @@ export default function ServiceDocuments({
     if (mimeType.startsWith('image/')) {
       return <ImageIcon className="h-8 w-8 text-blue-500" />
     }
-    return <File className="h-8 w-8 text-gray-500" />
+    return <File className="h-8 w-8 text-muted-foreground" />
   }
 
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -98,14 +98,14 @@ export default function ServiceDocuments({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-gray-900">
+        <h4 className="text-sm font-medium text-foreground">
           Documents ({documents.length})
         </h4>
         <button
           type="button"
           onClick={() => fileInputRef.current?.click()}
           disabled={uploadMutation.isPending}
-          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100 disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gold bg-blue-50 rounded-sm hover:bg-blue-100 disabled:opacity-50"
         >
           <Upload className="h-4 w-4" />
           {uploadMutation.isPending ? 'Uploading...' : 'Upload'}
@@ -120,10 +120,10 @@ export default function ServiceDocuments({
       </div>
 
       {documents.length === 0 ? (
-        <div className="text-center py-6 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-          <File className="mx-auto h-8 w-8 text-gray-400" />
-          <p className="mt-2 text-sm text-gray-500">No documents attached</p>
-          <p className="text-xs text-gray-400 mt-1">
+        <div className="text-center py-6 bg-muted rounded-sm border border-dashed border-border">
+          <File className="mx-auto h-8 w-8 text-muted-foreground" />
+          <p className="mt-2 text-sm text-muted-foreground">No documents attached</p>
+          <p className="text-xs text-muted-foreground mt-1">
             Upload receipts, certificates, or warranties
           </p>
         </div>
@@ -132,17 +132,17 @@ export default function ServiceDocuments({
           {documents.map((doc) => (
             <div
               key={doc.id}
-              className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
+              className="flex items-center gap-3 p-3 bg-muted rounded-sm border border-border hover:border-gray-300 transition-colors"
             >
               {/* File Icon */}
               <div className="flex-shrink-0">{getFileIcon(doc.mime_type)}</div>
 
               {/* File Info */}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
+                <p className="text-sm font-medium text-foreground truncate">
                   {doc.file_name}
                 </p>
-                <p className="text-xs text-gray-500">{formatFileSize(doc.file_size)}</p>
+                <p className="text-xs text-muted-foreground">{formatFileSize(doc.file_size)}</p>
               </div>
 
               {/* Actions */}
@@ -150,7 +150,7 @@ export default function ServiceDocuments({
                 <button
                   type="button"
                   onClick={() => handleDownload(doc)}
-                  className="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-white"
+                  className="p-1.5 text-muted-foreground hover:text-blue-600 rounded-sm hover:bg-white"
                   title="Download"
                 >
                   <Download className="h-4 w-4" />
@@ -169,7 +169,7 @@ export default function ServiceDocuments({
                     <button
                       type="button"
                       onClick={() => setDeleteConfirmId(null)}
-                      className="px-2 py-1 text-xs font-medium text-gray-700 bg-white hover:bg-gray-100 rounded"
+                      className="px-2 py-1 text-xs font-medium text-foreground bg-card hover:bg-accent rounded"
                     >
                       Cancel
                     </button>
@@ -178,7 +178,7 @@ export default function ServiceDocuments({
                   <button
                     type="button"
                     onClick={() => setDeleteConfirmId(doc.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-white"
+                    className="p-1.5 text-muted-foreground hover:text-red-600 rounded-sm hover:bg-white"
                     title="Delete"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -191,7 +191,7 @@ export default function ServiceDocuments({
       )}
 
       {/* Upload Help Text */}
-      <p className="text-xs text-gray-500">
+      <p className="text-xs text-muted-foreground">
         Accepted formats: PDF, JPG, PNG • Max size: 10MB
       </p>
     </div>

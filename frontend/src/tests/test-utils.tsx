@@ -2,6 +2,7 @@ import { ReactElement } from 'react'
 import { render, RenderOptions } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 
 /**
  * Custom render function that wraps components with necessary providers
@@ -21,7 +22,9 @@ export function renderWithProviders(
   function Wrapper({ children }: { children: React.ReactNode }) {
     return (
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>{children}</BrowserRouter>
+        <ThemeProvider>
+          <BrowserRouter>{children}</BrowserRouter>
+        </ThemeProvider>
       </QueryClientProvider>
     )
   }

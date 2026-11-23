@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import AppLayout from '@/components/layout/AppLayout'
+import PageHeader from '@/components/layout/PageHeader'
 import Card from '@/components/common/Card'
 import Button from '@/components/common/Button'
 import Spinner from '@/components/common/Spinner'
@@ -13,6 +14,10 @@ export default function DashboardPage() {
   // Totals cover every watch (not just the recent five listed below), in USD only
   const { data: analytics, isLoading: analyticsLoading } = useCollectionAnalytics('USD')
 
+  const figLabel = 'text-[11px] uppercase tracking-[0.24em] text-muted-foreground'
+  const returnPct = analytics && Number(analytics.total_purchase_price) > 0 ? ((Number(analytics.total_current_value) - Number(analytics.total_purchase_price)) / Number(analytics.total_purchase_price)) * 100 : null
+  const formatPercent = (pct: number) => `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%`
+
   const formatCurrency = (amount: number | string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
@@ -22,104 +27,57 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Welcome to your watch collection</p>
-        </div>
+      <div className="space-y-8">
+        <PageHeader
+          eyebrow="Watch Tracker"
+          title="Dashboard"
+          description="Welcome to your watch collection"
+          actions={
+            <>
+              <Button variant="secondary" asChild>
+                <Link to="/watches">View all watches</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/watches">Add new watch</Link>
+              </Button>
+            </>
+          }
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Watches</p>
-                <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                  {watchesLoading ? '-' : watchesData?.total || 0}
-                </p>
-              </div>
-              <div className="p-3 bg-blue-100 rounded-full">
-                <svg
-                  className="w-8 h-8 text-blue-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Current value</p>
-                <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                  {analyticsLoading || !analytics ? '-' : formatCurrency(analytics.total_current_value)}
-                </p>
-                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                  Paid: {analyticsLoading || !analytics ? '-' : formatCurrency(analytics.total_purchase_price)}
-                </p>
-              </div>
-              <div className="p-3 bg-green-100 rounded-full">
-                <svg
-                  className="w-8 h-8 text-green-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </Card>
-
-          <Card className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Collections</p>
-                <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                  {collectionsLoading ? '-' : collections?.length || 0}
-                </p>
-              </div>
-              <div className="p-3 bg-purple-100 rounded-full">
-                <svg
-                  className="w-8 h-8 text-purple-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                  />
-                </svg>
-              </div>
-            </div>
-          </Card>
+        {/* Figures: one tray with hairline gaps */}
+        <div className="grid grid-cols-2 gap-px border border-border bg-border md:grid-cols-4">
+          <div className="bg-card p-5 sm:p-6">
+            <p className={figLabel}>Watches</p>
+            <p className="mt-2 text-3xl font-light text-foreground">{watchesLoading ? '-' : watchesData?.total || 0}</p>
+          </div>
+          <div className="col-span-2 bg-card p-5 sm:p-6 md:col-span-1">
+            <p className={figLabel}>Current value</p>
+            <p className="mt-2 text-3xl font-light text-foreground">
+              {analyticsLoading || !analytics ? '-' : formatCurrency(analytics.total_current_value)}
+            </p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Paid: {analyticsLoading || !analytics ? '-' : formatCurrency(analytics.total_purchase_price)}
+            </p>
+          </div>
+          <div className="bg-card p-5 sm:p-6">
+            <p className={figLabel}>Return</p>
+            <p className={`mt-2 text-3xl font-light ${returnPct === null ? 'text-foreground' : returnPct >= 0 ? 'text-positive' : 'text-negative'}`}>
+              {returnPct === null ? '-' : formatPercent(returnPct)}
+            </p>
+          </div>
+          <div className="bg-card p-5 sm:p-6">
+            <p className={figLabel}>Collections</p>
+            <p className="mt-2 text-3xl font-light text-foreground">{collectionsLoading ? '-' : collections?.length || 0}</p>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Recent Watches</h2>
-              <Link to="/watches">
-                <Button variant="ghost" size="sm">
-                  View All
-                </Button>
-              </Link>
+              <h2 className={figLabel}>Recent watches</h2>
+              <Button variant="link" size="sm" asChild>
+                <Link to="/watches">View all</Link>
+              </Button>
             </div>
 
             {watchesLoading ? (
@@ -128,10 +86,10 @@ export default function DashboardPage() {
               </div>
             ) : watchesData?.items.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-600 dark:text-gray-400 mb-4">No watches yet</p>
-                <Link to="/watches">
-                  <Button>Add Your First Watch</Button>
-                </Link>
+                <p className="text-muted-foreground mb-4">No watches yet</p>
+                <Button asChild>
+                  <Link to="/watches">Add your first watch</Link>
+                </Button>
               </div>
             ) : (
               <div className="space-y-3">
@@ -139,19 +97,19 @@ export default function DashboardPage() {
                   <Link
                     key={watch.id}
                     to={`/watches/${watch.id}`}
-                    className="block p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="block p-3 border border-border rounded-sm hover:bg-accent transition-colors"
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-medium text-gray-900 dark:text-white">
+                        <p className="font-medium text-foreground">
                           {watch.brand?.name} {watch.model}
                         </p>
                         {watch.reference_number && (
-                          <p className="text-sm text-gray-500">Ref: {watch.reference_number}</p>
+                          <p className="text-sm text-muted-foreground">Ref: {watch.reference_number}</p>
                         )}
                       </div>
                       {watch.purchase_price && (
-                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                        <p className="text-sm font-medium text-foreground">
                           {formatCurrency(Number(watch.purchase_price))}
                         </p>
                       )}
@@ -164,7 +122,7 @@ export default function DashboardPage() {
 
           <Card className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Collections</h2>
+              <h2 className={figLabel}>Collections</h2>
             </div>
 
             {collectionsLoading ? (
@@ -173,7 +131,7 @@ export default function DashboardPage() {
               </div>
             ) : collections?.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-600 dark:text-gray-400">No collections yet</p>
+                <p className="text-muted-foreground">No collections yet</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -181,7 +139,7 @@ export default function DashboardPage() {
                   <Link
                     key={collection.id}
                     to={`/watches?collection_id=${collection.id}`}
-                    className="block p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="block p-3 border border-border rounded-sm hover:bg-accent transition-colors"
                   >
                     <div className="flex justify-between items-center">
                       <div className="flex items-center space-x-3">
@@ -189,9 +147,9 @@ export default function DashboardPage() {
                           className="w-4 h-4 rounded-full"
                           style={{ backgroundColor: collection.color }}
                         />
-                        <p className="font-medium text-gray-900 dark:text-white">{collection.name}</p>
+                        <p className="font-medium text-foreground">{collection.name}</p>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{collection.watch_count} watches</p>
+                      <p className="text-sm text-muted-foreground">{collection.watch_count} watches</p>
                     </div>
                   </Link>
                 ))}
@@ -200,19 +158,6 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Link to="/watches">
-              <Button className="w-full">View All Watches</Button>
-            </Link>
-            <Link to="/watches">
-              <Button variant="secondary" className="w-full">
-                Add New Watch
-              </Button>
-            </Link>
-          </div>
-        </Card>
       </div>
     </AppLayout>
   )

@@ -57,7 +57,7 @@ export default function ServiceHistoryList({
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+      <div className="p-4 bg-red-50 border border-red-200 rounded-sm">
         <p className="text-red-800">Failed to load service history</p>
       </div>
     )
@@ -66,16 +66,16 @@ export default function ServiceHistoryList({
   if (!services || services.length === 0) {
     return (
       <div className="text-center py-12">
-        <FileText className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No service history</h3>
-        <p className="mt-1 text-sm text-gray-500">
+        <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+        <h3 className="mt-2 text-sm font-medium text-foreground">No service history</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
           Get started by adding your first service record.
         </p>
         <div className="mt-6">
           <button
             type="button"
             onClick={onAddService}
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-sm text-white bg-blue-600 hover:bg-blue-700"
           >
             Add Service Record
           </button>
@@ -87,13 +87,13 @@ export default function ServiceHistoryList({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-900">
+        <h3 className="text-lg font-light tracking-wide text-foreground">
           Service History ({services.length})
         </h3>
         <button
           type="button"
           onClick={onAddService}
-          className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-sm text-white bg-blue-600 hover:bg-blue-700"
         >
           Add Service Record
         </button>
@@ -103,14 +103,14 @@ export default function ServiceHistoryList({
         {services.map((service, index) => (
           <div
             key={service.id}
-            className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+            className="bg-card border border-border rounded-sm p-4 hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 {/* Service Date and Provider */}
                 <div className="flex items-center gap-2 mb-2">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <span className="font-medium text-gray-900">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium text-foreground">
                     {formatDate(service.service_date)}
                   </span>
                   {index === 0 && (
@@ -122,27 +122,27 @@ export default function ServiceHistoryList({
 
                 <div className="ml-6 space-y-2">
                   {/* Provider */}
-                  <p className="text-sm text-gray-900">
+                  <p className="text-sm text-foreground">
                     <span className="font-medium">Provider:</span> {service.provider}
                   </p>
 
                   {/* Service Type */}
                   {service.service_type && (
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       <span className="font-medium">Type:</span> {service.service_type}
                     </p>
                   )}
 
                   {/* Description */}
                   {service.description && (
-                    <p className="text-sm text-gray-600">{service.description}</p>
+                    <p className="text-sm text-muted-foreground">{service.description}</p>
                   )}
 
                   {/* Cost */}
                   {service.cost !== null && (
                     <div className="flex items-center gap-2 text-sm">
-                      <DollarSign className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium text-gray-900">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-foreground">
                         {formatCost(service.cost, service.cost_currency)}
                       </span>
                     </div>
@@ -176,7 +176,7 @@ export default function ServiceHistoryList({
                           expandedServiceId === service.id ? null : service.id
                         )
                       }
-                      className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800"
+                      className="flex items-center gap-1 text-sm text-gold hover:opacity-80"
                     >
                       {expandedServiceId === service.id ? (
                         <ChevronUp className="h-4 w-4" />
@@ -197,7 +197,7 @@ export default function ServiceHistoryList({
                 <button
                   type="button"
                   onClick={() => onEditService(service)}
-                  className="p-2 text-gray-400 hover:text-blue-600 rounded-md hover:bg-gray-100"
+                  className="p-2 text-muted-foreground hover:text-blue-600 rounded-sm hover:bg-accent"
                   title="Edit service record"
                 >
                   <Edit className="h-4 w-4" />
@@ -216,7 +216,7 @@ export default function ServiceHistoryList({
                     <button
                       type="button"
                       onClick={() => setDeleteConfirmId(null)}
-                      className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded"
+                      className="px-2 py-1 text-xs font-medium text-foreground bg-muted hover:bg-accent rounded"
                     >
                       Cancel
                     </button>
@@ -225,7 +225,7 @@ export default function ServiceHistoryList({
                   <button
                     type="button"
                     onClick={() => setDeleteConfirmId(service.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 rounded-md hover:bg-gray-100"
+                    className="p-2 text-muted-foreground hover:text-red-600 rounded-sm hover:bg-accent"
                     title="Delete service record"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -236,7 +236,7 @@ export default function ServiceHistoryList({
 
             {/* Expandable Documents Section */}
             {expandedServiceId === service.id && service.documents.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="mt-4 pt-4 border-t border-border">
                 <ServiceDocuments
                   watchId={watchId}
                   serviceId={service.id}

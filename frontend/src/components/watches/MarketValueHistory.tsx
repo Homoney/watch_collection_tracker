@@ -55,7 +55,7 @@ export default function MarketValueHistory({
 
   if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+      <div className="p-4 bg-red-50 border border-red-200 rounded-sm">
         <p className="text-red-800">Failed to load market value history</p>
       </div>
     )
@@ -64,16 +64,16 @@ export default function MarketValueHistory({
   if (!values || values.length === 0) {
     return (
       <div className="text-center py-12">
-        <DollarSign className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No value history</h3>
-        <p className="mt-1 text-sm text-gray-500">
+        <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
+        <h3 className="mt-2 text-sm font-medium text-foreground">No value history</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
           Start tracking your watch's market value over time.
         </p>
         <div className="mt-6">
           <button
             type="button"
             onClick={onAddValue}
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-sm text-white bg-blue-600 hover:bg-blue-700"
           >
             Add Market Value
           </button>
@@ -85,13 +85,13 @@ export default function MarketValueHistory({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-900">
+        <h3 className="text-lg font-light tracking-wide text-foreground">
           Value History ({values.length})
         </h3>
         <button
           type="button"
           onClick={onAddValue}
-          className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-sm text-white bg-blue-600 hover:bg-blue-700"
         >
           Add Value
         </button>
@@ -109,14 +109,14 @@ export default function MarketValueHistory({
           return (
             <div
               key={value.id}
-              className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+              className="bg-card border border-border rounded-sm p-4 hover:shadow-md transition-shadow"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   {/* Date */}
                   <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="h-4 w-4 text-gray-400" />
-                    <span className="font-medium text-gray-900">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium text-foreground">
                       {formatDate(value.recorded_at)}
                     </span>
                     {index === 0 && (
@@ -129,13 +129,13 @@ export default function MarketValueHistory({
                   <div className="ml-6 space-y-2">
                     {/* Value */}
                     <div className="flex items-baseline gap-2">
-                      <span className="text-2xl font-bold text-gray-900">
+                      <span className="text-2xl font-bold text-foreground">
                         {formatValue(Number(value.value), value.currency)}
                       </span>
                       {changeInfo && (
                         <span
                           className={`flex items-center gap-1 text-sm font-medium ${
-                            changeInfo.change >= 0 ? 'text-green-600' : 'text-red-600'
+                            changeInfo.change >= 0 ? 'text-positive' : 'text-negative'
                           }`}
                         >
                           {changeInfo.change >= 0 ? (
@@ -149,7 +149,7 @@ export default function MarketValueHistory({
                     </div>
 
                     {/* Source */}
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       <span className="font-medium">Source:</span>{' '}
                       {value.source === 'manual'
                         ? 'Manual Entry'
@@ -160,7 +160,7 @@ export default function MarketValueHistory({
 
                     {/* Notes */}
                     {value.notes && (
-                      <p className="text-sm text-gray-600">{value.notes}</p>
+                      <p className="text-sm text-muted-foreground">{value.notes}</p>
                     )}
                   </div>
                 </div>
@@ -170,7 +170,7 @@ export default function MarketValueHistory({
                   <button
                     type="button"
                     onClick={() => onEditValue(value)}
-                    className="p-2 text-gray-400 hover:text-blue-600 rounded-md hover:bg-gray-100"
+                    className="p-2 text-muted-foreground hover:text-blue-600 rounded-sm hover:bg-accent"
                     title="Edit value"
                   >
                     <Edit className="h-4 w-4" />
@@ -189,7 +189,7 @@ export default function MarketValueHistory({
                       <button
                         type="button"
                         onClick={() => setDeleteConfirmId(null)}
-                        className="px-2 py-1 text-xs font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded"
+                        className="px-2 py-1 text-xs font-medium text-foreground bg-muted hover:bg-accent rounded"
                       >
                         Cancel
                       </button>
@@ -198,7 +198,7 @@ export default function MarketValueHistory({
                     <button
                       type="button"
                       onClick={() => setDeleteConfirmId(value.id)}
-                      className="p-2 text-gray-400 hover:text-red-600 rounded-md hover:bg-gray-100"
+                      className="p-2 text-muted-foreground hover:text-red-600 rounded-sm hover:bg-accent"
                       title="Delete value"
                     >
                       <Trash2 className="h-4 w-4" />

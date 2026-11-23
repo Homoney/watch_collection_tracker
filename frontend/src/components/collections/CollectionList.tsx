@@ -35,10 +35,10 @@ export default function CollectionList({
 
   if (collections.length === 0) {
     return (
-      <div className="text-center py-12 bg-white rounded-lg border border-gray-200">
-        <FolderOpen className="mx-auto h-12 w-12 text-gray-400" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900">No collections</h3>
-        <p className="mt-1 text-sm text-gray-500">
+      <div className="text-center py-12 bg-card rounded-sm border border-border">
+        <FolderOpen className="mx-auto h-12 w-12 text-muted-foreground" />
+        <h3 className="mt-2 text-sm font-medium text-foreground">No collections</h3>
+        <p className="mt-1 text-sm text-muted-foreground">
           Get started by creating a new collection.
         </p>
       </div>
@@ -50,7 +50,7 @@ export default function CollectionList({
       {collections.map((collection) => (
         <div
           key={collection.id}
-          className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-md transition-shadow"
+          className="bg-card rounded-sm border border-border p-6 hover:shadow-md transition-shadow"
         >
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3 flex-1">
@@ -59,15 +59,15 @@ export default function CollectionList({
                 style={!colorClasses[collection.color] ? { backgroundColor: collection.color } : undefined}
               />
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-gray-900 truncate">
+                <h3 className="text-lg font-light tracking-wide text-foreground truncate">
                   {collection.name}
                 </h3>
                 {collection.description && (
-                  <p className="mt-1 text-sm text-gray-500 line-clamp-2">
+                  <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
                     {collection.description}
                   </p>
                 )}
-                <p className="mt-2 text-sm text-gray-600">
+                <p className="mt-2 text-sm text-muted-foreground">
                   {collection.watch_count || 0}{' '}
                   {collection.watch_count === 1 ? 'watch' : 'watches'}
                 </p>
@@ -78,7 +78,7 @@ export default function CollectionList({
               <button
                 type="button"
                 onClick={() => onEdit(collection)}
-                className="p-2 text-gray-400 hover:text-blue-600 rounded-md hover:bg-gray-100"
+                className="p-2 text-muted-foreground hover:text-blue-600 rounded-sm hover:bg-accent"
                 title="Edit collection"
               >
                 <Edit className="h-4 w-4" />
@@ -86,7 +86,7 @@ export default function CollectionList({
               <button
                 type="button"
                 onClick={() => onDelete(collection)}
-                className="p-2 text-gray-400 hover:text-red-600 rounded-md hover:bg-gray-100"
+                className="p-2 text-muted-foreground hover:text-red-600 rounded-sm hover:bg-accent"
                 title="Delete collection"
               >
                 <Trash2 className="h-4 w-4" />

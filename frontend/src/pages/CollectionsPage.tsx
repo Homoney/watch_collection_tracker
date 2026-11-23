@@ -71,9 +71,9 @@ export default function CollectionsPage() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Collections</h1>
+            <h1 className="text-3xl font-light tracking-wide text-foreground sm:text-4xl">Collections</h1>
             {collections && (
-              <p className="mt-1 text-sm text-gray-600">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {collections.length} {collections.length === 1 ? 'collection' : 'collections'}
               </p>
             )}
@@ -131,7 +131,7 @@ export default function CollectionsPage() {
         size="sm"
       >
         <div className="space-y-4">
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Are you sure you want to delete{' '}
             <span className="font-semibold">{deleteCollection?.name}</span>? Watches in this
             collection will not be deleted, but will be unassigned from the collection.
