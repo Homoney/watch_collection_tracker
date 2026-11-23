@@ -10,26 +10,25 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={props.id} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor={props.id} className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1.5">
             {label}
-            {props.required && <span className="text-red-500 ml-1">*</span>}
+            {props.required && <span className="text-destructive ml-1">*</span>}
           </label>
         )}
         <input
           ref={ref}
           className={`
-            appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md
-            placeholder-gray-400 text-gray-900
-            dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:placeholder-gray-400
-            focus:outline-none focus:ring-blue-500 focus:border-blue-500
-            disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400
+            appearance-none block w-full px-3 py-2 border border-input rounded-sm
+            bg-card text-foreground placeholder:text-muted-foreground
+            focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring
+            disabled:opacity-60 disabled:cursor-not-allowed
             sm:text-sm
-            ${error ? 'border-red-500' : ''}
+            ${error ? 'border-destructive' : ''}
             ${className}
           `}
           {...props}
         />
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
       </div>
     )
   }
