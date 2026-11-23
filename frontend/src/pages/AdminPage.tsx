@@ -110,10 +110,10 @@ export default function AdminPage() {
     return (
       <AppLayout>
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+          <h2 className="text-2xl font-light tracking-wide text-foreground mb-2">
             Access Denied
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-muted-foreground">
             You don't have permission to access this page.
           </p>
         </div>
@@ -125,40 +125,40 @@ export default function AdminPage() {
     <AppLayout>
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-1">
+          <h1 className="text-3xl font-light tracking-wide text-foreground sm:text-4xl">User Management</h1>
+          <p className="text-muted-foreground mt-1">
             Manage user accounts and permissions
           </p>
         </div>
 
         <Card>
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-800">
+            <table className="min-w-full divide-y divide-border">
+              <thead className="bg-muted">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     User
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Role
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Joined
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+              <tbody className="bg-card divide-y divide-border">
                 {users?.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
+                  <tr key={user.id} className="hover:bg-accent">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        <div className="text-sm font-medium text-foreground">
                           {user.full_name || 'No name'}
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                        <div className="text-sm text-muted-foreground">
                           {user.email}
                         </div>
                       </div>
@@ -175,7 +175,7 @@ export default function AdminPage() {
                         {user.role}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                       {formatDate(user.created_at)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -193,7 +193,7 @@ export default function AdminPage() {
                         </button>
                         <button
                           onClick={() => handlePasswordClick(user)}
-                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
+                          className="text-gold hover:opacity-80"
                           title="Reset password"
                         >
                           <Key className="w-5 h-5" />
@@ -224,7 +224,7 @@ export default function AdminPage() {
         title="Update User Role"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Are you sure you want to change <strong>{selectedUser?.email}</strong>'s role to{' '}
             <strong>{newRole}</strong>?
           </p>
@@ -251,7 +251,7 @@ export default function AdminPage() {
         dirty={newPassword !== ''}
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Set a new password for <strong>{selectedUser?.email}</strong>
           </p>
           <Input
@@ -287,7 +287,7 @@ export default function AdminPage() {
         title="Delete User"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Are you sure you want to delete <strong>{selectedUser?.email}</strong>? This action
             cannot be undone and will delete all their watches, collections, and data.
           </p>

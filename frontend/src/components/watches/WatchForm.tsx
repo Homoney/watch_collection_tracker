@@ -129,6 +129,20 @@ export default function WatchForm({
     setSelectedComplications(draft.complications)
     setRestored(true)
   }, [draftKey, reset])
+
+  // A <select> can only show a value once that option exists. On a direct
+  // load the brand, movement and collection lists arrive after the form has
+  // mounted, so the stored ids are written back into the selects when they do.
+  // Keyed on the list sizes, so it runs when a list arrives, not on every render.
+  const optionCounts = [brands?.length ?? 0, movementTypes?.length ?? 0, collections?.length ?? 0]
+  useEffect(() => {
+    const names = ['brand_id', 'movement_type_id', 'collection_id'] as const
+    names.forEach((name, i) => {
+      const current = getValues(name)
+      if (optionCounts[i] && current) setValue(name, current)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...optionCounts, getValues, setValue])
   // Written only when what was typed changes, not on every render: after a
   // save the parent clears the draft while this form is still on screen, and
   // a re-render then (e.g. the save finishing) must not write it back.
@@ -221,18 +235,21 @@ export default function WatchForm({
     )
   }
 
+  const legend = 'mb-4 text-[11px] uppercase tracking-[0.24em] text-gold'
+
   return (
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {restored && (
         <p
           role="status"
-          className="rounded-md bg-blue-50 px-3 py-2 text-sm text-blue-900 dark:bg-blue-900/40 dark:text-blue-100"
+          className="rounded-sm border border-border bg-muted px-3 py-2 text-sm text-foreground"
         >
           Restored what you typed last time. Save it, or Cancel to discard it.
         </p>
       )}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
+      {/* Sections of two to four columns instead of one long column */}
+      <fieldset className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <legend className={legend}>The watch</legend>
 
         <div>
           <Select
@@ -259,7 +276,7 @@ export default function WatchForm({
           <SourceNote source={filledFrom.model} />
         </div>
 
-        <div className="space-y-2">
+        <div className="grid grid-cols-[1fr_auto] gap-2 sm:col-span-2">
           <Input
             label="Reference Number"
             {...register('reference_number')}
@@ -274,12 +291,12 @@ export default function WatchForm({
             onResult={applyLookup}
           />
           {photoFrom && (
-            <label className="flex items-start gap-2 text-sm text-gray-800 dark:text-gray-100">
+            <label className="col-span-full flex items-start gap-2 text-sm text-foreground">
               <input
                 type="checkbox"
                 checked={savePhoto}
                 onChange={(e) => setSavePhoto(e.target.checked)}
-                className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="mt-0.5 h-4 w-4 rounded-sm accent-[hsl(var(--gold))]"
               />
               <span>
                 {photoFrom.sourceName
@@ -324,31 +341,46 @@ export default function WatchForm({
           {...register('condition')}
           options={conditionOptions}
         />
-      </div>
+      </fieldset>
 
-      <div className="space-y-4 pt-4 border-t border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Purchase Information</h3>
+      <fieldset className="grid grid-cols-2 gap-4 border-t border-border pt-2 sm:grid-cols-4">
+        <legend className={legend}>Purchase and value</legend>
 
-        <Input label="Purchase Date" type="date" {...register('purchase_date')} />
-
-        <Input label="Retailer" {...register('retailer')} placeholder="e.g., Authorized Dealer" />
-
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Purchase Price"
-            type="number"
-            step="0.01"
-            {...register('purchase_price')}
-            placeholder="0.00"
-          />
-          <Input label="Currency" {...register('purchase_currency')} placeholder="USD" />
+        <div className="col-span-2">
+          <Input label="Purchase Date" type="date" {...register('purchase_date')} />
         </div>
-      </div>
+        <div className="col-span-2">
+          <Input label="Retailer" {...register('retailer')} placeholder="e.g., Authorized Dealer" />
+        </div>
+        <Input
+          label="Purchase Price"
+          type="number"
+          step="0.01"
+          {...register('purchase_price')}
+          placeholder="0.00"
+        />
+        <Input label="Currency" {...register('purchase_currency')} placeholder="USD" />
+        <Input
+          label="Current Market Value"
+          type="number"
+          step="0.01"
+          {...register('current_market_value')}
+          placeholder="0.00"
+        />
+        <Input
+          label="Currency"
+          {...register('current_market_currency')}
+          placeholder="USD"
+        />
+        <div className="col-span-2">
+          <Input label="Last Value Update" type="date" {...register('last_value_update')} />
+        </div>
+      </fieldset>
 
-      <div className="space-y-4 pt-4 border-t border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Specifications</h3>
+      <fieldset className="grid grid-cols-2 gap-4 border-t border-border pt-2 sm:grid-cols-4">
+        <legend className={legend}>Specifications</legend>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="contents">
           <div>
             <Input
               label="Case Diameter (mm)"
@@ -371,7 +403,7 @@ export default function WatchForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="contents">
           <div>
             <Input
               label="Lug Width (mm)"
@@ -393,7 +425,7 @@ export default function WatchForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="contents">
           <div>
             <Input
               label="Power Reserve (hours)"
@@ -409,7 +441,7 @@ export default function WatchForm({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="contents">
           <div>
             <Input label="Crystal" {...register('crystal')} placeholder="e.g., Sapphire" />
             <SourceNote source={filledFrom.crystal} />
@@ -424,63 +456,44 @@ export default function WatchForm({
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div className="col-span-full">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
             Complications
-          </label>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          </p>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {complications?.map((comp) => (
               <label
                 key={comp.id}
-                className="flex items-center space-x-2 p-2 border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer"
+                className="flex cursor-pointer items-center gap-2 rounded-sm border border-border p-2 hover:bg-accent has-[:checked]:border-gold"
               >
                 <input
                   type="checkbox"
                   checked={selectedComplications.includes(comp.name)}
                   onChange={() => toggleComplication(comp.name)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  className="h-4 w-4 rounded-sm accent-[hsl(var(--gold))]"
                 />
-                <span className="text-sm text-gray-700">{comp.name}</span>
+                <span className="text-sm text-foreground">{comp.name}</span>
               </label>
             ))}
           </div>
           <SourceNote source={filledFrom.complications} />
         </div>
-      </div>
+      </fieldset>
 
-      <div className="space-y-4 pt-4 border-t border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Market Value</h3>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Input
-            label="Current Market Value"
-            type="number"
-            step="0.01"
-            {...register('current_market_value')}
-            placeholder="0.00"
-          />
-          <Input
-            label="Currency"
-            {...register('current_market_currency')}
-            placeholder="USD"
-          />
-        </div>
-
-        <Input label="Last Value Update" type="date" {...register('last_value_update')} />
-      </div>
-
-      <div className="space-y-4 pt-4 border-t border-gray-200">
-        <h3 className="text-lg font-semibold text-gray-900">Notes</h3>
+      <fieldset className="border-t border-border pt-2">
+        <legend className={legend}>Notes</legend>
 
         <textarea
           {...register('notes')}
-          rows={4}
-          className="block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+          rows={3}
+          aria-label="Notes"
+          className="block w-full rounded-sm border border-input bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
           placeholder="Add any additional notes about this watch..."
         />
-      </div>
+      </fieldset>
 
-      <div className="flex gap-3 pt-4">
+      {/* Save and Cancel stay in view at the bottom of the pop-up */}
+      <div className="sticky bottom-0 -mx-4 -mb-4 flex gap-3 border-t border-border bg-card px-4 py-4 sm:-mx-6 sm:-mb-6 sm:px-6">
         <Button type="submit" disabled={isLoading} className="flex-1">
           {isLoading ? 'Saving...' : defaultValues ? 'Update Watch' : 'Add Watch'}
         </Button>

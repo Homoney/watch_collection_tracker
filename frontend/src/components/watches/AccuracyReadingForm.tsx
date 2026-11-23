@@ -75,7 +75,7 @@ export function AccuracyReadingForm({ watchId, isOpen, onClose, isFirstReading =
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Atomic Clock */}
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-gray-50 dark:bg-gray-900">
+        <div className="rounded-sm border border-border bg-card p-6">
           <AtomicClock
             onSecondMarkSelect={setSelectedMark}
             selectedMark={selectedMark}
@@ -90,14 +90,14 @@ export function AccuracyReadingForm({ watchId, isOpen, onClose, isFirstReading =
               type="checkbox"
               {...register('is_initial_reading')}
               disabled={isFirstReading}
-              className="mt-1 w-4 h-4 text-blue-600 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500 focus:ring-2"
+              className="mt-1 h-4 w-4 rounded-sm accent-[hsl(var(--gold))]"
             />
             <div className="flex-1">
-              <span className="font-medium text-gray-900 dark:text-white">
+              <span className="font-medium text-foreground">
                 This is an initial reading (baseline)
               </span>
               {isFirstReading && (
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                <p className="mt-1 text-sm text-muted-foreground">
                   Your first reading must be marked as initial.
                 </p>
               )}
@@ -105,9 +105,9 @@ export function AccuracyReadingForm({ watchId, isOpen, onClose, isFirstReading =
           </label>
 
           {/* Explainer */}
-          <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
-            <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-900 dark:text-blue-100 space-y-1">
+          <div className="flex items-start gap-2 rounded-sm border border-border bg-muted p-3">
+            <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-gold" />
+            <div className="space-y-1 text-sm text-foreground">
               {isInitial ? (
                 <>
                   <p className="font-medium">Initial Reading</p>
@@ -123,7 +123,7 @@ export function AccuracyReadingForm({ watchId, isOpen, onClose, isFirstReading =
                     This measures how much your watch has drifted since your last initial reading. The system will
                     calculate drift in seconds per day (positive = running fast, negative = running slow).
                   </p>
-                  <p className="text-xs mt-1 text-blue-700 dark:text-blue-300">
+                  <p className="mt-1 text-xs text-muted-foreground">
                     Note: Must be at least 6 hours after your last initial reading.
                   </p>
                 </>
@@ -134,7 +134,7 @@ export function AccuracyReadingForm({ watchId, isOpen, onClose, isFirstReading =
 
         {/* Notes */}
         <div className="space-y-2">
-          <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor="notes" className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
             Notes (optional)
           </label>
           <textarea
@@ -142,27 +142,27 @@ export function AccuracyReadingForm({ watchId, isOpen, onClose, isFirstReading =
             {...register('notes')}
             rows={3}
             placeholder="e.g., After 24 hours on wrist, crown up position"
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400"
+            className="block w-full rounded-sm border border-input bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
           />
         </div>
 
         {/* Error Messages */}
         {createMutation.isError && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md">
-            <p className="text-sm text-red-800 dark:text-red-200">
+          <div className="rounded-sm border border-destructive/40 bg-destructive/10 p-3">
+            <p className="text-sm text-destructive">
               {createMutation.error instanceof Error ? createMutation.error.message : 'Failed to create reading'}
             </p>
           </div>
         )}
 
         {/* Form Actions */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="flex justify-end gap-3 border-t border-border pt-4">
           <ModalClose>
             {(close) => (
               <button
                 type="button"
                 onClick={close}
-                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-input bg-transparent px-5 text-[11px] font-medium uppercase tracking-[0.18em] text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 Cancel
               </button>
@@ -171,7 +171,7 @@ export function AccuracyReadingForm({ watchId, isOpen, onClose, isFirstReading =
           <button
             type="submit"
             disabled={selectedMark === null || createMutation.isPending}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-primary bg-primary px-5 text-[11px] font-medium uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           >
             {createMutation.isPending ? 'Recording...' : 'Record Reading'}
           </button>

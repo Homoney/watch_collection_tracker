@@ -68,14 +68,14 @@ export default function WatchQRCode({ watchId }: WatchQRCodeProps) {
 
   if (!showQR) {
     return (
-      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+      <div className="bg-card border border-border rounded-sm p-6">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <h3 className="text-lg font-light tracking-wide text-foreground flex items-center gap-2">
               <QrCode className="h-5 w-5" />
               QR Code
             </h3>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               Generate a QR code for this watch to print labels or quick access
             </p>
           </div>
@@ -88,9 +88,9 @@ export default function WatchQRCode({ watchId }: WatchQRCodeProps) {
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+    <div className="bg-card border border-border rounded-sm p-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+        <h3 className="text-lg font-light tracking-wide text-foreground flex items-center gap-2">
           <QrCode className="h-5 w-5" />
           QR Code
         </h3>
@@ -100,7 +100,7 @@ export default function WatchQRCode({ watchId }: WatchQRCodeProps) {
       </div>
 
       <div className="space-y-4">
-        <div className="flex justify-center p-4 bg-white rounded-lg border border-gray-200">
+        <div className="flex justify-center p-4 bg-card rounded-sm border border-border">
           {isLoading ? (
             <div className="w-64 h-64 flex items-center justify-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -112,13 +112,13 @@ export default function WatchQRCode({ watchId }: WatchQRCodeProps) {
               className="w-64 h-64"
             />
           ) : (
-            <div className="w-64 h-64 flex items-center justify-center text-gray-400">
+            <div className="w-64 h-64 flex items-center justify-center text-muted-foreground">
               Failed to load QR code
             </div>
           )}
         </div>
 
-        <p className="text-sm text-gray-600 dark:text-gray-400 text-center">
+        <p className="text-sm text-muted-foreground text-center">
           Scan this QR code to view watch details on any device
         </p>
 

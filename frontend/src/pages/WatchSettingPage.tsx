@@ -76,31 +76,31 @@ export default function WatchSettingPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-3xl font-light tracking-wide text-foreground sm:text-4xl">
               Watch Setting Tool
             </h1>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            <p className="mt-1 text-sm text-muted-foreground">
               Accurate time reference for setting your watches
             </p>
           </div>
           <button
             onClick={() => setIs24Hour(!is24Hour)}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700"
+            className="px-4 py-2 text-sm font-medium text-foreground bg-card border border-border rounded-sm hover:bg-accent"
           >
             {is24Hour ? '24h' : '12h'}
           </button>
         </div>
 
         {/* Main Clock Display */}
-        <div className="p-8 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+        <div className="p-8 bg-card border border-border rounded-sm">
           <div className="text-center">
             <div className="flex justify-center mb-4">
-              <Clock className="w-12 h-12 text-blue-600 dark:text-blue-400" />
+              <Clock className="w-12 h-12 text-gold" />
             </div>
-            <div className="mb-2 text-6xl font-mono font-bold text-gray-900 dark:text-white">
+            <div className="mb-2 text-6xl font-mono font-bold text-foreground">
               {timeString}
             </div>
-            <div className="text-lg text-gray-600 dark:text-gray-400">
+            <div className="text-lg text-muted-foreground">
               {dateString}
             </div>
           </div>
@@ -109,56 +109,56 @@ export default function WatchSettingPage() {
         {/* Info Cards Grid */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           {/* Day of Week Card */}
-          <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+          <div className="p-6 bg-card border border-border rounded-sm">
             <div className="flex items-center justify-center mb-3">
-              <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <Calendar className="w-6 h-6 text-gold" />
             </div>
-            <h3 className="mb-2 text-xl font-semibold text-center text-gray-900 dark:text-white">
+            <h3 className="mb-2 text-xl font-light tracking-wide text-center text-foreground">
               Day of Week
             </h3>
-            <p className="text-3xl font-bold text-center text-blue-600 dark:text-blue-400">
+            <p className="text-3xl font-bold text-center text-gold">
               {dayName}
             </p>
           </div>
 
           {/* Leap Year Cycle Card */}
-          <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+          <div className="p-6 bg-card border border-border rounded-sm">
             <div className="flex items-center justify-center mb-3">
-              <RotateCcw className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <RotateCcw className="w-6 h-6 text-gold" />
             </div>
-            <h3 className="mb-2 text-xl font-semibold text-center text-gray-900 dark:text-white">
+            <h3 className="mb-2 text-xl font-light tracking-wide text-center text-foreground">
               Leap Year Cycle
             </h3>
-            <p className="text-3xl font-bold text-center text-blue-600 dark:text-blue-400">
+            <p className="text-3xl font-bold text-center text-gold">
               Year {leapYearInfo.position} of 4
             </p>
-            <p className="mt-2 text-sm text-center text-gray-600 dark:text-gray-400">
+            <p className="mt-2 text-sm text-center text-muted-foreground">
               {leapYearInfo.isLeapYear ? `${year} is a Leap Year` : `${year} is a Common Year`}
             </p>
           </div>
 
           {/* Moon Phase Card */}
-          <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700">
+          <div className="p-6 bg-card border border-border rounded-sm">
             <div className="flex items-center justify-center mb-3">
-              <Moon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+              <Moon className="w-6 h-6 text-gold" />
             </div>
-            <h3 className="mb-2 text-xl font-semibold text-center text-gray-900 dark:text-white">
+            <h3 className="mb-2 text-xl font-light tracking-wide text-center text-foreground">
               Moon Phase
             </h3>
             <div className="mb-2 text-5xl text-center">
               {moonPhaseInfo.emoji}
             </div>
-            <p className="text-lg font-semibold text-center text-gray-900 dark:text-white">
+            <p className="text-lg font-semibold text-center text-foreground">
               {moonPhaseInfo.phase}
             </p>
-            <p className="mt-1 text-sm text-center text-gray-600 dark:text-gray-400">
+            <p className="mt-1 text-sm text-center text-muted-foreground">
               {moonPhaseInfo.percentage}% illuminated
             </p>
           </div>
         </div>
 
         {/* Time Zone Info */}
-        <div className="p-4 text-sm text-gray-600 bg-white border border-gray-200 rounded-lg dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400">
+        <div className="p-4 text-sm text-muted-foreground bg-card border border-border rounded-sm">
           <p className="mb-1">
             <span className="font-semibold">Time Zone:</span> {timeZone}
           </p>

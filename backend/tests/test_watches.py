@@ -1,6 +1,8 @@
 """
 Tests for watch CRUD endpoints
 """
+from decimal import Decimal
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -89,6 +91,28 @@ class TestListWatches:
         assert "items" in data
         assert len(data["items"]) > 0
         assert data["items"][0]["model"] == "Submariner Date"
+
+    def test_list_watches_includes_current_market_value(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        test_watch: Watch,
+        test_db: Session,
+    ):
+        """The grid shows value and gain, so each item carries the current value"""
+        item = client.get("/api/v1/watches/", headers=auth_headers).json()["items"][0]
+        assert item["current_market_value"] is None  # no valuation yet
+
+        test_watch.current_market_value = 13653
+        test_watch.current_market_currency = "USD"
+        test_db.commit()
+
+        item = client.get("/api/v1/watches/", headers=auth_headers).json()["items"][0]
+        assert Decimal(item["current_market_value"]) == Decimal("13653")
+        assert item["current_market_currency"] == "USD"
+        # Existing fields are unchanged
+        assert Decimal(item["purchase_price"]) == Decimal("9000")
+        assert item["purchase_currency"] == "USD"
 
     def test_list_watches_pagination(
         self,

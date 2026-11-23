@@ -78,8 +78,8 @@ export default function ComparePage() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Watch Comparison</h1>
-            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+            <h1 className="text-3xl font-light tracking-wide text-foreground sm:text-4xl">Watch Comparison</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
               Comparing {watches.length} {watches.length === 1 ? 'watch' : 'watches'}
             </p>
           </div>
@@ -89,7 +89,7 @@ export default function ComparePage() {
         </div>
 
         {hasErrors && watches.length < watchIds.length && (
-          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-sm p-4">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
               Some watches could not be loaded and have been excluded from the comparison.
             </p>

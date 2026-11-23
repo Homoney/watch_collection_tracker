@@ -37,13 +37,13 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center bg-background py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
+          <h2 className="mt-6 text-center text-3xl font-light tracking-wide text-foreground">
             {adminSignup ? 'Create the admin account' : 'Create your account'}
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
+          <p className="mt-2 text-center text-sm text-muted-foreground">
             {adminSignup ? (
               <>
                 This first account becomes the administrator. Use the email address set in{' '}
@@ -58,52 +58,52 @@ export default function RegisterPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           {error && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/50 p-4">
-              <div className="text-sm text-red-800 dark:text-red-200">{error}</div>
+            <div className="rounded-sm border border-destructive/40 bg-destructive/10 p-4">
+              <div className="text-sm text-destructive">{error}</div>
             </div>
           )}
 
           <div className="rounded-md shadow-sm space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="email" className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 Email address
               </label>
               <input
                 id="email"
                 type="email"
                 autoComplete="email"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 appearance-none block w-full rounded-sm border border-input bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
                 placeholder="Email address"
                 {...register('email', { required: 'Email is required' })}
               />
               {errors.email && (
-                <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>
+                <p className="mt-1 text-sm text-destructive">{errors.email.message}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="full_name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="full_name" className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 Full name (optional)
               </label>
               <input
                 id="full_name"
                 type="text"
                 autoComplete="name"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 appearance-none block w-full rounded-sm border border-input bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
                 placeholder="Full name"
                 {...register('full_name')}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="password" className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 Password
               </label>
               <input
                 id="password"
                 type="password"
                 autoComplete="new-password"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 appearance-none block w-full rounded-sm border border-input bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
                 placeholder="Password (min 8 characters)"
                 {...register('password', {
                   required: 'Password is required',
@@ -114,19 +114,19 @@ export default function RegisterPage() {
                 })}
               />
               {errors.password && (
-                <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
+                <p className="mt-1 text-sm text-destructive">{errors.password.message}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="confirmPassword" className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 Confirm password
               </label>
               <input
                 id="confirmPassword"
                 type="password"
                 autoComplete="new-password"
-                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                className="mt-1 appearance-none block w-full rounded-sm border border-input bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
                 placeholder="Confirm password"
                 {...register('confirmPassword', {
                   required: 'Please confirm your password',
@@ -134,7 +134,7 @@ export default function RegisterPage() {
                 })}
               />
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword.message}</p>
+                <p className="mt-1 text-sm text-destructive">{errors.confirmPassword.message}</p>
               )}
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="group relative w-full inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-primary bg-primary px-5 text-[11px] font-medium uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? 'Creating account...' : adminSignup ? 'Create admin account' : 'Sign up'}
             </button>
@@ -152,7 +152,7 @@ export default function RegisterPage() {
           <div className="text-center">
             <Link
               to="/login"
-              className="font-medium text-blue-600 hover:text-blue-500"
+              className="font-medium text-gold underline-offset-2 hover:underline"
             >
               Already have an account? Sign in
             </Link>

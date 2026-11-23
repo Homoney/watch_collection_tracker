@@ -326,6 +326,9 @@ export interface WatchListItem {
   purchase_currency: string
   condition: ConditionEnum | null
   created_at: string
+  // Present when the API sends them (newer servers); cards fall back to the price paid
+  current_market_value?: number | string | null
+  current_market_currency?: string | null
   brand?: Brand
   collection?: Collection
   primary_image: WatchImage | null

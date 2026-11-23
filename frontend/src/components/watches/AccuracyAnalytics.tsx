@@ -29,8 +29,8 @@ export function AccuracyAnalytics({ watchId }: AccuracyAnalyticsProps) {
   const getDriftColor = (drift: number | null): string => {
     if (drift === null) return 'text-gray-500 dark:text-gray-400'
     const abs = Math.abs(drift)
-    if (abs <= 5) return 'text-green-600 dark:text-green-400'
-    if (abs <= 10) return 'text-yellow-600 dark:text-yellow-400'
+    if (abs <= 5) return 'text-positive'
+    if (abs <= 10) return 'text-yellow-700 dark:text-yellow-400'
     return 'text-red-600 dark:text-red-400'
   }
 
@@ -70,8 +70,8 @@ export function AccuracyAnalytics({ watchId }: AccuracyAnalyticsProps) {
     <div className="space-y-6">
       {/* Info Box */}
       {!hasData && (
-        <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
-          <Info className="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-sm">
+          <Info className="w-5 h-5 text-gold flex-shrink-0 mt-0.5" />
           <div className="text-sm text-blue-900 dark:text-blue-100">
             <p className="font-medium mb-1">Record your first measurement</p>
             <p>
@@ -86,14 +86,14 @@ export function AccuracyAnalytics({ watchId }: AccuracyAnalyticsProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Current Drift */}
         <div
-          className={`p-6 rounded-lg border ${getDriftBgColor(analytics.current_drift_spd)} ${getDriftBorderColor(
+          className={`p-6 rounded-sm border ${getDriftBgColor(analytics.current_drift_spd)} ${getDriftBorderColor(
             analytics.current_drift_spd
           )}`}
         >
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Target className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Current Drift</h3>
+              <Target className="w-5 h-5 text-muted-foreground" />
+              <h3 className="text-sm font-medium text-foreground">Current Drift</h3>
             </div>
             <span className={getDriftColor(analytics.current_drift_spd)}>{getTrendIcon(analytics.current_drift_spd)}</span>
           </div>
@@ -101,20 +101,20 @@ export function AccuracyAnalytics({ watchId }: AccuracyAnalyticsProps) {
             <p className={`text-3xl font-bold ${getDriftColor(analytics.current_drift_spd)}`}>
               {formatDrift(analytics.current_drift_spd)}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">{getTrendText(analytics.current_drift_spd)}</p>
+            <p className="text-sm text-muted-foreground">{getTrendText(analytics.current_drift_spd)}</p>
           </div>
         </div>
 
         {/* Average Drift */}
         <div
-          className={`p-6 rounded-lg border ${getDriftBgColor(analytics.average_drift_spd)} ${getDriftBorderColor(
+          className={`p-6 rounded-sm border ${getDriftBgColor(analytics.average_drift_spd)} ${getDriftBorderColor(
             analytics.average_drift_spd
           )}`}
         >
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Average Drift</h3>
+              <BarChart3 className="w-5 h-5 text-muted-foreground" />
+              <h3 className="text-sm font-medium text-foreground">Average Drift</h3>
             </div>
             <span className={getDriftColor(analytics.average_drift_spd)}>{getTrendIcon(analytics.average_drift_spd)}</span>
           </div>
@@ -122,56 +122,56 @@ export function AccuracyAnalytics({ watchId }: AccuracyAnalyticsProps) {
             <p className={`text-3xl font-bold ${getDriftColor(analytics.average_drift_spd)}`}>
               {formatDrift(analytics.average_drift_spd)}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">All-time average</p>
+            <p className="text-sm text-muted-foreground">All-time average</p>
           </div>
         </div>
 
         {/* Best Accuracy */}
         <div
-          className={`p-6 rounded-lg border ${getDriftBgColor(analytics.best_accuracy_spd)} ${getDriftBorderColor(
+          className={`p-6 rounded-sm border ${getDriftBgColor(analytics.best_accuracy_spd)} ${getDriftBorderColor(
             analytics.best_accuracy_spd
           )}`}
         >
           <div className="flex items-start justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Target className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Best Accuracy</h3>
+              <Target className="w-5 h-5 text-muted-foreground" />
+              <h3 className="text-sm font-medium text-foreground">Best Accuracy</h3>
             </div>
           </div>
           <div className="space-y-1">
             <p className={`text-3xl font-bold ${getDriftColor(analytics.best_accuracy_spd)}`}>
               {formatDrift(analytics.best_accuracy_spd, false)}
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Closest to zero</p>
+            <p className="text-sm text-muted-foreground">Closest to zero</p>
           </div>
         </div>
       </div>
 
       {/* Time-Based Trends */}
       {hasData && (
-        <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-800">
+        <div className="border border-border rounded-sm p-6 bg-card">
           <div className="flex items-center gap-2 mb-4">
-            <Calendar className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Trend Analysis</h3>
+            <Calendar className="w-5 h-5 text-muted-foreground" />
+            <h3 className="text-lg font-light tracking-wide text-foreground">Trend Analysis</h3>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="space-y-1">
-              <p className="text-sm text-gray-600 dark:text-gray-400">7-Day Average</p>
+              <p className="text-sm text-muted-foreground">7-Day Average</p>
               <p className={`text-xl font-semibold ${getDriftColor(analytics.drift_7d_avg)}`}>
                 {formatDrift(analytics.drift_7d_avg)}
               </p>
             </div>
 
             <div className="space-y-1">
-              <p className="text-sm text-gray-600 dark:text-gray-400">30-Day Average</p>
+              <p className="text-sm text-muted-foreground">30-Day Average</p>
               <p className={`text-xl font-semibold ${getDriftColor(analytics.drift_30d_avg)}`}>
                 {formatDrift(analytics.drift_30d_avg)}
               </p>
             </div>
 
             <div className="space-y-1">
-              <p className="text-sm text-gray-600 dark:text-gray-400">90-Day Average</p>
+              <p className="text-sm text-muted-foreground">90-Day Average</p>
               <p className={`text-xl font-semibold ${getDriftColor(analytics.drift_90d_avg)}`}>
                 {formatDrift(analytics.drift_90d_avg)}
               </p>
@@ -182,24 +182,24 @@ export function AccuracyAnalytics({ watchId }: AccuracyAnalyticsProps) {
 
       {/* Reading Statistics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Readings</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.total_readings}</p>
+        <div className="p-4 bg-muted border border-border rounded-sm">
+          <p className="text-sm text-muted-foreground mb-1">Total Readings</p>
+          <p className="text-2xl font-bold text-foreground">{analytics.total_readings}</p>
         </div>
 
-        <div className="p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Initial</p>
-          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{analytics.total_initial_readings}</p>
+        <div className="p-4 bg-muted border border-border rounded-sm">
+          <p className="text-sm text-muted-foreground mb-1">Initial</p>
+          <p className="text-2xl font-bold text-gold">{analytics.total_initial_readings}</p>
         </div>
 
-        <div className="p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Measurements</p>
+        <div className="p-4 bg-muted border border-border rounded-sm">
+          <p className="text-sm text-muted-foreground mb-1">Measurements</p>
           <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{analytics.total_subsequent_readings}</p>
         </div>
 
-        <div className="p-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Days Tracked</p>
-          <p className="text-2xl font-bold text-gray-900 dark:text-white">{analytics.date_range_days ?? 0}</p>
+        <div className="p-4 bg-muted border border-border rounded-sm">
+          <p className="text-sm text-muted-foreground mb-1">Days Tracked</p>
+          <p className="text-2xl font-bold text-foreground">{analytics.date_range_days ?? 0}</p>
         </div>
       </div>
     </div>

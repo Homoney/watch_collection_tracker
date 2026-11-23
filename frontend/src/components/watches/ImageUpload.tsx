@@ -127,20 +127,17 @@ export default function ImageUpload({ watchId, onUploadComplete }: ImageUploadPr
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={`
-          border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
-          transition-colors
-          ${isDragging
+        className={`border-2 border-dashed rounded-sm p-8 text-center cursor-pointer
+ transition-colors ${isDragging
             ? 'border-blue-500 bg-blue-50'
             : 'border-gray-300 hover:border-gray-400'
-          }
-        `}
+          }`}
       >
-        <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-        <p className="text-sm text-gray-600 mb-2">
+        <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+        <p className="text-sm text-muted-foreground mb-2">
           Drag and drop images here, or click to select files
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted-foreground">
           JPG, PNG, GIF, WebP - Max 20MB per file
         </p>
         <input
@@ -155,7 +152,7 @@ export default function ImageUpload({ watchId, onUploadComplete }: ImageUploadPr
 
       {/* Error Messages */}
       {errors.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="bg-red-50 border border-red-200 rounded-sm p-4">
           <div className="flex items-start gap-3">
             <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
@@ -181,18 +178,16 @@ export default function ImageUpload({ watchId, onUploadComplete }: ImageUploadPr
                 <img
                   src={preview.url}
                   alt={preview.file.name}
-                  className="w-full h-32 object-cover rounded-lg border border-gray-200"
+                  className="w-full h-32 object-cover rounded-sm border border-border"
                 />
                 <button
                   onClick={() => removePreview(index)}
-                  className="
-                    absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full
-                    opacity-0 group-hover:opacity-100 transition-opacity
-                  "
+                  className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full
+ opacity-0 group-hover:opacity-100 transition-opacity"
                 >
                   <X className="w-4 h-4" />
                 </button>
-                <p className="text-xs text-gray-600 mt-1 truncate">
+                <p className="text-xs text-muted-foreground mt-1 truncate">
                   {preview.file.name}
                 </p>
               </div>
@@ -203,11 +198,9 @@ export default function ImageUpload({ watchId, onUploadComplete }: ImageUploadPr
           <button
             onClick={handleUpload}
             disabled={uploadMutation.isPending}
-            className="
-              w-full px-4 py-2 bg-blue-600 text-white rounded-lg
-              hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed
-              transition-colors
-            "
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-sm
+ hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed
+ transition-colors"
           >
             {uploadMutation.isPending
               ? 'Uploading...'

@@ -17,18 +17,18 @@ interface ComparisonRowProps {
 
 function ComparisonRow({ label, values, renderer }: ComparisonRowProps) {
   return (
-    <tr className="border-b border-gray-200 dark:border-gray-700">
-      <td className="sticky left-0 bg-gray-50 dark:bg-gray-900 p-4 font-medium text-gray-900 dark:text-white">
+    <tr className="border-b border-border">
+      <td className="sticky left-0 bg-muted p-4 font-medium text-foreground">
         {label}
       </td>
       {values.map((value, idx) => (
-        <td key={idx} className="p-4 text-center text-gray-700 dark:text-gray-300">
+        <td key={idx} className="p-4 text-center text-foreground">
           {renderer ? (
             renderer(value, idx)
           ) : value !== null && value !== undefined && value !== '' ? (
             value
           ) : (
-            <span className="text-gray-400 dark:text-gray-400 italic">N/A</span>
+            <span className="text-muted-foreground italic">N/A</span>
           )}
         </td>
       ))}
@@ -38,8 +38,8 @@ function ComparisonRow({ label, values, renderer }: ComparisonRowProps) {
 
 function ComparisonSectionHeader({ title }: { title: string }) {
   return (
-    <tr className="bg-gray-100 dark:bg-gray-800">
-      <td colSpan={100} className="p-3 font-bold text-gray-900 dark:text-white">
+    <tr className="bg-muted">
+      <td colSpan={100} className="p-3 font-bold text-foreground">
         {title}
       </td>
     </tr>
@@ -75,25 +75,25 @@ export default function ComparisonTable({ watches, onRemoveWatch }: ComparisonTa
   }
 
   return (
-    <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow">
+    <div className="overflow-x-auto bg-card rounded-sm shadow">
       <table className="min-w-full border-collapse">
         <thead>
-          <tr className="border-b-2 border-gray-200 dark:border-gray-700">
-            <th className="sticky left-0 bg-white dark:bg-gray-800 p-4"></th>
+          <tr className="border-b-2 border-border">
+            <th className="sticky left-0 bg-card p-4"></th>
             {watches.map((watch) => (
               <th key={watch.id} className="p-4 relative min-w-[250px]">
                 <button
                   onClick={() => onRemoveWatch(watch.id)}
-                  className="absolute top-2 right-2 p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
+                  className="absolute top-2 right-2 p-1 hover:bg-accent rounded-full transition-colors"
                   title="Remove from comparison"
                 >
-                  <X className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  <X className="h-4 w-4 text-muted-foreground" />
                 </button>
                 <div className="text-left pr-8">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-light tracking-wide text-foreground">
                     {watch.brand?.name || 'Unknown'}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">{watch.model}</p>
+                  <p className="text-sm text-muted-foreground">{watch.model}</p>
                 </div>
               </th>
             ))}
@@ -109,12 +109,12 @@ export default function ComparisonTable({ watches, onRemoveWatch }: ComparisonTa
                 <img
                   src={url}
                   alt="Watch"
-                  className="h-40 w-40 object-cover rounded-md mx-auto"
+                  className="h-40 w-40 object-cover rounded-sm mx-auto"
                 />
               ) : (
-                <div className="h-40 w-40 bg-gray-100 dark:bg-gray-700 rounded-md mx-auto flex items-center justify-center">
+                <div className="h-40 w-40 bg-muted rounded-sm mx-auto flex items-center justify-center">
                   <svg
-                    className="w-12 h-12 text-gray-400 dark:text-gray-500"
+                    className="w-12 h-12 text-muted-foreground"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -230,8 +230,8 @@ export default function ComparisonTable({ watches, onRemoveWatch }: ComparisonTa
                 <span
                   className={
                     value >= 0
-                      ? 'text-green-600 dark:text-green-400 font-medium'
-                      : 'text-red-600 dark:text-red-400 font-medium'
+                      ? 'text-positive font-medium'
+                      : 'text-negative font-medium'
                   }
                 >
                   {value >= 0 ? '+' : ''}
@@ -248,8 +248,8 @@ export default function ComparisonTable({ watches, onRemoveWatch }: ComparisonTa
                 <span
                   className={
                     value >= 0
-                      ? 'text-green-600 dark:text-green-400 font-medium'
-                      : 'text-red-600 dark:text-red-400 font-medium'
+                      ? 'text-positive font-medium'
+                      : 'text-negative font-medium'
                   }
                 >
                   {value >= 0 ? '+' : ''}

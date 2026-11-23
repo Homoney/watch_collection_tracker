@@ -37,8 +37,8 @@ export function AccuracyReadingsList({ watchId, onAddReading }: AccuracyReadings
   const getDriftColor = (drift: number | null) => {
     if (drift === null) return ''
     const abs = Math.abs(drift)
-    if (abs <= 5) return 'text-green-600 dark:text-green-400'
-    if (abs <= 10) return 'text-yellow-600 dark:text-yellow-400'
+    if (abs <= 5) return 'text-positive'
+    if (abs <= 10) return 'text-yellow-700 dark:text-yellow-400'
     return 'text-red-600 dark:text-red-400'
   }
 
@@ -55,7 +55,7 @@ export function AccuracyReadingsList({ watchId, onAddReading }: AccuracyReadings
       <div className="flex items-center justify-center p-12">
         <div className="text-center">
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Failed to load accuracy readings</p>
+          <p className="text-muted-foreground">Failed to load accuracy readings</p>
         </div>
       </div>
     )
@@ -64,14 +64,14 @@ export function AccuracyReadingsList({ watchId, onAddReading }: AccuracyReadings
   if (!readings || readings.length === 0) {
     return (
       <div className="text-center py-12">
-        <Clock className="w-16 h-16 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
-        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No accuracy readings yet</h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+        <Clock className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+        <h3 className="text-lg font-light tracking-wide text-foreground mb-2">No accuracy readings yet</h3>
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
           Start tracking your watch's accuracy by recording your first baseline reading.
         </p>
         <button
           onClick={onAddReading}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <Clock className="w-5 h-5" />
           Record First Reading
@@ -84,12 +84,12 @@ export function AccuracyReadingsList({ watchId, onAddReading }: AccuracyReadings
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <h3 className="text-lg font-light tracking-wide text-foreground">
           Readings ({readings.length})
         </h3>
         <button
           onClick={onAddReading}
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
         >
           <Clock className="w-4 h-4" />
           Add Reading
@@ -105,7 +105,7 @@ export function AccuracyReadingsList({ watchId, onAddReading }: AccuracyReadings
           return (
             <div
               key={reading.id}
-              className="relative border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800 hover:shadow-md transition-shadow"
+              className="relative border border-border rounded-sm p-4 bg-card hover:shadow-md transition-shadow"
             >
               {/* Badge */}
               <div className="flex items-start justify-between gap-4 mb-3">
@@ -137,7 +137,7 @@ export function AccuracyReadingsList({ watchId, onAddReading }: AccuracyReadings
                 <button
                   onClick={() => handleDelete(reading.id)}
                   disabled={deletingId === reading.id}
-                  className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
+                  className="text-muted-foreground hover:text-red-600 dark:hover:text-red-400 transition-colors disabled:opacity-50"
                   title="Delete reading"
                 >
                   <Trash2 className="w-4 h-4" />
@@ -147,23 +147,23 @@ export function AccuracyReadingsList({ watchId, onAddReading }: AccuracyReadings
               {/* Reading Info */}
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="flex items-start gap-2">
-                  <Calendar className="w-4 h-4 text-gray-400 mt-0.5" />
+                  <Calendar className="w-4 h-4 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-gray-600 dark:text-gray-400">Date & Time</p>
-                    <p className="font-medium text-gray-900 dark:text-white">
+                    <p className="text-muted-foreground">Date & Time</p>
+                    <p className="font-medium text-foreground">
                       {format(readingDate, 'MMM d, yyyy')}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-muted-foreground">
                       {format(readingDate, 'h:mm:ss a')}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-2">
-                  <Clock className="w-4 h-4 text-gray-400 mt-0.5" />
+                  <Clock className="w-4 h-4 text-muted-foreground mt-0.5" />
                   <div>
-                    <p className="text-gray-600 dark:text-gray-400">Second Mark</p>
-                    <p className="font-medium text-gray-900 dark:text-white">
+                    <p className="text-muted-foreground">Second Mark</p>
+                    <p className="font-medium text-foreground">
                       :{reading.watch_seconds_position.toString().padStart(2, '0')}
                     </p>
                   </div>
@@ -173,23 +173,23 @@ export function AccuracyReadingsList({ watchId, onAddReading }: AccuracyReadings
                 {!reading.is_initial_reading && reading.drift_seconds_per_day !== null && (
                   <>
                     <div className="flex items-start gap-2">
-                      <Target className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <Target className="w-4 h-4 text-muted-foreground mt-0.5" />
                       <div>
-                        <p className="text-gray-600 dark:text-gray-400">Drift</p>
+                        <p className="text-muted-foreground">Drift</p>
                         <p className={`font-semibold ${getDriftColor(reading.drift_seconds_per_day)}`}>
                           {formatDrift(reading.drift_seconds_per_day)}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-muted-foreground">
                           {reading.drift_seconds_per_day > 0 ? 'Running fast' : 'Running slow'}
                         </p>
                       </div>
                     </div>
 
                     <div className="flex items-start gap-2">
-                      <Clock className="w-4 h-4 text-gray-400 mt-0.5" />
+                      <Clock className="w-4 h-4 text-muted-foreground mt-0.5" />
                       <div>
-                        <p className="text-gray-600 dark:text-gray-400">Time Elapsed</p>
-                        <p className="font-medium text-gray-900 dark:text-white">
+                        <p className="text-muted-foreground">Time Elapsed</p>
+                        <p className="font-medium text-foreground">
                           {reading.hours_since_initial?.toFixed(1)} hours
                         </p>
                       </div>
@@ -200,12 +200,12 @@ export function AccuracyReadingsList({ watchId, onAddReading }: AccuracyReadings
 
               {/* Notes */}
               {reading.notes && (
-                <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <div className="mt-3 pt-3 border-t border-border">
                   <div className="flex items-start gap-2">
-                    <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                    <FileText className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
                     <div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Notes</p>
-                      <p className="text-sm text-gray-900 dark:text-white">{reading.notes}</p>
+                      <p className="text-xs text-muted-foreground mb-1">Notes</p>
+                      <p className="text-sm text-foreground">{reading.notes}</p>
                     </div>
                   </div>
                 </div>

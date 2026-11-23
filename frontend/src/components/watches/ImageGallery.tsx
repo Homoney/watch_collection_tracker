@@ -47,10 +47,10 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
 
   if (images.length === 0) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-        <ImageIcon className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-        <p className="text-gray-600 font-medium mb-1">No images yet</p>
-        <p className="text-sm text-gray-500">
+      <div className="text-center py-12 bg-muted rounded-sm border-2 border-dashed border-border">
+        <ImageIcon className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+        <p className="text-muted-foreground font-medium mb-1">No images yet</p>
+        <p className="text-sm text-muted-foreground">
           Upload images to showcase this watch
         </p>
       </div>
@@ -64,10 +64,8 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
           {/* Image */}
           <div
             onClick={() => onImageClick(index)}
-            className="
-              relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden
-              cursor-pointer transition-transform hover:scale-105
-            "
+            className="relative w-full h-48 bg-muted rounded-sm overflow-hidden
+ cursor-pointer transition-transform hover:scale-105"
           >
             <img
               src={image.url}
@@ -79,7 +77,7 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
             {(image.is_primary || image.source === 'reference_photo') && (
               <div className="absolute top-2 left-2 right-2 flex flex-wrap gap-1">
                 {image.is_primary && (
-                  <span className="px-2 py-1 bg-yellow-500 text-white text-xs font-medium rounded">
+                  <span className="px-2 py-1 bg-primary text-primary-foreground text-xs font-medium rounded">
                     Primary
                   </span>
                 )}
@@ -93,17 +91,13 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
             )}
 
             {/* Hover Overlay */}
-            <div className="
-              absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30
-              transition-all duration-200
-            " />
+            <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30
+ transition-all duration-200" />
           </div>
 
           {/* Action Buttons */}
-          <div className="
-            absolute bottom-2 left-2 right-2 flex gap-2
-            opacity-0 group-hover:opacity-100 transition-opacity
-          ">
+          <div className="absolute bottom-2 left-2 right-2 flex gap-2
+ opacity-0 group-hover:opacity-100 transition-opacity">
             {/* Set Primary Button */}
             {!image.is_primary && (
               <button
@@ -112,11 +106,9 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
                   handleSetPrimary(image.id)
                 }}
                 disabled={updateMutation.isPending}
-                className="
-                  flex-1 px-2 py-1 bg-yellow-500 text-white text-xs rounded
-                  hover:bg-yellow-600 disabled:bg-gray-400
-                  transition-colors flex items-center justify-center gap-1
-                "
+                className="flex-1 px-2 py-1 bg-primary text-primary-foreground text-xs rounded
+ hover:bg-primary/90 disabled:opacity-50
+ transition-colors flex items-center justify-center gap-1"
                 title="Set as primary"
               >
                 <Star className="w-3 h-3" />
@@ -132,11 +124,9 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
                   handleDelete(image.id)
                 }}
                 disabled={deleteMutation.isPending}
-                className="
-                  flex-1 px-2 py-1 bg-red-600 text-white text-xs rounded
-                  hover:bg-red-700 disabled:bg-gray-400
-                  transition-colors
-                "
+                className="flex-1 px-2 py-1 bg-red-600 text-white text-xs rounded
+ hover:bg-red-700 disabled:bg-gray-400
+ transition-colors"
               >
                 Confirm?
               </button>
@@ -148,11 +138,9 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
                   // Auto-cancel after 3 seconds
                   setTimeout(() => setDeleteConfirm(null), 3000)
                 }}
-                className="
-                  flex-1 px-2 py-1 bg-red-500 text-white text-xs rounded
-                  hover:bg-red-600
-                  transition-colors flex items-center justify-center gap-1
-                "
+                className="flex-1 px-2 py-1 bg-red-500 text-white text-xs rounded
+ hover:bg-red-600
+ transition-colors flex items-center justify-center gap-1"
                 title="Delete image"
               >
                 <Trash2 className="w-3 h-3" />
@@ -163,14 +151,14 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
 
           {/* File Info; a reference photo links to where it came from */}
           {image.source === 'reference_photo' ? (
-            <div className="mt-2 text-xs leading-snug text-gray-600 dark:text-gray-300 break-words">
+            <div className="mt-2 text-xs leading-snug text-muted-foreground break-words">
               Reference photo from{' '}
               {image.source_url ? (
                 <a
                   href={image.source_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-700 underline dark:text-blue-300"
+                  className="text-blue-700 underline"
                 >
                   {photoSourceName(image.source_url)}
                 </a>
@@ -179,7 +167,7 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
               )}
             </div>
           ) : (
-            <div className="mt-2 text-xs text-gray-500 truncate">
+            <div className="mt-2 text-xs text-muted-foreground truncate">
               {image.file_name}
             </div>
           )}

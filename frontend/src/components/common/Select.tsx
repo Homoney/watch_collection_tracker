@@ -1,4 +1,4 @@
-import { SelectHTMLAttributes, forwardRef } from 'react'
+import { SelectHTMLAttributes, forwardRef, useId } from 'react'
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string
@@ -9,24 +9,29 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ label, error, options, placeholder, className = '', ...props }, ref) => {
+    // Ties the label (and error) to the field when the caller gives no id
+    const autoId = useId()
+    const id = props.id ?? autoId
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={props.id} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor={id} className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1.5">
             {label}
-            {props.required && <span className="text-red-500 ml-1">*</span>}
+            {props.required && <span className="text-destructive ml-1">*</span>}
           </label>
         )}
         <select
           ref={ref}
+          id={id}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
           className={`
-            appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md
-            text-gray-900 bg-white
-            dark:bg-gray-800 dark:border-gray-600 dark:text-white
-            focus:outline-none focus:ring-blue-500 focus:border-blue-500
-            disabled:bg-gray-100 disabled:text-gray-500 dark:disabled:bg-gray-700 dark:disabled:text-gray-400
+            appearance-none block w-full px-3 py-2 border border-input rounded-sm
+            bg-card text-foreground placeholder:text-muted-foreground
+            focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring
+            disabled:opacity-60 disabled:cursor-not-allowed
             sm:text-sm
-            ${error ? 'border-red-500' : ''}
+            ${error ? 'border-destructive' : ''}
             ${className}
           `}
           {...props}
@@ -42,7 +47,11 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        {error && (
+          <p id={`${id}-error`} className="mt-1 text-sm text-destructive">
+            {error}
+          </p>
+        )}
       </div>
     )
   }
