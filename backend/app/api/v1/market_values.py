@@ -19,6 +19,7 @@ from app.schemas.market_value import (
     MarketValueResponse,
     MarketValueUpdate,
     WatchAnalytics,
+    to_naive_utc,
 )
 
 router = APIRouter()
@@ -280,9 +281,9 @@ def list_market_values(
     query = db.query(MarketValue).filter(MarketValue.watch_id == watch.id)
 
     if start_date:
-        query = query.filter(MarketValue.recorded_at >= start_date)
+        query = query.filter(MarketValue.recorded_at >= to_naive_utc(start_date))
     if end_date:
-        query = query.filter(MarketValue.recorded_at <= end_date)
+        query = query.filter(MarketValue.recorded_at <= to_naive_utc(end_date))
 
     # Order by date descending and limit
     values = query.order_by(desc(MarketValue.recorded_at)).limit(limit).all()
