@@ -5,24 +5,19 @@ import Button from '@/components/common/Button'
 import Spinner from '@/components/common/Spinner'
 import { useWatches } from '@/hooks/useWatches'
 import { useCollections } from '@/hooks/useCollections'
+import { useCollectionAnalytics } from '@/hooks/useMarketValues'
 
 export default function DashboardPage() {
   const { data: watchesData, isLoading: watchesLoading } = useWatches({}, 5, 0)
   const { data: collections, isLoading: collectionsLoading } = useCollections()
+  // Totals cover every watch (not just the recent five listed below), in USD only
+  const { data: analytics, isLoading: analyticsLoading } = useCollectionAnalytics('USD')
 
-  const totalValue =
-    watchesData?.items.reduce((sum, watch) => {
-      if (watch.purchase_price) {
-        return sum + Number(watch.purchase_price)
-      }
-      return sum
-    }, 0) || 0
-
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount: number | string) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-    }).format(amount)
+    }).format(Number(amount))
   }
 
   return (
@@ -63,9 +58,12 @@ export default function DashboardPage() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Value</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Current value</p>
                 <p className="mt-2 text-3xl font-bold text-gray-900 dark:text-white">
-                  {watchesLoading ? '-' : formatCurrency(totalValue)}
+                  {analyticsLoading || !analytics ? '-' : formatCurrency(analytics.total_current_value)}
+                </p>
+                <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                  Paid: {analyticsLoading || !analytics ? '-' : formatCurrency(analytics.total_purchase_price)}
                 </p>
               </div>
               <div className="p-3 bg-green-100 rounded-full">

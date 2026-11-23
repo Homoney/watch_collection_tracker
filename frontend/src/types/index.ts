@@ -210,8 +210,8 @@ export interface CollectionAnalytics {
   average_roi: number
   top_performers: WatchPerformance[]
   worst_performers: WatchPerformance[]
-  value_by_brand: Record<string, number>
-  value_by_collection: Record<string, number>
+  value_by_brand: Record<string, string>  // Decimal as string
+  value_by_collection: Record<string, string>  // Decimal as string
   total_valuations: number
 }
 

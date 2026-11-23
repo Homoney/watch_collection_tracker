@@ -42,10 +42,12 @@ export default function CollectionAnalytics({ currency = 'USD' }: CollectionAnal
     )
   }
 
-  // Prepare brand chart data from value_by_brand
+  // Prepare brand chart data from value_by_brand. The API sends Decimals as
+  // strings; recharts needs real numbers or the pie draws nothing and the bar
+  // axis compares values as text.
   const brandData = Object.entries(analytics.value_by_brand).map(([name, value]) => ({
     name,
-    value,
+    value: Number(value),
   }))
 
   // Prepare pie chart data for brand distribution
