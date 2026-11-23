@@ -2,6 +2,14 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [2.1.6] - 2026-11-23
+
+Fixes only. No upgrade steps.
+
+### Fixed
+- The Dashboard value card now shows the current market value of the whole collection, with the amount paid underneath, matching the Analytics page.
+- The Analytics brand pie chart is drawn again and the bar chart axis scales to the largest value.
+
 ## [2.1.5] - 2026-11-23
 
 Maintenance only. No upgrade steps.
