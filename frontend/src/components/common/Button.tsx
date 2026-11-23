@@ -1,41 +1,32 @@
-import { ButtonHTMLAttributes, ReactNode } from 'react'
+import { forwardRef } from 'react'
+import { Button as UIButton, type ButtonProps as UIButtonProps } from '@/components/ui/button'
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'danger' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
-  children: ReactNode
+/**
+ * The app's one button set. A thin wrapper over the shadcn/ui Button that
+ * keeps the old variant names, so every screen gets the same three styles:
+ * primary (solid gold), secondary (outline), danger (red outline).
+ */
+interface ButtonProps extends Omit<UIButtonProps, 'variant' | 'size'> {
+  variant?: 'primary' | 'secondary' | 'outline' | 'danger' | 'ghost' | 'link'
+  size?: 'sm' | 'md' | 'lg' | 'icon'
 }
 
-export default function Button({
-  variant = 'primary',
-  size = 'md',
-  children,
-  className = '',
-  disabled,
-  ...props
-}: ButtonProps) {
-  const baseClasses = 'font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors'
+const variantMap = {
+  primary: 'default',
+  secondary: 'secondary',
+  outline: 'outline',
+  danger: 'destructive',
+  ghost: 'ghost',
+  link: 'link',
+} as const
 
-  const variantClasses = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500 disabled:bg-blue-400',
-    secondary: 'bg-gray-200 hover:bg-gray-300 text-gray-900 focus:ring-gray-500 disabled:bg-gray-100',
-    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500 disabled:bg-red-400',
-    ghost: 'bg-transparent hover:bg-gray-100 text-gray-700 focus:ring-gray-500',
-  }
+const sizeMap = { sm: 'sm', md: 'default', lg: 'lg', icon: 'icon' } as const
 
-  const sizeClasses = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-sm',
-    lg: 'px-6 py-3 text-base',
-  }
-
-  return (
-    <button
-      className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
-      disabled={disabled}
-      {...props}
-    >
-      {children}
-    </button>
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ variant = 'primary', size = 'md', ...props }, ref) => (
+    <UIButton ref={ref} variant={variantMap[variant]} size={sizeMap[size]} {...props} />
   )
-}
+)
+Button.displayName = 'Button'
+
+export default Button
