@@ -45,6 +45,10 @@ describe('collection analytics charts', () => {
 
     // One pie slice per brand (none were drawn when values were strings)
     expect(container.querySelectorAll('.recharts-pie-sector')).toHaveLength(3)
+    // Labels use the text colour (18:1 on white), not the slice colours (as low as 2.2:1)
+    const labels = Array.from(container.querySelectorAll('.recharts-pie-labels text'))
+    expect(labels.map((l) => l.textContent)).toEqual(['Patek Philippe 60%', 'Rolex 38%', 'Seiko 1%'])
+    for (const l of labels) expect(l).toHaveAttribute('fill', '#14130f')
     // The bar axis reaches the largest value, not the largest string ('505.00')
     const ticks = Array.from(container.querySelectorAll('.recharts-yAxis .recharts-cartesian-axis-tick-value')).map(
       (t) => t.textContent

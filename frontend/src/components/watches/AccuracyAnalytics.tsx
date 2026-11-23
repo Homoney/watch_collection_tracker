@@ -29,8 +29,8 @@ export function AccuracyAnalytics({ watchId }: AccuracyAnalyticsProps) {
   const getDriftColor = (drift: number | null): string => {
     if (drift === null) return 'text-gray-500 dark:text-gray-400'
     const abs = Math.abs(drift)
-    if (abs <= 5) return 'text-green-600 dark:text-green-400'
-    if (abs <= 10) return 'text-yellow-600 dark:text-yellow-400'
+    if (abs <= 5) return 'text-positive'
+    if (abs <= 10) return 'text-yellow-700 dark:text-yellow-400'
     return 'text-red-600 dark:text-red-400'
   }
 

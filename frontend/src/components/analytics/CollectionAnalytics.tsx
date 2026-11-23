@@ -10,10 +10,11 @@ interface CollectionAnalyticsProps {
 }
 
 // Collector's Vault chart palettes: gold first, then warm and muted tones
-// that stay apart from each other on both grounds.
+// that stay apart from each other on both grounds. Every colour is at least
+// 4.5:1 on its card (dark 6.3-12.7:1 on #121211, light 5.0-6.9:1 on white).
 const PALETTE = {
   dark: ['#c9a45c', '#7fc08f', '#8fa9c9', '#d9876f', '#b39ddb', '#e6d3a3', '#6fb3ad', '#9a958a'],
-  light: ['#7a5d1c', '#2e6a3c', '#3d5f86', '#a23a2a', '#6a4c93', '#a3823a', '#2f7a74', '#5e5a51'],
+  light: ['#7a5d1c', '#2e6a3c', '#3d5f86', '#a23a2a', '#6a4c93', '#8a4f7a', '#2f7a74', '#5e5a51'],
 }
 
 const panel = 'bg-card border border-border rounded-sm p-6'
@@ -26,6 +27,7 @@ export default function CollectionAnalytics({ currency = 'USD' }: CollectionAnal
   const colors = dark ? PALETTE.dark : PALETTE.light
   const axis = dark ? '#9a958a' : '#5e5a51'
   const grid = dark ? '#25241f' : '#e7e1d3'
+  const text = dark ? '#ece7da' : '#14130f'
 
   const formatCurrency = (value: number | string | null, curr: string) => {
     if (value === null) return 'N/A'
@@ -69,6 +71,8 @@ export default function CollectionAnalytics({ currency = 'USD' }: CollectionAnal
     name,
     value: Number(value),
   }))
+
+  const tiltLabels = isPhone || brandData.length > 5
 
   // Pie chart data for brand distribution
   const brandPieData = brandData.map((brand, index) => ({
@@ -168,9 +172,10 @@ export default function CollectionAnalytics({ currency = 'USD' }: CollectionAnal
                   tick={{ fontSize: 11, fill: axis }}
                   stroke={axis}
                   interval={0}
-                  angle={isPhone ? -40 : 0}
-                  textAnchor={isPhone ? 'end' : 'middle'}
-                  height={isPhone ? 70 : 30}
+                  // Angled when the names would collide, so none is skipped
+                  angle={tiltLabels ? -35 : 0}
+                  textAnchor={tiltLabels ? 'end' : 'middle'}
+                  height={tiltLabels ? 80 : 30}
                 />
                 <YAxis
                   tick={{ fontSize: 11, fill: axis }}
@@ -203,7 +208,16 @@ export default function CollectionAnalytics({ currency = 'USD' }: CollectionAnal
                   cy={isPhone ? '42%' : '50%'}
                   // On phones the labels would run off the edges: use the legend instead
                   labelLine={false}
-                  label={isPhone ? false : ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  // Labels in the text colour, not the slice colour (contrast)
+                  label={
+                    isPhone
+                      ? false
+                      : ({ x, y, textAnchor, name, percent }) => (
+                          <text x={x} y={y} textAnchor={textAnchor} dominantBaseline="central" fill={text} fontSize={12}>
+                            {`${name} ${(percent * 100).toFixed(0)}%`}
+                          </text>
+                        )
+                  }
                   outerRadius={isPhone ? 90 : 100}
                   dataKey="value"
                   stroke={dark ? '#121211' : '#ffffff'}

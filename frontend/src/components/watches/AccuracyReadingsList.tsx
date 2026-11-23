@@ -37,8 +37,8 @@ export function AccuracyReadingsList({ watchId, onAddReading }: AccuracyReadings
   const getDriftColor = (drift: number | null) => {
     if (drift === null) return ''
     const abs = Math.abs(drift)
-    if (abs <= 5) return 'text-green-600 dark:text-green-400'
-    if (abs <= 10) return 'text-yellow-600 dark:text-yellow-400'
+    if (abs <= 5) return 'text-positive'
+    if (abs <= 10) return 'text-yellow-700 dark:text-yellow-400'
     return 'text-red-600 dark:text-red-400'
   }
 

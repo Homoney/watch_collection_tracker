@@ -53,7 +53,7 @@ export function AccuracyChart({ watchId }: AccuracyChartProps) {
     if (active && payload && payload.length) {
       const data = payload[0].payload as ChartDataPoint
       const drift = data.drift
-      const driftColor = Math.abs(drift) <= 5 ? 'text-green-600' : Math.abs(drift) <= 10 ? 'text-yellow-600' : 'text-red-600'
+      const driftColor = Math.abs(drift) <= 5 ? 'text-positive' : Math.abs(drift) <= 10 ? 'text-yellow-700' : 'text-red-600'
 
       return (
         <div className="bg-card border border-border rounded-sm shadow-lg p-3">
