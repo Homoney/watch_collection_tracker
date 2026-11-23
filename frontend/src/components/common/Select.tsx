@@ -1,4 +1,4 @@
-import { SelectHTMLAttributes, forwardRef } from 'react'
+import { SelectHTMLAttributes, forwardRef, useId } from 'react'
 
 interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string
@@ -9,16 +9,22 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ label, error, options, placeholder, className = '', ...props }, ref) => {
+    // Ties the label (and error) to the field when the caller gives no id
+    const autoId = useId()
+    const id = props.id ?? autoId
     return (
       <div className="w-full">
         {label && (
-          <label htmlFor={props.id} className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1.5">
+          <label htmlFor={id} className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground mb-1.5">
             {label}
             {props.required && <span className="text-destructive ml-1">*</span>}
           </label>
         )}
         <select
           ref={ref}
+          id={id}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? `${id}-error` : undefined}
           className={`
             appearance-none block w-full px-3 py-2 border border-input rounded-sm
             bg-card text-foreground placeholder:text-muted-foreground
@@ -41,7 +47,11 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             </option>
           ))}
         </select>
-        {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
+        {error && (
+          <p id={`${id}-error`} className="mt-1 text-sm text-destructive">
+            {error}
+          </p>
+        )}
       </div>
     )
   }

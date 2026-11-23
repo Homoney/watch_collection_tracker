@@ -97,16 +97,16 @@ export default function MarketValueForm({
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-sm border border-border bg-card text-card-foreground shadow-2xl">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-6 py-4">
+          <h2 className="text-lg font-light tracking-wide text-foreground">
             {isEditing ? 'Edit Market Value' : 'Add Market Value'}
           </h2>
           <button
             type="button"
             onClick={onCancel}
-            className="text-gray-400 hover:text-gray-500"
+            className="text-muted-foreground hover:text-foreground"
           >
             <X className="h-6 w-6" />
           </button>
@@ -116,8 +116,8 @@ export default function MarketValueForm({
           {/* Value and Currency */}
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label htmlFor="value" className="block text-sm font-medium text-gray-700">
-                Market Value <span className="text-red-500">*</span>
+              <label htmlFor="value" className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                Market Value <span className="text-destructive">*</span>
               </label>
               <input
                 type="number"
@@ -129,21 +129,21 @@ export default function MarketValueForm({
                   valueAsNumber: true,
                   min: { value: 0, message: 'Value must be positive' },
                 })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-sm border border-input bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
               />
               {errors.value && (
-                <p className="mt-1 text-sm text-red-600">{errors.value.message}</p>
+                <p className="mt-1 text-sm text-destructive">{errors.value.message}</p>
               )}
             </div>
 
             <div>
-              <label htmlFor="currency" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="currency" className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
                 Currency
               </label>
               <select
                 id="currency"
                 {...register('currency')}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+                className="mt-1 block w-full rounded-sm border border-input bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
               >
                 {CURRENCIES.map((curr) => (
                   <option key={curr} value={curr}>
@@ -156,29 +156,29 @@ export default function MarketValueForm({
 
           {/* Recorded Date */}
           <div>
-            <label htmlFor="recorded_at" className="block text-sm font-medium text-gray-700">
-              Valuation Date <span className="text-red-500">*</span>
+            <label htmlFor="recorded_at" className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+              Valuation Date <span className="text-destructive">*</span>
             </label>
             <input
               type="date"
               id="recorded_at"
               {...register('recorded_at', { required: 'Date is required' })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-sm border border-input bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
             />
             {errors.recorded_at && (
-              <p className="mt-1 text-sm text-red-600">{errors.recorded_at.message}</p>
+              <p className="mt-1 text-sm text-destructive">{errors.recorded_at.message}</p>
             )}
           </div>
 
           {/* Source */}
           <div>
-            <label htmlFor="source" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="source" className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
               Source
             </label>
             <select
               id="source"
               {...register('source')}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-sm border border-input bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
             >
               {SOURCES.map((src) => (
                 <option key={src.value} value={src.value}>
@@ -190,7 +190,7 @@ export default function MarketValueForm({
 
           {/* Notes */}
           <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="notes" className="block text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
               Notes
             </label>
             <textarea
@@ -198,23 +198,23 @@ export default function MarketValueForm({
               {...register('notes')}
               rows={3}
               placeholder="Optional notes about this valuation..."
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm"
+              className="mt-1 block w-full rounded-sm border border-input bg-card px-3 py-2 text-foreground placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring sm:text-sm"
             />
           </div>
 
           {/* Form Actions */}
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end gap-3 border-t border-border pt-4">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-input bg-transparent px-5 text-[11px] font-medium uppercase tracking-[0.18em] text-foreground hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-sm border border-primary bg-primary px-5 text-[11px] font-medium uppercase tracking-[0.18em] text-primary-foreground hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? 'Saving...' : isEditing ? 'Update' : 'Add Value'}
             </button>

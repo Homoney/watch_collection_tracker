@@ -105,7 +105,7 @@ export default function Modal({
           aria-label={title}
           className={`relative bg-card text-card-foreground border border-border rounded-sm shadow-2xl w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}
         >
-          <div className="flex items-center justify-between p-4 border-b border-border">
+          <div className="flex items-center justify-between px-4 py-4 sm:px-6 border-b border-border">
             <h3 className="text-lg font-light tracking-wide text-foreground">{title}</h3>
             <button
               onClick={requestClose}
@@ -127,7 +127,7 @@ export default function Modal({
           </div>
 
           <ModalFormContext.Provider value={{ setDirty, requestClose }}>
-            <div className="p-4">{children}</div>
+            <div className="p-4 sm:p-6">{children}</div>
           </ModalFormContext.Provider>
 
           {confirming && (
