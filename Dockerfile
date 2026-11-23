@@ -22,11 +22,14 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-# Runtime packages only (tests use requirements-dev.txt); pip and setuptools
-# from the base image are upgraded for their own security fixes
+# Runtime packages only (tests use requirements-dev.txt); setuptools from the
+# base image is upgraded for its own security fixes. pip is removed once the
+# packages are in: the app never runs it, and it carries its own old copy of
+# setuptools code (pkg_resources) that a newer pip does not replace.
 COPY backend/requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip setuptools \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir -r requirements.txt \
+    && python -m pip uninstall -y pip
 
 COPY backend/ ./
 COPY --from=web /web/dist /app/web
