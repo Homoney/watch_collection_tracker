@@ -113,6 +113,49 @@ class TestCreateMarketValue:
         test_db.refresh(test_watch)
         assert test_watch.current_market_value == Decimal("17000.00")
 
+    def test_second_value_with_utc_offset_does_not_fail(
+        self,
+        client: TestClient,
+        auth_headers: dict,
+        test_watch: Watch,
+        test_db: Session
+    ):
+        """Two valuations sent as "...Z" times (as the web app does) both save.
+
+        The stored last_value_update is naive; the second request's time is
+        offset-aware. Comparing them used to raise TypeError (500 on SQLite).
+        """
+        first = datetime.utcnow() - timedelta(days=10)
+        second = datetime.utcnow()
+        for value, when in (("15000.00", first), ("16000.00", second)):
+            response = client.post(
+                f"/api/v1/watches/{test_watch.id}/market-values",
+                headers=auth_headers,
+                json={
+                    "value": value,
+                    "currency": "USD",
+                    "source": "manual",
+                    "recorded_at": when.isoformat() + "Z"
+                }
+            )
+            assert response.status_code == 201, response.text
+
+        test_db.refresh(test_watch)
+        assert test_watch.current_market_value == Decimal("16000.00")
+        assert test_watch.last_value_update.tzinfo is None
+
+        # A "+02:00" time is converted to UTC before comparing: this one is
+        # older than the second value, so it must not become current.
+        older = (second - timedelta(hours=1)).isoformat() + "+02:00"
+        response = client.post(
+            f"/api/v1/watches/{test_watch.id}/market-values",
+            headers=auth_headers,
+            json={"value": "1.00", "currency": "USD", "recorded_at": older}
+        )
+        assert response.status_code == 201, response.text
+        test_db.refresh(test_watch)
+        assert test_watch.current_market_value == Decimal("16000.00")
+
     def test_create_market_value_validation(
         self,
         client: TestClient,

@@ -1,9 +1,21 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+def to_naive_utc(value: Optional[datetime]) -> Optional[datetime]:
+    """Return a naive UTC datetime.
+
+    The database stores naive UTC times. A client time with an offset (for
+    example the web app's "...Z" ISO strings) is converted to UTC and the
+    offset dropped, so it can be compared with stored values.
+    """
+    if value is None or value.tzinfo is None:
+        return value
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
 
 
 class MarketValueBase(BaseModel):
@@ -33,6 +45,11 @@ class MarketValueCreate(BaseModel):
     notes: Optional[str] = None
     recorded_at: Optional[datetime] = None  # Optional, defaults to now if not provided
 
+    @field_validator("recorded_at")
+    @classmethod
+    def _recorded_at_naive_utc(cls, value: Optional[datetime]) -> Optional[datetime]:
+        return to_naive_utc(value)
+
 
 class MarketValueUpdate(BaseModel):
     """Schema for updating market value"""
@@ -42,6 +59,11 @@ class MarketValueUpdate(BaseModel):
     source: Optional[str] = None
     notes: Optional[str] = None
     recorded_at: Optional[datetime] = None
+
+    @field_validator("recorded_at")
+    @classmethod
+    def _recorded_at_naive_utc(cls, value: Optional[datetime]) -> Optional[datetime]:
+        return to_naive_utc(value)
 
 
 class MarketValueResponse(BaseModel):
