@@ -2,6 +2,13 @@
 
 Versions follow [Semantic Versioning](https://semver.org/). Patch releases (x.y.Z) are fixes and maintenance only.
 
+## [2.1.5] - 2026-11-23
+
+Maintenance only. No upgrade steps.
+
+### Changed
+- Dependency update: removed an unused bundled package from the backend image. pip is no longer in the container.
+
 ## [2.1.4] - 2026-11-19
 
 Fixes only. No upgrade steps. The database migration (0003) runs on start and takes a backup first.
