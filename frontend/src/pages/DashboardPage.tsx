@@ -60,7 +60,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="bg-card p-5 sm:p-6">
-            <p className={figLabel}>Return</p>
+            <p className={figLabel}>Total return</p>
             <p className={`mt-2 text-3xl font-light ${returnPct === null ? 'text-foreground' : returnPct >= 0 ? 'text-positive' : 'text-negative'}`}>
               {returnPct === null ? '-' : formatPercent(returnPct)}
             </p>

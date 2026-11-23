@@ -218,7 +218,7 @@ export default function WatchListPage() {
                   <dd className={`text-2xl font-light ${totalReturn >= 0 ? 'text-positive' : 'text-negative'}`}>
                     {formatPercent(totalReturn)}
                   </dd>
-                  <dt className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Return</dt>
+                  <dt className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Total return</dt>
                 </div>
               )}
             </dl>

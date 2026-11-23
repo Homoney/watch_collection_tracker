@@ -61,6 +61,9 @@ export default function ImageLightbox({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Photo viewer"
       className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center"
       onClick={handleBackdropClick}
     >

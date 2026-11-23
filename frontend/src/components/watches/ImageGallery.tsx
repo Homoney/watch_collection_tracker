@@ -77,7 +77,7 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
             {(image.is_primary || image.source === 'reference_photo') && (
               <div className="absolute top-2 left-2 right-2 flex flex-wrap gap-1">
                 {image.is_primary && (
-                  <span className="px-2 py-1 bg-yellow-500 text-white text-xs font-medium rounded">
+                  <span className="px-2 py-1 bg-primary text-primary-foreground text-xs font-medium rounded">
                     Primary
                   </span>
                 )}
@@ -106,8 +106,8 @@ export default function ImageGallery({ watchId, images, onImageClick }: ImageGal
                   handleSetPrimary(image.id)
                 }}
                 disabled={updateMutation.isPending}
-                className="flex-1 px-2 py-1 bg-yellow-500 text-white text-xs rounded
- hover:bg-yellow-600 disabled:bg-gray-400
+                className="flex-1 px-2 py-1 bg-primary text-primary-foreground text-xs rounded
+ hover:bg-primary/90 disabled:opacity-50
  transition-colors flex items-center justify-center gap-1"
                 title="Set as primary"
               >

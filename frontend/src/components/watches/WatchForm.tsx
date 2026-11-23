@@ -129,6 +129,20 @@ export default function WatchForm({
     setSelectedComplications(draft.complications)
     setRestored(true)
   }, [draftKey, reset])
+
+  // A <select> can only show a value once that option exists. On a direct
+  // load the brand, movement and collection lists arrive after the form has
+  // mounted, so the stored ids are written back into the selects when they do.
+  // Keyed on the list sizes, so it runs when a list arrives, not on every render.
+  const optionCounts = [brands?.length ?? 0, movementTypes?.length ?? 0, collections?.length ?? 0]
+  useEffect(() => {
+    const names = ['brand_id', 'movement_type_id', 'collection_id'] as const
+    names.forEach((name, i) => {
+      const current = getValues(name)
+      if (optionCounts[i] && current) setValue(name, current)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...optionCounts, getValues, setValue])
   // Written only when what was typed changes, not on every render: after a
   // save the parent clears the draft while this form is still on screen, and
   // a re-render then (e.g. the save finishing) must not write it back.

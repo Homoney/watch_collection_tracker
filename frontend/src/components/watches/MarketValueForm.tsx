@@ -98,14 +98,20 @@ export default function MarketValueForm({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-sm border border-border bg-card text-card-foreground shadow-2xl">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="market-value-form-title"
+        className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-sm border border-border bg-card text-card-foreground shadow-2xl"
+      >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-card px-6 py-4">
-          <h2 className="text-lg font-light tracking-wide text-foreground">
+          <h2 id="market-value-form-title" className="text-lg font-light tracking-wide text-foreground">
             {isEditing ? 'Edit Market Value' : 'Add Market Value'}
           </h2>
           <button
             type="button"
             onClick={onCancel}
+            aria-label="Close"
             className="text-muted-foreground hover:text-foreground"
           >
             <X className="h-6 w-6" />
